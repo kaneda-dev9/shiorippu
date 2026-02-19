@@ -35,6 +35,40 @@ const SYSTEM_PROMPT = `あなたは「しおりっぷ」の旅行プランナー
 - おすすめの食事スポット
 - 予算の目安
 
+プランを提案する際は、通常のテキスト説明の後に、必ず以下のJSON形式でも出力してください。
+このJSONは自動的にしおり（旅程表）に変換されます。
+
+<PLAN_JSON>
+{
+  "days": [
+    {
+      "day_number": 1,
+      "date": "2024-03-20",
+      "events": [
+        {
+          "title": "イベント名",
+          "category": "カテゴリ",
+          "start_time": "09:00",
+          "end_time": "10:00",
+          "memo": "説明や補足",
+          "address": "住所"
+        }
+      ]
+    }
+  ]
+}
+</PLAN_JSON>
+
+categoryの値は以下のいずれかを使ってください:
+- 移動: transport_train, transport_car, transport_plane, transport_bus, transport_walk, transport_ship
+- 食事: meal_restaurant, meal_cafe, meal_izakaya
+- 宿泊: stay_hotel, stay_ryokan, stay_camp
+- 観光: sightseeing_temple, sightseeing_theme_park, sightseeing_beach, sightseeing_park, sightseeing_museum
+- その他: onsen, shopping, photo_spot, activity, memo, other
+
+dateフィールドはしおりの開始日が分かっている場合のみ設定してください。
+start_time, end_time は "HH:MM" 形式で設定してください。
+
 ## 注意事項
 - 不確かな情報は「確認をおすすめします」と付け加えてください
 - 季節に応じたアドバイスを心がけてください
@@ -45,7 +79,7 @@ const SYSTEM_PROMPT = `あなたは「しおりっぷ」の旅行プランナー
  * Claude API を使った AI チャット（ストリーミング対応）
  */
 export default defineEventHandler(async (event) => {
-  const user = await requireAuth(event)
+  await requireAuth(event)
 
   const body = await readBody<{
     shioriId?: string
@@ -81,7 +115,7 @@ export default defineEventHandler(async (event) => {
   // しおりのコンテキストを取得
   let contextPrompt = ''
   if (body.shioriId) {
-    const supabase = useSupabaseWithAuth(event)
+    const supabase = useServerSupabase()
     const { data: shiori } = await supabase
       .from('shioris')
       .select('title, area, start_date, end_date')
@@ -100,7 +134,7 @@ export default defineEventHandler(async (event) => {
     const { default: Anthropic } = await import('@anthropic-ai/sdk')
     const anthropic = new Anthropic({ apiKey: config.claudeApiKey })
 
-    const claudeMessages = body.messages.map((msg) => ({
+    const claudeMessages = body.messages!.map((msg) => ({
       role: msg.role as 'user' | 'assistant',
       content: msg.content,
     }))
@@ -118,11 +152,14 @@ export default defineEventHandler(async (event) => {
     setResponseHeader(event, 'Connection', 'keep-alive')
 
     const encoder = new TextEncoder()
+    let fullAssistantContent = ''
+
     const readableStream = new ReadableStream({
       async start(controller) {
         try {
           for await (const chunk of stream) {
             if (chunk.type === 'content_block_delta' && 'text' in chunk.delta) {
+              fullAssistantContent += chunk.delta.text
               const sseData = `data: ${JSON.stringify({ type: 'text', text: chunk.delta.text })}\n\n`
               controller.enqueue(encoder.encode(sseData))
             } else if (chunk.type === 'message_stop') {
@@ -140,6 +177,38 @@ export default defineEventHandler(async (event) => {
           })}\n\n`
           controller.enqueue(encoder.encode(usageData))
           controller.close()
+
+          // ストリーミング完了後にチャット履歴をDBに保存
+          if (body.shioriId) {
+            const supabase = useServerSupabase()
+            const lastUserMessage = body.messages![body.messages!.length - 1]
+
+            // ユーザーメッセージを保存
+            if (lastUserMessage?.role === 'user') {
+              const { error: userErr } = await supabase
+                .from('chat_messages')
+                .insert({
+                  shiori_id: body.shioriId,
+                  role: 'user',
+                  content: lastUserMessage.content,
+                  metadata: {},
+                })
+              if (userErr) console.error('ユーザーメッセージ保存エラー:', userErr)
+            }
+
+            // AI応答を保存
+            if (fullAssistantContent) {
+              const { error: assistantErr } = await supabase
+                .from('chat_messages')
+                .insert({
+                  shiori_id: body.shioriId,
+                  role: 'assistant',
+                  content: fullAssistantContent,
+                  metadata: {},
+                })
+              if (assistantErr) console.error('AI応答保存エラー:', assistantErr)
+            }
+          }
         } catch (streamError) {
           console.error('ストリーミングエラー:', streamError)
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', message: 'ストリーミング中にエラーが発生しました。' })}\n\n`))
@@ -147,25 +216,6 @@ export default defineEventHandler(async (event) => {
         }
       },
     })
-
-    // チャット履歴をDBに保存
-    if (body.shioriId) {
-      const lastUserMessage = body.messages[body.messages.length - 1]
-      if (lastUserMessage?.role === 'user') {
-        const supabase = useServerSupabase()
-        supabase
-          .from('chat_messages')
-          .insert({
-            shiori_id: body.shioriId,
-            role: 'user',
-            content: lastUserMessage.content,
-            metadata: {},
-          })
-          .then(({ error }) => {
-            if (error) console.error('チャットメッセージ保存エラー:', error)
-          })
-      }
-    }
 
     return sendStream(event, readableStream)
   } catch (error: unknown) {

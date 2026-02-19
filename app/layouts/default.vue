@@ -38,7 +38,7 @@ watch(() => route.path, () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-stone-50 dark:bg-stone-950">
+  <div class="flex h-dvh flex-col overflow-hidden bg-stone-50 dark:bg-stone-950">
     <!-- ヘッダー -->
     <header class="sticky top-0 z-50 border-b border-stone-200 bg-white/80 backdrop-blur-md dark:border-stone-800 dark:bg-stone-950/80">
       <div class="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -169,22 +169,9 @@ watch(() => route.path, () => {
     </USlideover>
 
     <!-- メインコンテンツ -->
-    <main>
+    <main class="min-h-0 flex-1 overflow-y-auto">
       <slot />
     </main>
 
-    <!-- フッター -->
-    <footer class="border-t border-stone-200 dark:border-stone-800">
-      <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div class="flex flex-col items-center justify-between gap-2 sm:flex-row">
-          <p class="text-xs text-stone-400">
-            &copy; 2026 しおりっぷ
-          </p>
-          <p class="text-xs text-stone-400">
-            AIと一緒に旅のしおりを作ろう
-          </p>
-        </div>
-      </div>
-    </footer>
   </div>
 </template>

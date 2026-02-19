@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import dayjs from 'dayjs'
 import type { Shiori } from '~~/types/database'
 
 definePageMeta({
@@ -6,10 +7,14 @@ definePageMeta({
 })
 
 const { authFetch } = useAuthFetch()
+const { user } = useAuth()
 const toast = useToast()
 
 const shioris = ref<Shiori[]>([])
 const loading = ref(true)
+const deleteTarget = ref<Shiori | null>(null)
+const showDeleteModal = ref(false)
+const deleting = ref(false)
 
 async function fetchShioris() {
   loading.value = true
@@ -35,6 +40,32 @@ async function createShiori() {
       title: 'しおりの作成に失敗しました',
       color: 'error',
     })
+  }
+}
+
+/** 削除確認モーダルを開く */
+function confirmDelete(shiori: Shiori, e: MouseEvent) {
+  e.stopPropagation()
+  deleteTarget.value = shiori
+  showDeleteModal.value = true
+}
+
+/** しおりを削除 */
+async function deleteShiori() {
+  if (!deleteTarget.value) return
+  deleting.value = true
+  try {
+    await authFetch(`/api/shiori/${deleteTarget.value.id}`, { method: 'DELETE' })
+    shioris.value = shioris.value.filter((s) => s.id !== deleteTarget.value!.id)
+    toast.add({ title: 'しおりを削除しました', color: 'success' })
+  }
+  catch {
+    toast.add({ title: 'しおりの削除に失敗しました', color: 'error' })
+  }
+  finally {
+    deleting.value = false
+    showDeleteModal.value = false
+    deleteTarget.value = null
   }
 }
 
@@ -105,9 +136,19 @@ onMounted(fetchShioris)
       <UCard
         v-for="shiori in shioris"
         :key="shiori.id"
-        class="cursor-pointer transition-all hover:shadow-md hover:ring-1 hover:ring-orange-200 dark:hover:ring-orange-800"
+        class="group relative cursor-pointer transition-all hover:shadow-md hover:ring-1 hover:ring-orange-200 dark:hover:ring-orange-800"
         @click="navigateTo(`/shiori/${shiori.id}`)"
       >
+        <!-- 削除ボタン（ホバーで表示、オーナーのみ） -->
+        <UButton
+          v-if="shiori.owner_id === user?.id"
+          icon="i-lucide-trash-2"
+          variant="ghost"
+          size="xs"
+          class="absolute right-2 top-2 z-10 transition-opacity md:opacity-0 md:group-hover:opacity-100 hover:!text-red-500"
+          @click="confirmDelete(shiori, $event)"
+        />
+
         <!-- カバー画像 or グラデーション -->
         <div
           v-if="shiori.cover_image_url"
@@ -148,20 +189,62 @@ onMounted(fetchShioris)
 
         <!-- ステータスバッジ -->
         <div class="mt-3 flex items-center justify-between">
-          <UBadge
-            v-if="shiori.is_public"
-            variant="subtle"
-            color="success"
-            size="xs"
-          >
-            公開中
-          </UBadge>
-          <span v-else />
+          <div class="flex items-center gap-1.5">
+            <UBadge
+              v-if="shiori.owner_id !== user?.id"
+              variant="subtle"
+              color="info"
+              size="xs"
+            >
+              共同編集
+            </UBadge>
+            <UBadge
+              v-if="shiori.is_public"
+              variant="subtle"
+              color="success"
+              size="xs"
+            >
+              公開中
+            </UBadge>
+          </div>
           <span class="text-xs text-stone-400">
-            {{ formatDateShort(shiori.updated_at) }} 更新
+            {{ dayjs(shiori.updated_at).format('YYYY/MM/DD HH:mm') }} 更新
           </span>
         </div>
       </UCard>
     </div>
+    <!-- 削除確認モーダル -->
+    <UModal v-model:open="showDeleteModal">
+      <template #content>
+        <div class="p-6">
+          <div class="mb-4 flex items-center gap-3">
+            <div class="flex size-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+              <UIcon name="i-lucide-triangle-alert" class="size-5 text-red-500" />
+            </div>
+            <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-50">
+              しおりを削除
+            </h3>
+          </div>
+          <p class="mb-2 text-sm text-stone-600 dark:text-stone-400">
+            「<span class="font-medium text-stone-900 dark:text-stone-50">{{ deleteTarget?.title }}</span>」を削除しますか？
+          </p>
+          <p class="mb-6 text-xs text-stone-400">
+            日程・イベント・チャット履歴もすべて削除されます。この操作は取り消せません。
+          </p>
+          <div class="flex justify-end gap-2">
+            <UButton variant="ghost" @click="showDeleteModal = false">
+              キャンセル
+            </UButton>
+            <UButton
+              color="error"
+              :loading="deleting"
+              @click="deleteShiori"
+            >
+              削除する
+            </UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>

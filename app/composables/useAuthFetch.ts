@@ -11,13 +11,13 @@ export function useAuthFetch() {
       throw new Error('認証が必要です。ログインしてください。')
     }
 
-    return $fetch<T>(url, {
+    return $fetch(url, {
       ...options,
       headers: {
         ...options.headers,
         Authorization: `Bearer ${token}`,
       },
-    })
+    }) as Promise<T>
   }
 
   return { authFetch }

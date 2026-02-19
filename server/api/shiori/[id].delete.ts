@@ -13,8 +13,22 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  await requireAuth(event)
-  const supabase = useSupabaseWithAuth(event)
+  const user = await requireAuth(event)
+  const supabase = useServerSupabase()
+
+  // オーナー権限チェック
+  const { data: shiori } = await supabase
+    .from('shioris')
+    .select('owner_id')
+    .eq('id', id)
+    .single()
+
+  if (!shiori || shiori.owner_id !== user.id) {
+    throw createError({
+      statusCode: 403,
+      statusMessage: 'このしおりを削除する権限がありません。',
+    })
+  }
 
   const { error } = await supabase
     .from('shioris')

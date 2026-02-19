@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  await requireAuth(event)
+  const user = await requireAuth(event)
 
   const body = await readBody<{
     title?: string
@@ -68,7 +68,21 @@ export default defineEventHandler(async (event) => {
   if (body.custom_style !== undefined) updateData.custom_style = body.custom_style
   if (body.cover_image_url !== undefined) updateData.cover_image_url = body.cover_image_url
 
-  const supabase = useSupabaseWithAuth(event)
+  const supabase = useServerSupabase()
+
+  // オーナー権限チェック
+  const { data: shiori } = await supabase
+    .from('shioris')
+    .select('owner_id')
+    .eq('id', id)
+    .single()
+
+  if (!shiori || shiori.owner_id !== user.id) {
+    throw createError({
+      statusCode: 403,
+      statusMessage: 'このしおりを編集する権限がありません。',
+    })
+  }
 
   const { data, error } = await supabase
     .from('shioris')

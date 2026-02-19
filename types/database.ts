@@ -118,6 +118,29 @@ export interface ChatMessageMetadata {
 }
 
 // ===========================================
+// AI Plan types (AIプラン自動作成用)
+// ===========================================
+
+export interface PlanEvent {
+  title: string
+  category: EventCategory
+  start_time?: string // "09:00"
+  end_time?: string
+  memo?: string
+  address?: string
+}
+
+export interface PlanDay {
+  day_number: number
+  date?: string
+  events: PlanEvent[]
+}
+
+export interface TripPlan {
+  days: PlanDay[]
+}
+
+// ===========================================
 // Insert types (for creating new records)
 // ===========================================
 

@@ -1,10 +1,10 @@
-import { createClient } from '@supabase/supabase-js'
 import type { Shiori, Day, Event, ShioriWithDays, DayWithEvents } from '~~/types/database'
 
 /**
  * GET /api/shiori/:id
  * しおりの詳細を days, events と共に取得
- * 認証は任意（公開しおりは未認証でも閲覧可能）
+ * 認証済みユーザー: 自分のしおり or コラボレーター
+ * 未認証: 公開しおりのみ
  */
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -16,20 +16,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // 認証は任意（RLS で制御）
-  const authorization = getHeader(event, 'authorization')
-  let supabase
-
-  if (authorization) {
-    supabase = useSupabaseWithAuth(event)
-  } else {
-    const config = useRuntimeConfig()
-    supabase = createClient(
-      config.public.supabaseUrl,
-      config.public.supabaseAnonKey,
-      { auth: { autoRefreshToken: false, persistSession: false } },
-    )
-  }
+  const supabase = useServerSupabase()
 
   // しおり本体を取得
   const { data: shiori, error: shioriError } = await supabase
@@ -43,6 +30,26 @@ export default defineEventHandler(async (event) => {
       statusCode: 404,
       statusMessage: 'しおりが見つかりません。',
     })
+  }
+
+  // アクセス権チェック: 公開 or オーナー or コラボレーター
+  if (!shiori.is_public) {
+    const authorization = getHeader(event, 'authorization')
+    if (!authorization) {
+      throw createError({ statusCode: 401, statusMessage: '認証が必要です。' })
+    }
+    const user = await requireAuth(event)
+    if (shiori.owner_id !== user.id) {
+      const { data: collab } = await supabase
+        .from('collaborators')
+        .select('id')
+        .eq('shiori_id', id)
+        .eq('user_id', user.id)
+        .single()
+      if (!collab) {
+        throw createError({ statusCode: 403, statusMessage: 'アクセス権限がありません。' })
+      }
+    }
   }
 
   // days + events を取得

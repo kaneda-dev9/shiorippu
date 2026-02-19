@@ -18,11 +18,13 @@
     "@vueuse/core": "^14.2.1",
     "@vueuse/nuxt": "^14.2.1",
     "dayjs": "^1.11.19",
+    "marked": "^17.0.3",
     "nuxt": "^4.3.0",
     "pinia": "^3.0.4",
     "tailwindcss": "^4.2.0",
     "vue": "^3.5.0",
-    "vue-router": "^4.5.0"
+    "vue-router": "^4.5.0",
+    "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
     "@nuxt/devtools": "^2.4.0",
