@@ -11,6 +11,10 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
+  icon: {
+    provider: 'iconify',
+  },
+
   runtimeConfig: {
     // Server-only
     supabaseServiceKey: '',
