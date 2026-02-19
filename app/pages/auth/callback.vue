@@ -1,24 +1,37 @@
 <script setup lang="ts">
-// OAuth callback handler
-// Supabase handles the token exchange automatically via detectSessionInUrl
+// OAuth PKCE callback handler
 const route = useRoute()
-const { user, loading } = useAuth()
+const supabase = useSupabase()
+const { init } = useAuth()
 
-watch(
-  [user, loading],
-  ([newUser, isLoading]) => {
-    if (isLoading) return
+onMounted(async () => {
+  try {
+    const code = route.query.code as string
 
-    if (newUser) {
-      const redirect = (route.query.redirect as string) || '/dashboard'
-      navigateTo(redirect)
+    if (!code) {
+      await navigateTo('/login?error=auth_failed')
+      return
     }
-    else {
-      navigateTo('/login?error=auth_failed')
+
+    // PKCE: codeをセッションに交換
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (error) {
+      console.error('Auth callback error:', error)
+      await navigateTo('/login?error=auth_failed')
+      return
     }
-  },
-  { immediate: true },
-)
+
+    // 認証状態を再初期化
+    await init()
+
+    const redirect = (route.query.redirect as string) || '/dashboard'
+    await navigateTo(redirect)
+  }
+  catch (e) {
+    console.error('Auth callback unexpected error:', e)
+    await navigateTo('/login?error=auth_failed')
+  }
+})
 </script>
 
 <template>

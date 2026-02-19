@@ -8,21 +8,33 @@ importers:
 
   .:
     dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.77.0
+        version: 0.77.0
       '@nuxt/ui':
         specifier: ^4.4.0
         version: 4.4.0(@tiptap/extensions@3.20.0(@tiptap/core@3.20.0(@tiptap/pm@3.20.0))(@tiptap/pm@3.20.0))(@tiptap/y-tiptap@3.0.2(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.6)(y-protocols@1.0.7(yjs@13.6.29))(yjs@13.6.29))(db0@0.3.4)(embla-carousel@8.6.0)(ioredis@5.9.3)(magicast@0.5.2)(tailwindcss@4.2.0)(typescript@5.9.3)(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(yaml@2.8.2))(vue-router@4.6.4(vue@3.5.28(typescript@5.9.3)))(vue@3.5.28(typescript@5.9.3))(yjs@13.6.29)
       '@pinia/nuxt':
-        specifier: ^0.9.0
-        version: 0.9.0(magicast@0.5.2)(pinia@2.3.1(typescript@5.9.3)(vue@3.5.28(typescript@5.9.3)))
+        specifier: ^0.11.3
+        version: 0.11.3(magicast@0.5.2)(pinia@3.0.4(typescript@5.9.3)(vue@3.5.28(typescript@5.9.3)))
       '@supabase/supabase-js':
         specifier: ^2.49.0
         version: 2.97.0
+      '@vueuse/core':
+        specifier: ^14.2.1
+        version: 14.2.1(vue@3.5.28(typescript@5.9.3))
+      '@vueuse/nuxt':
+        specifier: ^14.2.1
+        version: 14.2.1(magicast@0.5.2)(nuxt@4.3.1(@parcel/watcher@2.5.6)(@types/node@25.2.3)(@vue/compiler-sfc@3.5.28)(cac@6.7.14)(db0@0.3.4)(ioredis@5.9.3)(lightningcss@1.31.1)(magicast@0.5.2)(rollup@4.57.1)(terser@5.46.0)(typescript@5.9.3)(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(yaml@2.8.2))(yaml@2.8.2))(vue@3.5.28(typescript@5.9.3))
+      dayjs:
+        specifier: ^1.11.19
+        version: 1.11.19
       nuxt:
         specifier: ^4.3.0
         version: 4.3.1(@parcel/watcher@2.5.6)(@types/node@25.2.3)(@vue/compiler-sfc@3.5.28)(cac@6.7.14)(db0@0.3.4)(ioredis@5.9.3)(lightningcss@1.31.1)(magicast@0.5.2)(rollup@4.57.1)(terser@5.46.0)(typescript@5.9.3)(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(yaml@2.8.2))(yaml@2.8.2)
       pinia:
-        specifier: ^2.3.0
-        version: 2.3.1(typescript@5.9.3)(vue@3.5.28(typescript@5.9.3))
+        specifier: ^3.0.4
+        version: 3.0.4(typescript@5.9.3)(vue@3.5.28(typescript@5.9.3))
       tailwindcss:
         specifier: ^4.2.0
         version: 4.2.0
@@ -48,6 +60,15 @@ packages:
 
   '@antfu/install-pkg@1.1.0':
     resolution: {integrity: sha512-MGQsmw10ZyI+EJo45CdSER4zEb+p31LpDAFp2Z3gkSd1yqVZGi0Ebx++YTEMonJy4oChEMLsxZ64j8FH6sSqtQ==}
+
+  '@anthropic-ai/sdk@0.77.0':
+    resolution: {integrity: sha512-TivlT6nfidz3sOyMF72T2x5AkmHrpT7JgL2e/0HNdh7b24v7JC8cR+rCY/42jA68xIsjmiGQ5IKMsH9feEKh3A==}
+    hasBin: true
+    peerDependencies:
+      zod: ^3.25.0 || ^4.0.0
+    peerDependenciesMeta:
+      zod:
+        optional: true
 
   '@babel/code-frame@7.29.0':
     resolution: {integrity: sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw==}
@@ -153,6 +174,10 @@ packages:
     engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
+
+  '@babel/runtime@7.28.6':
+    resolution: {integrity: sha512-05WQkdpL9COIMz4LjTxGpPNCdlpyimKppYNoJ5Di5EUObifl8t4tuLuUBBZEpoLYOmfvIWrsp9fCl0HoPRVTdA==}
+    engines: {node: '>=6.9.0'}
 
   '@babel/template@7.28.6':
     resolution: {integrity: sha512-YA6Ma2KsCdGb+WC6UpBVFJGXL58MDA6oyONbjyF/+5sBgxY/dwkhLogbMT2GXXyU84/IhRw/2D1Os1B/giz+BQ==}
@@ -1183,10 +1208,10 @@ packages:
     resolution: {integrity: sha512-tmmZ3lQxAe/k/+rNnXQRawJ4NjxO2hqiOLTHvWchtGZULp4RyFeh6aU4XdOYBFe2KE1oShQTv4AblOs2iOrNnQ==}
     engines: {node: '>= 10.0.0'}
 
-  '@pinia/nuxt@0.9.0':
-    resolution: {integrity: sha512-2yeRo7LeyCF68AbNeL3xu2h6uw0617RkcsYxmA8DJM0R0PMdz5wQHnc44KeENQxR/Mrq8T910XVT6buosqsjBQ==}
+  '@pinia/nuxt@0.11.3':
+    resolution: {integrity: sha512-7WVNHpWx4qAEzOlnyrRC88kYrwnlR/PrThWT0XI1dSNyUAXu/KBv9oR37uCgYkZroqP5jn8DfzbkNF3BtKvE9w==}
     peerDependencies:
-      pinia: ^2.3.0
+      pinia: ^3.0.4
 
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
@@ -1882,6 +1907,9 @@ packages:
   '@vue/devtools-api@6.6.4':
     resolution: {integrity: sha512-sGhTPMuXqZ1rVOk32RylztWkfXTRhuS7vgAKv0zjqk8gbsHkJ7xfFf+jbySxt7tWObEJwyKaHMikV/WGDiQm8g==}
 
+  '@vue/devtools-api@7.7.9':
+    resolution: {integrity: sha512-kIE8wvwlcZ6TJTbNeU2HQNtaxLx3a84aotTITUuL/4bzfPxzajGBOoqjMhwZJ8L9qFYDU/lAYMEEm11dnZOD6g==}
+
   '@vue/devtools-core@7.7.9':
     resolution: {integrity: sha512-48jrBSwG4GVQRvVeeXn9p9+dlx+ISgasM7SxZZKczseohB0cBz+ITKr4YbLWjmJdy45UHL7UMPlR4Y0CWTRcSQ==}
     peerDependencies:
@@ -1985,6 +2013,12 @@ packages:
 
   '@vueuse/metadata@14.2.1':
     resolution: {integrity: sha512-1ButlVtj5Sb/HDtIy1HFr1VqCP4G6Ypqt5MAo0lCgjokrk2mvQKsK2uuy0vqu/Ks+sHfuHo0B9Y9jn9xKdjZsw==}
+
+  '@vueuse/nuxt@14.2.1':
+    resolution: {integrity: sha512-DHgFMUpyH98M1YM9pbnRjFXMAMKEsHntJeOp8rOXs8QN2cvJBzEZ+TTWIBSPESNFOEwM02RA6BDsaTL35OK4Mw==}
+    peerDependencies:
+      nuxt: ^3.0.0 || ^4.0.0-0
+      vue: ^3.5.0
 
   '@vueuse/shared@10.11.1':
     resolution: {integrity: sha512-LHpC8711VFZlDaYUXEBbFBCQ7GS3dVU9mjOhhMhXP6txTV4EhYQg/KGnQuvt/sPAtoUKq7VVUnL6mVtFoL42sA==}
@@ -2341,6 +2375,9 @@ packages:
 
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
+
+  dayjs@1.11.19:
+    resolution: {integrity: sha512-t5EcLVS6QPBNqM2z8fakk/NKel+Xzshgt8FFKAn+qwlD1pzZWxh0nVCrvFK7ZDb6XucZeF9z8C7CBWTRIVApAw==}
 
   db0@0.3.4:
     resolution: {integrity: sha512-RiXXi4WaNzPTHEOu8UPQKMooIbqOEyqA1t7Z6MsdxSCeb8iUC9ko3LcmsLmeUt2SM5bctfArZKkRQggKZz7JNw==}
@@ -2899,6 +2936,10 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
+  json-schema-to-ts@3.1.1:
+    resolution: {integrity: sha512-+DWg8jCJG2TEnpy7kOm/7/AxaYoaRbjVB4LFZLySZlWn8exGs3A4OLJR966cVvU26N7X9TWxl+Jsw7dzAqKT6g==}
+    engines: {node: '>=16'}
+
   json5@2.2.3:
     resolution: {integrity: sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==}
     engines: {node: '>=6'}
@@ -3357,11 +3398,11 @@ packages:
     resolution: {integrity: sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==}
     engines: {node: '>=12'}
 
-  pinia@2.3.1:
-    resolution: {integrity: sha512-khUlZSwt9xXCaTbbxFYBKDc/bWAGWJjOgvxETwkTN7KRm66EeT1ZdZj6i2ceh9sP2Pzqsbc704r2yngBrxBVug==}
+  pinia@3.0.4:
+    resolution: {integrity: sha512-l7pqLUFTI/+ESXn6k3nu30ZIzW5E2WZF/LaHJEpoq6ElcLD+wduZoB2kBN19du6K/4FDpPMazY2wJr+IndBtQw==}
     peerDependencies:
-      typescript: '>=4.4.4'
-      vue: ^2.7.0 || ^3.5.11
+      typescript: '>=4.5.0'
+      vue: ^3.5.11
     peerDependenciesMeta:
       typescript:
         optional: true
@@ -3977,6 +4018,9 @@ packages:
   tr46@0.0.3:
     resolution: {integrity: sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==}
 
+  ts-algebra@2.0.0:
+    resolution: {integrity: sha512-FPAhNPFMrkwz76P7cdjdmiShwMynZYN6SgOujD1urY4oNm80Ou9oMdmbR45LotcKOXoy7wSmHkRFE6Mxbrhefw==}
+
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
@@ -4422,6 +4466,10 @@ snapshots:
       package-manager-detector: 1.6.0
       tinyexec: 1.0.2
 
+  '@anthropic-ai/sdk@0.77.0':
+    dependencies:
+      json-schema-to-ts: 3.1.1
+
   '@babel/code-frame@7.29.0':
     dependencies:
       '@babel/helper-validator-identifier': 7.28.5
@@ -4565,6 +4613,8 @@ snapshots:
       '@babel/plugin-syntax-typescript': 7.28.6(@babel/core@7.29.0)
     transitivePeerDependencies:
       - supports-color
+
+  '@babel/runtime@7.28.6': {}
 
   '@babel/template@7.28.6':
     dependencies:
@@ -5737,10 +5787,10 @@ snapshots:
       '@parcel/watcher-win32-ia32': 2.5.6
       '@parcel/watcher-win32-x64': 2.5.6
 
-  '@pinia/nuxt@0.9.0(magicast@0.5.2)(pinia@2.3.1(typescript@5.9.3)(vue@3.5.28(typescript@5.9.3)))':
+  '@pinia/nuxt@0.11.3(magicast@0.5.2)(pinia@3.0.4(typescript@5.9.3)(vue@3.5.28(typescript@5.9.3)))':
     dependencies:
-      '@nuxt/kit': 3.21.1(magicast@0.5.2)
-      pinia: 2.3.1(typescript@5.9.3)(vue@3.5.28(typescript@5.9.3))
+      '@nuxt/kit': 4.3.1(magicast@0.5.2)
+      pinia: 3.0.4(typescript@5.9.3)(vue@3.5.28(typescript@5.9.3))
     transitivePeerDependencies:
       - magicast
 
@@ -6427,6 +6477,10 @@ snapshots:
 
   '@vue/devtools-api@6.6.4': {}
 
+  '@vue/devtools-api@7.7.9':
+    dependencies:
+      '@vue/devtools-kit': 7.7.9
+
   '@vue/devtools-core@7.7.9(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(yaml@2.8.2))(vue@3.5.28(typescript@5.9.3))':
     dependencies:
       '@vue/devtools-kit': 7.7.9
@@ -6552,6 +6606,17 @@ snapshots:
   '@vueuse/metadata@12.8.2': {}
 
   '@vueuse/metadata@14.2.1': {}
+
+  '@vueuse/nuxt@14.2.1(magicast@0.5.2)(nuxt@4.3.1(@parcel/watcher@2.5.6)(@types/node@25.2.3)(@vue/compiler-sfc@3.5.28)(cac@6.7.14)(db0@0.3.4)(ioredis@5.9.3)(lightningcss@1.31.1)(magicast@0.5.2)(rollup@4.57.1)(terser@5.46.0)(typescript@5.9.3)(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(yaml@2.8.2))(yaml@2.8.2))(vue@3.5.28(typescript@5.9.3))':
+    dependencies:
+      '@nuxt/kit': 4.3.1(magicast@0.5.2)
+      '@vueuse/core': 14.2.1(vue@3.5.28(typescript@5.9.3))
+      '@vueuse/metadata': 14.2.1
+      local-pkg: 1.1.2
+      nuxt: 4.3.1(@parcel/watcher@2.5.6)(@types/node@25.2.3)(@vue/compiler-sfc@3.5.28)(cac@6.7.14)(db0@0.3.4)(ioredis@5.9.3)(lightningcss@1.31.1)(magicast@0.5.2)(rollup@4.57.1)(terser@5.46.0)(typescript@5.9.3)(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(yaml@2.8.2))(yaml@2.8.2)
+      vue: 3.5.28(typescript@5.9.3)
+    transitivePeerDependencies:
+      - magicast
 
   '@vueuse/shared@10.11.1(vue@3.5.28(typescript@5.9.3))':
     dependencies:
@@ -6935,6 +7000,8 @@ snapshots:
       css-tree: 2.2.1
 
   csstype@3.2.3: {}
+
+  dayjs@1.11.19: {}
 
   db0@0.3.4: {}
 
@@ -7487,6 +7554,11 @@ snapshots:
   js-tokens@9.0.1: {}
 
   jsesc@3.1.0: {}
+
+  json-schema-to-ts@3.1.1:
+    dependencies:
+      '@babel/runtime': 7.28.6
+      ts-algebra: 2.0.0
 
   json5@2.2.3: {}
 
@@ -8157,15 +8229,12 @@ snapshots:
 
   picomatch@4.0.3: {}
 
-  pinia@2.3.1(typescript@5.9.3)(vue@3.5.28(typescript@5.9.3)):
+  pinia@3.0.4(typescript@5.9.3)(vue@3.5.28(typescript@5.9.3)):
     dependencies:
-      '@vue/devtools-api': 6.6.4
+      '@vue/devtools-api': 7.7.9
       vue: 3.5.28(typescript@5.9.3)
-      vue-demi: 0.14.10(vue@3.5.28(typescript@5.9.3))
     optionalDependencies:
       typescript: 5.9.3
-    transitivePeerDependencies:
-      - '@vue/composition-api'
 
   pkg-types@1.3.1:
     dependencies:
@@ -8833,6 +8902,8 @@ snapshots:
   totalist@3.0.1: {}
 
   tr46@0.0.3: {}
+
+  ts-algebra@2.0.0: {}
 
   tslib@2.8.1: {}
 
