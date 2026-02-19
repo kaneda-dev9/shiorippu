@@ -15,13 +15,13 @@ Lead + 3 Teammate で効率的にMVPを構築する。
 
 ## Sprint計画
 
-### Sprint 1: 基盤構築 (現在 → 次のステップ)
-| エージェント | タスク |
-|-------------|--------|
-| Lead | プロジェクト設定完了 ✅ → composables整理、共通ユーティリティ |
-| UI Agent | ログインページ改善、ダッシュボード完成、レスポンシブ対応 |
-| API Agent | server/api/chat/ (Claude API連携), server/api/shiori/ (CRUD API) |
-| Test Agent | 認証フローE2Eテスト、RLSポリシーテスト |
+### Sprint 1: 基盤構築 ✅ 完了
+| エージェント | タスク | 状態 |
+|-------------|--------|------|
+| Lead | プロジェクト設定、composables整理、dayjs/VueUse導入 | ✅ |
+| UI Agent | レスポンシブヘッダー、モバイルメニュー、トップ・ログイン・ダッシュボード改善 | ✅ |
+| API Agent | server/api/shiori/ (CRUD 5本), server/api/chat/ (Claude SSE) | ✅ |
+| Test Agent | 認証フローE2Eテスト、RLSポリシーテスト | 🔲 未着手 |
 
 ### Sprint 2: AIチャット + エディタ
 | エージェント | タスク |

@@ -5,7 +5,7 @@
 | レイヤー | 技術 |
 |---------|------|
 | フロントエンド | Nuxt v4.3.1, Vue 3.5, Nuxt UI v4.4 |
-| 状態管理 | Pinia v2 (クライアントキャッシュのみ、永続化なし) |
+| 状態管理 | Pinia v3 (クライアントキャッシュのみ、永続化なし) |
 | バックエンド | Supabase (PostgreSQL, Auth, Realtime, Storage) |
 | AI | Claude API (Function Calling / Tool Use) |
 | 地図 | Google Maps Platform (Places, Maps JS, Directions) |
@@ -16,22 +16,34 @@
 ```
 shiorippu/
 ├── app/
-│   ├── app.vue                    # ルートコンポーネント
+│   ├── app.vue                    # ルートコンポーネント (<UApp>ラッパー)
 │   ├── app.config.ts              # Nuxt UI テーマ (orange/stone)
-│   ├── assets/css/main.css        # Tailwind + Nuxt UI
-│   ├── composables/               # useAuth, useSupabase
-│   ├── layouts/default.vue        # 共通ヘッダー・ナビ
+│   ├── assets/css/main.css        # Tailwind + Nuxt UI (@import)
+│   ├── composables/               # useAuth, useSupabase, useAuthFetch
+│   ├── layouts/default.vue        # レスポンシブヘッダー・モバイルメニュー・フッター
 │   ├── middleware/                 # auth (認証必須), guest (未認証のみ)
 │   ├── pages/                     # ルーティング
-│   │   ├── index.vue              # トップ
-│   │   ├── login.vue              # ログイン
-│   │   ├── dashboard.vue          # マイしおり一覧
-│   │   ├── auth/callback.vue      # OAuth コールバック
-│   │   └── shiori/[id]/index.vue  # エディタ
-│   ├── plugins/                   # supabase.client, auth.client
+│   │   ├── index.vue              # トップ (ヒーロー、特徴、3ステップ)
+│   │   ├── login.vue              # ログイン (Google OAuth)
+│   │   ├── dashboard.vue          # マイしおり一覧 (サーバーAPI経由)
+│   │   ├── auth/callback.vue      # OAuth PKCE コールバック
+│   │   └── shiori/[id]/           # エディタ (Sprint 2)
+│   ├── plugins/                   # supabase.client, auth.client (dependsOnで順序制御)
+│   ├── utils/date.ts              # dayjs 日付フォーマットユーティリティ
 │   └── stores/shiori.ts           # Pinia しおりCRUD
 ├── server/
-│   └── utils/supabase.ts          # サーバーサイドクライアント (service role)
+│   ├── api/
+│   │   ├── shiori/                # しおりCRUD API (5エンドポイント)
+│   │   │   ├── index.get.ts       # 一覧取得
+│   │   │   ├── index.post.ts      # 新規作成
+│   │   │   ├── [id].get.ts        # 詳細取得
+│   │   │   ├── [id].put.ts        # 更新
+│   │   │   └── [id].delete.ts     # 削除
+│   │   └── chat/
+│   │       └── index.post.ts      # AIチャット (Claude API, SSEストリーミング)
+│   └── utils/
+│       ├── auth.ts                # requireAuth, useSupabaseWithAuth
+│       └── supabase.ts            # useServerSupabase (service role)
 ├── types/database.ts              # 全DB型定義
 └── nuxt.config.ts
 ```

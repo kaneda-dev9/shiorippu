@@ -5,39 +5,36 @@ definePageMeta({
   middleware: 'auth',
 })
 
-const supabase = useSupabase()
-const { user } = useAuth()
+const { authFetch } = useAuthFetch()
+const toast = useToast()
 
 const shioris = ref<Shiori[]>([])
 const loading = ref(true)
 
 async function fetchShioris() {
-  if (!user.value) return
-
   loading.value = true
-  const { data, error } = await supabase
-    .from('shioris')
-    .select('*')
-    .eq('owner_id', user.value.id)
-    .order('updated_at', { ascending: false })
-
-  if (!error && data) {
-    shioris.value = data
+  try {
+    shioris.value = await authFetch<Shiori[]>('/api/shiori')
   }
-  loading.value = false
+  catch (e) {
+    console.error('しおり一覧取得エラー:', e)
+  }
+  finally {
+    loading.value = false
+  }
 }
 
 async function createShiori() {
-  if (!user.value) return
-
-  const { data, error } = await supabase
-    .from('shioris')
-    .insert({ owner_id: user.value.id })
-    .select()
-    .single()
-
-  if (!error && data) {
+  try {
+    const data = await authFetch<Shiori>('/api/shiori', { method: 'POST' })
     await navigateTo(`/shiori/${data.id}`)
+  }
+  catch (e) {
+    console.error('しおり作成エラー:', e)
+    toast.add({
+      title: 'しおりの作成に失敗しました',
+      color: 'error',
+    })
   }
 }
 

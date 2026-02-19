@@ -9,9 +9,14 @@
 | `vue` | ^3.5.0 | UIフレームワーク |
 | `vue-router` | ^4.5.0 | ルーティング |
 | `@nuxt/ui` | ^4.4.0 | UIコンポーネントライブラリ |
-| `pinia` | ^2.3.0 | 状態管理 (※v3はpinia/nuxtと非互換) |
-| `@pinia/nuxt` | ^0.9.0 | Pinia Nuxt統合 |
+| `tailwindcss` | ^4.0.0 | CSSフレームワーク (pnpmでは直接依存必須) |
+| `pinia` | ^3.0.4 | 状態管理 |
+| `@pinia/nuxt` | latest | Pinia Nuxt統合 |
 | `@supabase/supabase-js` | ^2.49.0 | Supabase クライアント |
+| `@anthropic-ai/sdk` | ^0.39.0 | Claude API (server-side) |
+| `dayjs` | ^1.11.0 | 日付処理 (日本語ロケール) |
+| `@vueuse/nuxt` | latest | VueUse Nuxt統合 |
+| `@vueuse/core` | latest | VueUse コアユーティリティ |
 
 ### devDependencies
 | パッケージ | バージョン | 用途 |
@@ -23,7 +28,6 @@
 | パッケージ | 用途 |
 |-----------|------|
 | `vuedraggable` / `@vueuse/integrations` | ドラッグ&ドロップ |
-| `@anthropic-ai/sdk` | Claude API (server-side) |
 | `@googlemaps/js-api-loader` | Google Maps |
 
 ## 外部API

@@ -12,42 +12,38 @@ export default defineEventHandler(async (event) => {
     start_date?: string | null
     end_date?: string | null
     area?: string | null
-  }>(event)
+  }>(event).catch(() => null)
 
-  if (!body?.title?.trim()) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'タイトルは必須です。',
-    })
-  }
+  const title = body?.title?.trim() || '新しいしおり'
 
-  if (body.title.length > 100) {
+  if (title.length > 100) {
     throw createError({
       statusCode: 400,
       statusMessage: 'タイトルは100文字以内で入力してください。',
     })
   }
 
-  if (body.start_date && body.end_date && new Date(body.start_date) > new Date(body.end_date)) {
+  if (body?.start_date && body?.end_date && new Date(body.start_date) > new Date(body.end_date)) {
     throw createError({
       statusCode: 400,
       statusMessage: '終了日は開始日以降の日付を指定してください。',
     })
   }
 
-  // service role でしおりを作成（owner_id をサーバーサイドで設定）
+  // service role でしおりを作成（RLSバイパス、owner_id をサーバーサイドで設定）
   const supabase = useServerSupabase()
 
+  // しおりを作成
   const { data, error } = await supabase
     .from('shioris')
     .insert({
       owner_id: user.id,
-      title: body.title.trim(),
-      start_date: body.start_date || null,
-      end_date: body.end_date || null,
-      area: body.area?.trim() || null,
+      title,
+      start_date: body?.start_date || null,
+      end_date: body?.end_date || null,
+      area: body?.area?.trim() || null,
     })
-    .select()
+    .select('id, title, owner_id, created_at, updated_at')
     .single()
 
   if (error) {

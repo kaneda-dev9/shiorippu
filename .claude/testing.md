@@ -29,21 +29,21 @@
 
 ```bash
 # 1. パッケージインストール
-npm install
+pnpm install
 
-# 2. 環境変数設定 (.envにSupabase URLとAnon Keyが設定済み)
-#    NUXT_SUPABASE_SERVICE_KEY を Supabase Dashboard から取得して追加
+# 2. 環境変数設定 (.envにSupabase URL、Anon Key、Service Key が設定済み)
+#    NUXT_CLAUDE_API_KEY を Anthropic Console から取得して追加
 
-# 3. 開発サーバー起動
-npm run dev
+# 3. 開発サーバー起動 (ENFILE エラー時は ulimit -n 10240 を先に実行)
+pnpm dev
 
 # 4. ブラウザで確認
 #    http://localhost:3000        → トップページ
-#    http://localhost:3000/login  → Googleログイン
-#    http://localhost:3000/dashboard → マイしおり一覧
+#    http://localhost:3000/login  → Googleログイン → コールバック → ダッシュボード
+#    http://localhost:3000/dashboard → マイしおり一覧、新規作成
 
 # 5. 型チェック
-npm run typecheck
+pnpm typecheck
 ```
 
 ## Supabase RLS テスト方針

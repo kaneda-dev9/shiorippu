@@ -5,12 +5,14 @@ import type { Shiori } from '~~/types/database'
  * ユーザーのしおり一覧を取得（RLS でフィルタ）
  */
 export default defineEventHandler(async (event) => {
-  await requireAuth(event)
-  const supabase = useSupabaseWithAuth(event)
+  const user = await requireAuth(event)
+  const supabase = useServerSupabase()
 
+  // service role でオーナーのしおりのみ取得
   const { data, error } = await supabase
     .from('shioris')
     .select('*')
+    .eq('owner_id', user.id)
     .order('updated_at', { ascending: false })
 
   if (error) {
