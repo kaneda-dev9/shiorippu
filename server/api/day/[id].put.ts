@@ -14,8 +14,6 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const user = await requireAuth(event)
-
   const body = await readBody<{
     day_number?: number
     date?: string | null
@@ -28,31 +26,10 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // day → shiori の権限チェック（owner or collaborator）
+  await requireDayAccess(event, id)
+
   const supabase = useServerSupabase()
-
-  // day → shiori のオーナー権限チェック
-  const { data: day } = await supabase
-    .from('days')
-    .select('shiori_id')
-    .eq('id', id)
-    .single()
-
-  if (!day) {
-    throw createError({ statusCode: 404, statusMessage: '日程が見つかりません。' })
-  }
-
-  const { data: shiori } = await supabase
-    .from('shioris')
-    .select('owner_id')
-    .eq('id', day.shiori_id)
-    .single()
-
-  if (!shiori || shiori.owner_id !== user.id) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: 'この日程を編集する権限がありません。',
-    })
-  }
 
   const updateData: Record<string, unknown> = {}
   if (body.day_number !== undefined) updateData.day_number = body.day_number

@@ -12,10 +12,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const user = await requireAuth(event)
   const supabase = useServerSupabase()
 
-  // event → day → shiori のオーナー権限チェック
+  // event → day → shiori の権限チェック（owner or collaborator）
   const { data: existingEvent } = await supabase
     .from('events')
     .select('day_id')
@@ -26,28 +25,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'イベントが見つかりません。' })
   }
 
-  const { data: day } = await supabase
-    .from('days')
-    .select('shiori_id')
-    .eq('id', existingEvent.day_id)
-    .single()
-
-  if (!day) {
-    throw createError({ statusCode: 404, statusMessage: '日程が見つかりません。' })
-  }
-
-  const { data: shiori } = await supabase
-    .from('shioris')
-    .select('owner_id')
-    .eq('id', day.shiori_id)
-    .single()
-
-  if (!shiori || shiori.owner_id !== user.id) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: 'このイベントを削除する権限がありません。',
-    })
-  }
+  await requireDayAccess(event, existingEvent.day_id)
 
   const { error } = await supabase
     .from('events')

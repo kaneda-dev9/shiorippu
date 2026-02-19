@@ -5,8 +5,6 @@ import type { Day } from '~~/types/database'
  * しおりに新しい日程を追加する
  */
 export default defineEventHandler(async (event) => {
-  const user = await requireAuth(event)
-
   const body = await readBody<{
     shiori_id: string
     day_number: number
@@ -27,21 +25,10 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // オーナー or コラボレーターの権限チェック
+  await requireShioriAccess(event, body.shiori_id)
+
   const supabase = useServerSupabase()
-
-  // オーナー権限チェック
-  const { data: shiori } = await supabase
-    .from('shioris')
-    .select('owner_id')
-    .eq('id', body.shiori_id)
-    .single()
-
-  if (!shiori || shiori.owner_id !== user.id) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: 'このしおりに日程を追加する権限がありません。',
-    })
-  }
 
   // 現在の最大 sort_order を取得
   const { data: maxDay } = await supabase

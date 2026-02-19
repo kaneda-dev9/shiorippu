@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ShioriWithDays } from '~~/types/database'
 import { getCategoryIcon, getCategoryLabel } from '~~/shared/category-icons'
+import { getTemplate } from '~~/shared/templates'
 // formatDateJa, formatDateRange は app/utils/date.ts から auto-import
 
 definePageMeta({
@@ -30,6 +31,9 @@ async function fetchShiori() {
 }
 
 onMounted(fetchShiori)
+
+// テンプレートスタイル
+const tmpl = computed(() => getTemplate(shiori.value?.template_id))
 </script>
 
 <template>
@@ -57,28 +61,46 @@ onMounted(fetchShiori)
   </div>
 
   <!-- 公開しおり表示 -->
-  <div v-else-if="shiori" class="mx-auto max-w-3xl px-4 py-8">
-    <!-- ヘッダー -->
-    <div class="mb-8 text-center">
-      <h1 class="text-2xl font-bold text-stone-900 dark:text-stone-50 sm:text-3xl">
-        {{ shiori.title }}
-      </h1>
-      <div class="mt-3 flex flex-wrap items-center justify-center gap-3 text-sm text-stone-500">
-        <span v-if="shiori.area" class="flex items-center gap-1">
-          <UIcon name="i-lucide-map-pin" class="size-4" />
-          {{ shiori.area }}
-        </span>
-        <span v-if="shiori.start_date" class="flex items-center gap-1">
-          <UIcon name="i-lucide-calendar" class="size-4" />
-          <template v-if="shiori.end_date">
-            {{ formatDateRange(shiori.start_date, shiori.end_date) }}
-          </template>
-          <template v-else>
-            {{ formatDateJa(shiori.start_date) }}
-          </template>
-        </span>
+  <div v-else-if="shiori" class="mx-auto max-w-3xl">
+    <!-- テンプレートヘッダーバナー -->
+    <div class="relative overflow-hidden" :class="[tmpl.colors.headerBg, tmpl.colors.headerBgDark]">
+      <div class="h-2 bg-gradient-to-r" :class="tmpl.colors.headerGradient" />
+      <!-- 装飾アイコン -->
+      <div v-if="tmpl.decorations.length > 0" class="pointer-events-none relative h-20">
+        <UIcon
+          v-for="(deco, i) in tmpl.decorations"
+          :key="i"
+          :name="deco.icon"
+          class="absolute opacity-30"
+          :class="[deco.size, deco.position, tmpl.colors.decoColor, tmpl.colors.decoColorDark]"
+        />
+      </div>
+      <!-- ヘッダーコンテンツ -->
+      <div class="px-4 pb-6" :class="tmpl.decorations.length > 0 ? '-mt-4' : 'pt-6'">
+        <div class="text-center">
+          <h1 class="text-2xl font-bold text-stone-900 dark:text-stone-50 sm:text-3xl">
+            {{ shiori.title }}
+          </h1>
+          <div class="mt-3 flex flex-wrap items-center justify-center gap-3 text-sm text-stone-500">
+            <span v-if="shiori.area" class="flex items-center gap-1">
+              <UIcon name="i-lucide-map-pin" class="size-4" />
+              {{ shiori.area }}
+            </span>
+            <span v-if="shiori.start_date" class="flex items-center gap-1">
+              <UIcon name="i-lucide-calendar" class="size-4" />
+              <template v-if="shiori.end_date">
+                {{ formatDateRange(shiori.start_date, shiori.end_date) }}
+              </template>
+              <template v-else>
+                {{ formatDateJa(shiori.start_date) }}
+              </template>
+            </span>
+          </div>
+        </div>
       </div>
     </div>
+
+    <div class="px-4 py-8">
 
     <!-- 空の状態 -->
     <div v-if="shiori.days.length === 0" class="py-16 text-center">
@@ -91,7 +113,7 @@ onMounted(fetchShiori)
     <div v-else class="space-y-8">
       <div v-for="day in shiori.days" :key="day.id">
         <!-- 日程ヘッダー -->
-        <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold text-orange-500">
+        <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold" :class="tmpl.colors.dayHeader">
           <UIcon name="i-lucide-calendar-days" class="size-4" />
           Day {{ day.day_number }}
           <span v-if="day.date" class="text-stone-400">{{ formatDateJa(day.date) }}</span>
@@ -107,11 +129,20 @@ onMounted(fetchShiori)
           <div
             v-for="ev in day.events"
             :key="ev.id"
-            class="flex items-start gap-3 rounded-xl border border-stone-200 bg-white p-3 dark:border-stone-700 dark:bg-stone-900"
+            class="relative flex items-start gap-3 overflow-hidden rounded-xl border border-l-[3px] border-stone-200 bg-white p-3 dark:border-stone-700 dark:bg-stone-900"
+            :class="tmpl.colors.cardLeftBorder"
           >
+            <!-- カード内装飾アイコン（デコレーション配列をローテーション） -->
+            <UIcon
+              v-if="tmpl.decorations.length > 0"
+              :name="tmpl.decorations[ev.sort_order % tmpl.decorations.length]!.icon"
+              class="pointer-events-none absolute -bottom-3 -right-3 size-20 opacity-[0.08]"
+              :class="[tmpl.colors.cardDecoColor, tmpl.colors.cardDecoColorDark]"
+            />
+
             <!-- カテゴリアイコン -->
-            <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-orange-50 dark:bg-orange-900/20">
-              <UIcon :name="getCategoryIcon(ev.category)" class="size-5 text-orange-500" />
+            <div class="flex size-10 shrink-0 items-center justify-center rounded-lg" :class="[tmpl.colors.eventIconBg, tmpl.colors.accentBgDark]">
+              <UIcon :name="getCategoryIcon(ev.category)" class="size-5" :class="tmpl.colors.eventIconText" />
             </div>
 
             <!-- イベント情報 -->
@@ -121,9 +152,12 @@ onMounted(fetchShiori)
                   {{ ev.start_time.slice(0, 5) }}
                   <template v-if="ev.end_time"> - {{ ev.end_time.slice(0, 5) }}</template>
                 </span>
-                <UBadge variant="subtle" size="xs">
+                <span
+                  class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium"
+                  :class="[tmpl.colors.badgeText, tmpl.colors.badgeBg]"
+                >
                   {{ getCategoryLabel(ev.category) }}
-                </UBadge>
+                </span>
               </div>
               <p class="mt-0.5 font-medium text-stone-900 dark:text-stone-50">
                 {{ ev.title }}
@@ -141,7 +175,8 @@ onMounted(fetchShiori)
                 :href="ev.url"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="mt-1 inline-flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600 hover:underline"
+                class="mt-1 inline-flex items-center gap-1 text-xs hover:underline"
+                :class="[tmpl.colors.link, tmpl.colors.linkHover]"
               >
                 <UIcon name="i-lucide-external-link" class="size-3" />
                 {{ ev.url.replace(/^https?:\/\//, '').split('/')[0] }}
@@ -155,11 +190,12 @@ onMounted(fetchShiori)
     <!-- フッター -->
     <div class="mt-12 border-t border-stone-200 pt-6 text-center text-xs text-stone-400 dark:border-stone-700">
       <p>
-        <NuxtLink to="/" class="text-orange-500 hover:underline">
+        <NuxtLink to="/" class="hover:underline" :class="tmpl.colors.link">
           しおりっぷ
         </NuxtLink>
         で作成された旅のしおり
       </p>
     </div>
+    </div><!-- /px-4 py-8 -->
   </div>
 </template>

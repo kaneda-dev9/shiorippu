@@ -26,22 +26,10 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const user = await requireAuth(event)
+  // オーナー or コラボレーターの権限チェック
+  await requireShioriAccess(event, id)
+
   const supabase = useServerSupabase()
-
-  // オーナー権限チェック
-  const { data: shiori } = await supabase
-    .from('shioris')
-    .select('owner_id')
-    .eq('id', id)
-    .single()
-
-  if (!shiori || shiori.owner_id !== user.id) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: 'このしおりを編集する権限がありません。',
-    })
-  }
 
   const body = await readBody<{ plan: TripPlan }>(event)
 

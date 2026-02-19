@@ -5,8 +5,6 @@ import type { Event, EventCategory } from '~~/types/database'
  * 日程にイベントを追加する
  */
 export default defineEventHandler(async (event) => {
-  const user = await requireAuth(event)
-
   const body = await readBody<{
     day_id: string
     title: string
@@ -44,31 +42,10 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // day → shiori の権限チェック（owner or collaborator）
+  await requireDayAccess(event, body.day_id)
+
   const supabase = useServerSupabase()
-
-  // day → shiori のオーナー権限チェック
-  const { data: day } = await supabase
-    .from('days')
-    .select('shiori_id')
-    .eq('id', body.day_id)
-    .single()
-
-  if (!day) {
-    throw createError({ statusCode: 404, statusMessage: '日程が見つかりません。' })
-  }
-
-  const { data: shiori } = await supabase
-    .from('shioris')
-    .select('owner_id')
-    .eq('id', day.shiori_id)
-    .single()
-
-  if (!shiori || shiori.owner_id !== user.id) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: 'このしおりにイベントを追加する権限がありません。',
-    })
-  }
 
   // 現在の最大 sort_order を取得
   const { data: maxEvent } = await supabase

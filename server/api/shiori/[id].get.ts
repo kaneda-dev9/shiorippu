@@ -33,22 +33,51 @@ export default defineEventHandler(async (event) => {
   }
 
   // アクセス権チェック: 公開 or オーナー or コラボレーター
+  let userRole: string | null = null
+  const authorization = getHeader(event, 'authorization')
+
   if (!shiori.is_public) {
-    const authorization = getHeader(event, 'authorization')
     if (!authorization) {
       throw createError({ statusCode: 401, statusMessage: '認証が必要です。' })
     }
     const user = await requireAuth(event)
-    if (shiori.owner_id !== user.id) {
+    if (shiori.owner_id === user.id) {
+      userRole = 'owner'
+    }
+    else {
       const { data: collab } = await supabase
         .from('collaborators')
-        .select('id')
+        .select('role')
         .eq('shiori_id', id)
         .eq('user_id', user.id)
         .single()
       if (!collab) {
         throw createError({ statusCode: 403, statusMessage: 'アクセス権限がありません。' })
       }
+      userRole = collab.role
+    }
+  }
+  else if (authorization) {
+    // 公開しおりでも認証済みならロールを判定
+    try {
+      const user = await requireAuth(event)
+      if (shiori.owner_id === user.id) {
+        userRole = 'owner'
+      }
+      else {
+        const { data: collab } = await supabase
+          .from('collaborators')
+          .select('role')
+          .eq('shiori_id', id)
+          .eq('user_id', user.id)
+          .single()
+        if (collab) {
+          userRole = collab.role
+        }
+      }
+    }
+    catch {
+      // 認証失敗は無視（公開しおりなので閲覧可能）
     }
   }
 
@@ -80,5 +109,6 @@ export default defineEventHandler(async (event) => {
   return {
     ...(shiori as Shiori),
     days: daysWithEvents,
-  } as ShioriWithDays
+    userRole,
+  } as ShioriWithDays & { userRole: string | null }
 })

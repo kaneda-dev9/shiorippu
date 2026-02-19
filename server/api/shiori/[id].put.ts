@@ -14,7 +14,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const user = await requireAuth(event)
+  // オーナー or コラボレーターの権限チェック
+  const { role } = await requireShioriAccess(event, id)
 
   const body = await readBody<{
     title?: string
@@ -33,6 +34,19 @@ export default defineEventHandler(async (event) => {
       statusCode: 400,
       statusMessage: '更新する項目を指定してください。',
     })
+  }
+
+  // editor はオーナー専用フィールドを変更できない
+  const ownerOnlyFields = ['is_public', 'invite_enabled', 'template_id', 'custom_style', 'cover_image_url'] as const
+  if (role === 'editor') {
+    for (const field of ownerOnlyFields) {
+      if (body[field] !== undefined) {
+        throw createError({
+          statusCode: 403,
+          statusMessage: 'この設定はオーナーのみ変更できます。',
+        })
+      }
+    }
   }
 
   if (body.title !== undefined && body.title.trim() === '') {
@@ -69,20 +83,6 @@ export default defineEventHandler(async (event) => {
   if (body.cover_image_url !== undefined) updateData.cover_image_url = body.cover_image_url
 
   const supabase = useServerSupabase()
-
-  // オーナー権限チェック
-  const { data: shiori } = await supabase
-    .from('shioris')
-    .select('owner_id')
-    .eq('id', id)
-    .single()
-
-  if (!shiori || shiori.owner_id !== user.id) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: 'このしおりを編集する権限がありません。',
-    })
-  }
 
   const { data, error } = await supabase
     .from('shioris')

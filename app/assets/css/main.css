@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
+/* テンプレート定義ファイルの動的クラスをスキャン対象に含める */
+@source "../../../shared";
+
 /* しおりっぷ custom theme overrides */
 :root {
   --font-family-base: 'Noto Sans JP', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;

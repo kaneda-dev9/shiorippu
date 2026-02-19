@@ -42,6 +42,7 @@ export default defineEventHandler(async (event) => {
       start_date: body?.start_date || null,
       end_date: body?.end_date || null,
       area: body?.area?.trim() || null,
+      template_id: 'simple',
     })
     .select('id, title, owner_id, created_at, updated_at')
     .single()

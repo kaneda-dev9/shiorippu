@@ -193,3 +193,14 @@ export interface DayWithEvents extends Day {
 export interface CollaboratorWithProfile extends Collaborator {
   profile: Profile | null
 }
+
+export interface PresenceUser {
+  user_id: string
+  display_name: string | null
+  avatar_url: string | null
+  online_at: string
+}
+
+export interface ShioriWithRole extends ShioriWithDays {
+  userRole: CollaboratorRole | null
+}
