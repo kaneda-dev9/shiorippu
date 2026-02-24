@@ -35,9 +35,9 @@ AIと一緒に旅のプランを作成し、おしゃれな「旅のしおり」
 
 ## 現在の状況
 
-**Sprint 1 完了 → Sprint 2 開始待ち**
+**Sprint 1〜3 完了 → Sprint 4 開始待ち**
 
-### 完了済み
+### Sprint 1: 基盤構築 — 完了
 - [x] 要件定義 v3、インタラクティブプロトタイプ（JSX 9画面）
 - [x] Supabase: テーブル6個、RLS、トリガー、インデックス、Realtime、Google OAuth
 - [x] Nuxt v4 初期セットアップ（TypeScript型チェックパス済み）
@@ -49,12 +49,25 @@ AIと一緒に旅のプランを作成し、おしゃれな「旅のしおり」
 - [x] composables: useAuth, useSupabase, useAuthFetch
 - [x] ユーティリティ: dayjs日付フォーマット、サーバー認証ヘルパー
 
-### 次にやること（優先順）
+### Sprint 2: AIチャット + エディタ — 完了
+- [x] しおりエディタ画面 (`/shiori/[id]`): 基本情報編集、日程・イベント管理、ドラッグ&ドロップ
+- [x] AIチャット: エディタ内サイドパネルとして統合（ChatPanel, PlanPreview）
+- [x] Server API: 日程CRUD（day/）、イベントCRUD（event/）、並び替え（reorder）
+- [x] プラン適用API (`apply-plan.post.ts`)
+- [x] チャット履歴API (`chat/[shioriId]/messages.get.ts`)
 
-1. **Sprint 2: しおりエディタ画面** (`/shiori/[id]`): 基本情報編集、日程・イベント管理
-2. **Sprint 2: AIチャット画面** (`/shiori/[id]/plan`): 選択肢カードUIでAIと旅行プランを作成
-3. **テスト整備**: 認証フローE2E、RLSテスト（Sprint 1 残タスク）
-4. **Sprint 3**: 共同編集（Realtime）、デザインテンプレート
+### Sprint 3: 共同編集 + デザイン — 完了
+- [x] テンプレート選択（TemplateSelector）
+- [x] 共同編集: 招待リンクAPI、ShareModal、ロールベースUI制御
+- [x] 招待フロー (`/invite/[token]`)
+- [x] 公開しおりページ (`/s/[id]`)
+- [x] コラボレーターAPI（一覧取得、削除）
+- [x] Realtime同期、レスポンシブ対応改善
+
+### 未完了・次にやること（優先順）
+
+1. **テスト整備**: 認証フローE2E、RLSテスト、AIチャットフローテスト（Sprint 1〜3 残タスク）
+2. **Sprint 4: 地図 + 仕上げ**: Google Maps表示、ルート可視化、OGP生成、デプロイ設定
 
 ### 作業の進め方
 - Agent Teams 体制で並列開発（`.claude/agent-teams.md` 参照）

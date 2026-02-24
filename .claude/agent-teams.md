@@ -23,21 +23,21 @@ Lead + 3 Teammate で効率的にMVPを構築する。
 | API Agent | server/api/shiori/ (CRUD 5本), server/api/chat/ (Claude SSE) | ✅ |
 | Test Agent | 認証フローE2Eテスト、RLSポリシーテスト | 🔲 未着手 |
 
-### Sprint 2: AIチャット + エディタ
-| エージェント | タスク |
-|-------------|--------|
-| Lead | Realtime統合設計、状態管理最適化 |
-| UI Agent | AIチャット画面（選択肢カードUI）、しおりエディタ（ドラッグ&ドロップ） |
-| API Agent | Claude Function Calling実装、Google Places API連携 |
-| Test Agent | AIチャットフローテスト、エディタ操作テスト |
+### Sprint 2: AIチャット + エディタ ✅ 完了
+| エージェント | タスク | 状態 |
+|-------------|--------|------|
+| Lead | Realtime統合設計、状態管理最適化 | ✅ |
+| UI Agent | しおりエディタ（ドラッグ&ドロップ）、AIチャットサイドパネル（ChatPanel, PlanPreview） | ✅ |
+| API Agent | 日程/イベントCRUD、並び替え、プラン適用API、チャット履歴API | ✅ |
+| Test Agent | AIチャットフローテスト、エディタ操作テスト | 🔲 未着手 |
 
-### Sprint 3: 共同編集 + デザイン
-| エージェント | タスク |
-|-------------|--------|
-| Lead | CRDT検討、パフォーマンス最適化 |
-| UI Agent | テンプレート5種実装、プレビュー画面、共有設定画面 |
-| API Agent | Realtime (Presence/Broadcast)、招待リンクAPI、PDF出力 |
-| Test Agent | リアルタイム同期テスト、マルチユーザーテスト |
+### Sprint 3: 共同編集 + デザイン ✅ 完了
+| エージェント | タスク | 状態 |
+|-------------|--------|------|
+| Lead | Realtime同期、ロールベースUI制御 | ✅ |
+| UI Agent | テンプレート選択、ShareModal、招待ページ、公開しおりページ | ✅ |
+| API Agent | 招待リンクAPI、コラボレーターAPI、Realtime同期 | ✅ |
+| Test Agent | リアルタイム同期テスト、マルチユーザーテスト | 🔲 未着手 |
 
 ### Sprint 4: 地図 + 仕上げ
 | エージェント | タスク |

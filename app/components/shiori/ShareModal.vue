@@ -180,7 +180,7 @@ function roleLabel(role: string) {
 </script>
 
 <template>
-  <UModal v-model:open="isOpen">
+  <UModal v-model:open="isOpen" title="共有設定">
     <template #header>
       <div class="flex items-center gap-2">
         <UIcon name="i-lucide-share-2" class="size-5 text-orange-500" />
@@ -348,33 +348,19 @@ function roleLabel(role: string) {
   </UModal>
 
   <!-- キック確認ダイアログ -->
-  <UModal v-model:open="showKickConfirm">
-    <template #content>
-      <div class="p-6">
-        <div class="mb-4 flex items-center gap-3">
-          <div class="flex size-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-            <UIcon name="i-lucide-user-x" class="size-5 text-red-500" />
-          </div>
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-50">
-            メンバーを削除
-          </h3>
-        </div>
-        <p class="mb-6 text-sm text-stone-600 dark:text-stone-400">
-          「<span class="font-medium text-stone-900 dark:text-stone-50">{{ kickTarget?.profile?.display_name || 'ゲストユーザー' }}</span>」をこのしおりから削除しますか？
-        </p>
-        <div class="flex justify-end gap-2">
-          <UButton variant="ghost" @click="showKickConfirm = false">
-            キャンセル
-          </UButton>
-          <UButton
-            color="error"
-            :loading="kickingId !== null"
-            @click="kickCollaborator"
-          >
-            削除する
-          </UButton>
-        </div>
-      </div>
+  <UModal
+    v-model:open="showKickConfirm"
+    title="メンバーを削除"
+    :description="`「${kickTarget?.profile?.display_name || 'ゲストユーザー'}」をこのしおりから削除しますか？`"
+    :ui="{ footer: 'justify-end' }"
+  >
+    <template #footer="{ close }">
+      <UButton variant="ghost" @click="close">
+        キャンセル
+      </UButton>
+      <UButton color="error" :loading="kickingId !== null" @click="kickCollaborator">
+        削除する
+      </UButton>
     </template>
   </UModal>
 </template>

@@ -4,6 +4,7 @@ import type { Shiori } from '~~/types/database'
 
 definePageMeta({
   middleware: 'auth',
+  ssr: false,
 })
 
 const { authFetch } = useAuthFetch()
@@ -214,36 +215,29 @@ onMounted(fetchShioris)
       </UCard>
     </div>
     <!-- 削除確認モーダル -->
-    <UModal v-model:open="showDeleteModal">
-      <template #content>
-        <div class="p-6">
-          <div class="mb-4 flex items-center gap-3">
-            <div class="flex size-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-              <UIcon name="i-lucide-triangle-alert" class="size-5 text-red-500" />
-            </div>
-            <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-50">
-              しおりを削除
-            </h3>
-          </div>
-          <p class="mb-2 text-sm text-stone-600 dark:text-stone-400">
-            「<span class="font-medium text-stone-900 dark:text-stone-50">{{ deleteTarget?.title }}</span>」を削除しますか？
-          </p>
-          <p class="mb-6 text-xs text-stone-400">
-            日程・イベント・チャット履歴もすべて削除されます。この操作は取り消せません。
-          </p>
-          <div class="flex justify-end gap-2">
-            <UButton variant="ghost" @click="showDeleteModal = false">
-              キャンセル
-            </UButton>
-            <UButton
-              color="error"
-              :loading="deleting"
-              @click="deleteShiori"
-            >
-              削除する
-            </UButton>
-          </div>
-        </div>
+    <UModal
+      v-model:open="showDeleteModal"
+      title="しおりを削除"
+      :description="`「${deleteTarget?.title}」を削除しますか？`"
+      :ui="{ footer: 'justify-end' }"
+    >
+      <template #body>
+        <p class="text-xs text-stone-400">
+          日程・イベント・チャット履歴もすべて削除されます。この操作は取り消せません。
+        </p>
+      </template>
+
+      <template #footer="{ close }">
+        <UButton variant="ghost" @click="close">
+          キャンセル
+        </UButton>
+        <UButton
+          color="error"
+          :loading="deleting"
+          @click="deleteShiori"
+        >
+          削除する
+        </UButton>
       </template>
     </UModal>
   </div>

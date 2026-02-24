@@ -121,7 +121,7 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <UModal v-model:open="isOpen">
+  <UModal v-model:open="isOpen" :title="isEditMode ? 'イベントを編集' : 'イベントを追加'">
     <template #header>
       <div class="flex items-center gap-2">
         <UIcon
