@@ -480,6 +480,14 @@ onMounted(fetchShiori)
           >
             <span class="hidden sm:inline">AI相談</span>
           </UButton>
+          <UButton
+            icon="i-lucide-map"
+            variant="ghost"
+            size="sm"
+            :to="`/shiori/${shioriId}/map`"
+          >
+            <span class="hidden sm:inline">マップ</span>
+          </UButton>
           <!-- テンプレート切替ボタン（オーナーのみ） -->
           <UButton
             v-if="isOwner"

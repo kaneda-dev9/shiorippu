@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Event, EventCategory } from '~~/types/database'
+import type { PlaceResult } from '~~/app/components/map/PlaceAutocomplete.vue'
 import { categoryLabels, categoryIcons } from '~~/shared/category-icons'
 
 const props = defineProps<{
@@ -32,6 +33,9 @@ const form = reactive({
   memo: '',
   url: '',
   address: '',
+  lat: null as number | null,
+  lng: null as number | null,
+  place_id: null as string | null,
 })
 
 // 編集モードの場合、既存データで初期化
@@ -44,6 +48,9 @@ watch(() => props.event, (ev) => {
     form.memo = ev.memo || ''
     form.url = ev.url || ''
     form.address = ev.address || ''
+    form.lat = ev.lat
+    form.lng = ev.lng
+    form.place_id = ev.place_id
   }
   else {
     resetForm()
@@ -58,9 +65,25 @@ function resetForm() {
   form.memo = ''
   form.url = ''
   form.address = ''
+  form.lat = null
+  form.lng = null
+  form.place_id = null
 }
 
 const isEditMode = computed(() => !!props.event)
+
+function onPlaceSelected(result: PlaceResult) {
+  form.lat = result.lat
+  form.lng = result.lng
+  form.place_id = result.placeId
+  form.address = result.address
+}
+
+function onPlaceCleared() {
+  form.lat = null
+  form.lng = null
+  form.place_id = null
+}
 
 // カテゴリの選択肢を生成
 const categoryOptions = Object.entries(categoryLabels).map(([value, label]) => ({
@@ -86,6 +109,9 @@ async function handleSubmit() {
       memo: form.memo.trim() || null,
       url: form.url.trim() || null,
       address: form.address.trim() || null,
+      lat: form.lat,
+      lng: form.lng,
+      place_id: form.place_id,
     }
 
     let result: Event
@@ -122,7 +148,7 @@ async function handleSubmit() {
 
 <template>
   <UModal v-model:open="isOpen" :title="isEditMode ? 'イベントを編集' : 'イベントを追加'">
-    <template #header>
+    <template #title>
       <div class="flex items-center gap-2">
         <UIcon
           :name="categoryIcons[form.category] || 'i-lucide-map-pin'"
@@ -142,16 +168,21 @@ async function handleSubmit() {
             v-model="form.title"
             placeholder="例: 東京駅で新幹線に乗る"
             icon="i-lucide-type"
+            size="lg"
+            class="w-full"
           />
         </UFormField>
 
         <!-- カテゴリ -->
-        <UFormField label="カテゴリ">
+        <UFormField label="カテゴリ" class="w-1/2">
           <USelectMenu
             v-model="form.category"
             :items="categoryOptions"
             value-key="value"
             placeholder="カテゴリを選択"
+            size="lg"
+            class="w-full"
+            :ui="{ content: 'min-w-48' }"
           />
         </UFormField>
 
@@ -162,6 +193,8 @@ async function handleSubmit() {
               v-model="form.start_time"
               type="time"
               icon="i-lucide-clock"
+              size="lg"
+              class="w-full"
             />
           </UFormField>
           <UFormField label="終了時刻">
@@ -169,16 +202,19 @@ async function handleSubmit() {
               v-model="form.end_time"
               type="time"
               icon="i-lucide-clock"
+              size="lg"
+              class="w-full"
             />
           </UFormField>
         </div>
 
-        <!-- 住所 -->
+        <!-- 場所（Places Autocomplete） -->
         <UFormField label="場所・住所">
-          <UInput
+          <MapPlaceAutocomplete
             v-model="form.address"
-            placeholder="例: 東京都千代田区丸の内1丁目"
-            icon="i-lucide-map-pin"
+            placeholder="場所を検索..."
+            @place-selected="onPlaceSelected"
+            @place-cleared="onPlaceCleared"
           />
         </UFormField>
 
@@ -188,6 +224,8 @@ async function handleSubmit() {
             v-model="form.url"
             placeholder="https://..."
             icon="i-lucide-link"
+            size="lg"
+            class="w-full"
           />
         </UFormField>
 
@@ -197,6 +235,8 @@ async function handleSubmit() {
             v-model="form.memo"
             placeholder="メモや注意事項を記入..."
             :rows="3"
+            size="lg"
+            class="w-full"
           />
         </UFormField>
       </form>

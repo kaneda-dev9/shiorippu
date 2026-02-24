@@ -181,7 +181,7 @@ function roleLabel(role: string) {
 
 <template>
   <UModal v-model:open="isOpen" title="共有設定">
-    <template #header>
+    <template #title>
       <div class="flex items-center gap-2">
         <UIcon name="i-lucide-share-2" class="size-5 text-orange-500" />
         <span class="font-semibold">共有設定</span>
