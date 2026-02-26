@@ -348,10 +348,19 @@ async function sendMessage() {
     const token = session.value?.access_token
     if (!token) throw new Error('認証が必要です。')
 
-    const apiMessages = messages.value
-      .slice(0, -1)
-      .slice(-20)
-      .map((m) => ({ role: m.role, content: m.content }))
+    // 会話履歴をAPIに送信（先頭2メッセージ + 直近のメッセージを保持）
+    const allMessages = messages.value.slice(0, -1)
+    const MAX_MESSAGES = 40
+    let apiMessages: { role: string; content: string }[]
+    if (allMessages.length <= MAX_MESSAGES) {
+      apiMessages = allMessages.map((m) => ({ role: m.role, content: m.content }))
+    }
+    else {
+      // 先頭2メッセージ（最初の希望）+ 直近のメッセージを保持
+      const head = allMessages.slice(0, 2)
+      const tail = allMessages.slice(-(MAX_MESSAGES - 2))
+      apiMessages = [...head, ...tail].map((m) => ({ role: m.role, content: m.content }))
+    }
 
     const response = await fetch('/api/chat', {
       method: 'POST',
@@ -457,11 +466,11 @@ onMounted(loadHistory)
             旅行プランを一緒に考えましょう！
           </h3>
           <p class="mb-4 text-sm text-stone-500">
-            行きたい場所やテーマを教えてください
+            どんな旅がしたいか、気軽に話しかけてください
           </p>
           <div class="flex flex-wrap justify-center gap-2">
             <UButton
-              v-for="suggestion in ['温泉旅行がしたい', '週末に日帰り旅行', 'おすすめの観光地は？']"
+              v-for="suggestion in ['のんびりリフレッシュしたい', '友達とグルメ旅がしたい', '家族で温泉に行きたい', '記念日のお祝い旅行', 'おすすめの旅先を教えて']"
               :key="suggestion"
               variant="outline"
               size="sm"

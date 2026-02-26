@@ -1,5 +1,65 @@
 import type { TripPlan, EventCategory, DayWithEvents } from '~~/types/database'
 
+interface GeocodingResult {
+  lat: number
+  lng: number
+  place_id: string
+  formatted_address: string
+}
+
+/**
+ * Google Geocoding API で住所を座標に変換
+ * 失敗時は null を返す（プラン適用を止めない）
+ */
+async function geocodeAddress(address: string, apiKey: string): Promise<GeocodingResult | null> {
+  try {
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&language=ja&region=jp&key=${apiKey}`
+    const res = await fetch(url)
+    const data = await res.json() as {
+      status: string
+      results: {
+        geometry: { location: { lat: number; lng: number } }
+        place_id: string
+        formatted_address: string
+      }[]
+    }
+    if (data.status === 'OK' && data.results[0]) {
+      const r = data.results[0]
+      return {
+        lat: r.geometry.location.lat,
+        lng: r.geometry.location.lng,
+        place_id: r.place_id,
+        formatted_address: r.formatted_address,
+      }
+    }
+  }
+  catch (err) {
+    console.error('ジオコーディングエラー:', address, err)
+  }
+  return null
+}
+
+/**
+ * 複数の住所を並列でジオコーディング（同時実行数を制限）
+ */
+async function geocodeAddresses(
+  addresses: { index: number; address: string }[],
+  apiKey: string,
+): Promise<Map<number, GeocodingResult>> {
+  const results = new Map<number, GeocodingResult>()
+  // 5件ずつ並列実行でレートリミットを回避
+  const BATCH_SIZE = 5
+  for (let i = 0; i < addresses.length; i += BATCH_SIZE) {
+    const batch = addresses.slice(i, i + BATCH_SIZE)
+    const promises = batch.map(async ({ index, address }) => {
+      const result = await geocodeAddress(address, apiKey)
+      if (result) results.set(index, result)
+    })
+    await Promise.all(promises)
+  }
+  return results
+}
+
 /** 有効なカテゴリ一覧 */
 const VALID_CATEGORIES: EventCategory[] = [
   'transport_train', 'transport_car', 'transport_plane',
@@ -104,6 +164,33 @@ export default defineEventHandler(async (event) => {
     createdDays.map((d) => [d.sort_order, d.id] as [number, string]),
   )
 
+  // 住所があるイベントをジオコーディング
+  const config = useRuntimeConfig()
+  const apiKey = config.public.googleMapsApiKey as string
+
+  // 全イベントを先に収集してインデックスを振る
+  const allPlanEvents: { dayIndex: number; evIndex: number; address: string }[] = []
+  for (let dayIndex = 0; dayIndex < body.plan.days.length; dayIndex++) {
+    const planDay = body.plan.days[dayIndex]!
+    for (let evIndex = 0; evIndex < planDay.events.length; evIndex++) {
+      const planEvent = planDay.events[evIndex]!
+      if (planEvent.address) {
+        allPlanEvents.push({ dayIndex, evIndex, address: planEvent.address })
+      }
+    }
+  }
+
+  // ジオコーディング実行（APIキーがある場合のみ）
+  const geocodeResults = new Map<string, GeocodingResult>()
+  if (apiKey && allPlanEvents.length > 0) {
+    const addressEntries = allPlanEvents.map((e, i) => ({ index: i, address: e.address }))
+    const results = await geocodeAddresses(addressEntries, apiKey)
+    for (const [i, result] of results) {
+      const entry = allPlanEvents[i]!
+      geocodeResults.set(`${entry.dayIndex}-${entry.evIndex}`, result)
+    }
+  }
+
   // Event を一括INSERT
   const eventInserts: {
     day_id: string
@@ -114,6 +201,9 @@ export default defineEventHandler(async (event) => {
     end_time: string | null
     memo: string | null
     address: string | null
+    lat: number | null
+    lng: number | null
+    place_id: string | null
     sort_order: number
   }[] = []
 
@@ -128,6 +218,8 @@ export default defineEventHandler(async (event) => {
         ? planEvent.category
         : 'other'
 
+      const geo = geocodeResults.get(`${dayIndex}-${evIndex}`)
+
       eventInserts.push({
         day_id: dayId,
         title: planEvent.title,
@@ -136,7 +228,10 @@ export default defineEventHandler(async (event) => {
         start_time: planEvent.start_time || null,
         end_time: planEvent.end_time || null,
         memo: planEvent.memo || null,
-        address: planEvent.address || null,
+        address: geo?.formatted_address || planEvent.address || null,
+        lat: geo?.lat ?? null,
+        lng: geo?.lng ?? null,
+        place_id: geo?.place_id ?? null,
         sort_order: evIndex,
       })
     }
