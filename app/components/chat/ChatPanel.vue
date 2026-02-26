@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import type { TripPlan } from '~~/types/database'
 
 marked.setOptions({ breaks: true, gfm: true })
@@ -73,9 +74,10 @@ watch(isNearBottom, (val) => {
   if (val) newMessageCount.value = 0
 })
 
-/** マークダウンをHTMLに変換 */
+/** マークダウンをHTMLに変換（サニタイズ済み） */
 function renderMd(text: string): string {
-  return marked.parse(text, { async: false }) as string
+  const html = marked.parse(text, { async: false }) as string
+  return DOMPurify.sanitize(html)
 }
 
 /** メッセージからPLAN_JSONを抽出 */
@@ -157,13 +159,10 @@ function getMessageBody(content: string): string {
  * - 説明は同じ行の括弧内、次の行の「- 」「• 」、インデントされた行
  */
 const choiceCards = computed<ChoiceCard[]>(() => {
-  if (isStreaming.value || messages.value.length === 0) return []
-
-  const lastMsg = messages.value[messages.value.length - 1]
-  if (!lastMsg || lastMsg.role !== 'assistant') return []
+  if (isStreaming.value || !lastMessage.value || lastMessage.value.role !== 'assistant') return []
 
   const choices: ChoiceCard[] = []
-  const lines = lastMsg.content.split('\n')
+  const lines = lastMessage.value.content.split('\n')
 
   for (let i = 0; i < lines.length; i++) {
     const line = (lines[i] || '').trim()
@@ -229,12 +228,16 @@ const choiceCards = computed<ChoiceCard[]>(() => {
   return choices
 })
 
+/** 最後のメッセージ（テンプレート内で繰り返し参照するため computed に抽出） */
+const lastMessage = computed(() => messages.value[messages.value.length - 1] ?? null)
+
+/** 最後のメッセージのグローバルインデックス */
+const lastMessageIndex = computed(() => messages.value.length - 1)
+
 /** 複数選択モードかどうか */
 const isMultiSelect = computed(() => {
-  if (messages.value.length === 0) return false
-  const lastMsg = messages.value[messages.value.length - 1]
-  if (!lastMsg || lastMsg.role !== 'assistant') return false
-  return /複数/.test(lastMsg.content)
+  if (!lastMessage.value || lastMessage.value.role !== 'assistant') return false
+  return /複数/.test(lastMessage.value.content)
 })
 
 /** 選択肢カードをクリック */
@@ -434,6 +437,7 @@ onMounted(loadHistory)
         icon="i-lucide-x"
         variant="ghost"
         size="xs"
+        aria-label="閉じる"
         @click="emit('close')"
       />
     </div>
@@ -441,7 +445,7 @@ onMounted(loadHistory)
     <!-- メッセージエリア -->
     <div
       ref="chatContainer"
-      class="min-h-0 flex-1 overflow-y-auto"
+      class="min-h-0 flex-1 overflow-y-auto overscroll-contain"
     >
       <div class="space-y-5 px-4 py-4">
         <!-- ウェルカムメッセージ -->
@@ -470,24 +474,30 @@ onMounted(loadHistory)
 
         <!-- 古いメッセージの展開ボタン -->
         <div v-if="hiddenCount > 0" class="flex justify-center py-2">
-          <button
-            class="flex items-center gap-1.5 rounded-full bg-stone-100 px-3 py-1.5 text-xs text-stone-500 transition-colors hover:bg-stone-200 hover:text-stone-700 dark:bg-stone-800 dark:text-stone-400 dark:hover:bg-stone-700"
+          <UButton
+            icon="i-lucide-chevrons-up"
+            variant="soft"
+            color="neutral"
+            size="xs"
+            class="rounded-full"
             @click="showAllMessages = true"
           >
-            <UIcon name="i-lucide-chevrons-up" class="size-3.5" />
             {{ hiddenCount }}件の古いメッセージを表示
-          </button>
+          </UButton>
         </div>
 
         <!-- 全表示時の折りたたみボタン -->
         <div v-if="showAllMessages && messages.length > VISIBLE_COUNT" class="flex justify-center py-2">
-          <button
-            class="flex items-center gap-1.5 rounded-full bg-stone-100 px-3 py-1.5 text-xs text-stone-500 transition-colors hover:bg-stone-200 hover:text-stone-700 dark:bg-stone-800 dark:text-stone-400 dark:hover:bg-stone-700"
+          <UButton
+            icon="i-lucide-chevrons-down"
+            variant="soft"
+            color="neutral"
+            size="xs"
+            class="rounded-full"
             @click="showAllMessages = false"
           >
-            <UIcon name="i-lucide-chevrons-down" class="size-3.5" />
             古いメッセージを折りたたむ
-          </button>
+          </UButton>
         </div>
 
         <!-- メッセージ一覧 -->
@@ -503,13 +513,13 @@ onMounted(loadHistory)
               <div class="rounded-2xl rounded-tl-sm border border-stone-200 bg-white px-4 py-3 text-sm leading-relaxed text-stone-900 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-50">
                 <!-- 選択肢がある場合は本文のみ表示 -->
                 <div
-                  v-if="choiceCards.length > 0 && toGlobalIndex(localIdx) === messages.length - 1 && !isStreaming"
+                  v-if="choiceCards.length > 0 && toGlobalIndex(localIdx) === lastMessageIndex && !isStreaming"
                   class="chat-markdown"
                   v-html="renderMd(getMessageBody(getTextWithoutPlan(msg.content)))"
                 />
                 <!-- プラン含みメッセージ: テキスト部分のみ描画 -->
                 <div
-                  v-else-if="extractPlan(msg.content) && !(isStreaming && toGlobalIndex(localIdx) === messages.length - 1)"
+                  v-else-if="extractPlan(msg.content) && !(isStreaming && toGlobalIndex(localIdx) === lastMessageIndex)"
                   class="chat-markdown"
                   v-html="renderMd(getTextWithoutPlan(msg.content))"
                 />
@@ -518,7 +528,7 @@ onMounted(loadHistory)
 
                 <!-- 複数選択インジケーター -->
                 <p
-                  v-if="isMultiSelect && toGlobalIndex(localIdx) === messages.length - 1 && !isStreaming && choiceCards.length > 0"
+                  v-if="isMultiSelect && toGlobalIndex(localIdx) === lastMessageIndex && !isStreaming && choiceCards.length > 0"
                   class="mt-2 text-xs font-medium text-orange-500"
                 >
                   * 複数選択できます
@@ -526,14 +536,14 @@ onMounted(loadHistory)
 
                 <!-- ストリーミング中のカーソル（プラン生成中は非表示） -->
                 <span
-                  v-if="isStreaming && toGlobalIndex(localIdx) === messages.length - 1 && !isPlanStreaming(msg.content)"
+                  v-if="isStreaming && toGlobalIndex(localIdx) === lastMessageIndex && !isPlanStreaming(msg.content)"
                   class="inline-block h-4 w-0.5 animate-pulse bg-stone-400"
                 />
               </div>
 
               <!-- プラン生成中インジケーター -->
               <div
-                v-if="isStreaming && toGlobalIndex(localIdx) === messages.length - 1 && isPlanStreaming(msg.content)"
+                v-if="isStreaming && toGlobalIndex(localIdx) === lastMessageIndex && isPlanStreaming(msg.content)"
                 class="mt-3 overflow-hidden rounded-xl border border-orange-200 bg-orange-50/50 dark:border-orange-800/50 dark:bg-orange-900/10"
               >
                 <div class="flex items-center gap-2 border-b border-orange-200 bg-orange-100/50 px-4 py-2.5 dark:border-orange-800/50 dark:bg-orange-900/20">
@@ -550,7 +560,7 @@ onMounted(loadHistory)
                     </div>
                     <div>
                       <p class="text-sm font-medium text-stone-700 dark:text-stone-200">
-                        プランを作成しています...
+                        プランを作成しています…
                       </p>
                       <p class="mt-0.5 text-xs text-stone-400">
                         {{ countStreamingEvents(msg.content) }}件のイベントを生成中
@@ -566,7 +576,7 @@ onMounted(loadHistory)
 
               <!-- プランプレビュー（PLAN_JSONが含まれるメッセージ、完了後） -->
               <ChatPlanPreview
-                v-if="extractPlan(msg.content) && !(isStreaming && toGlobalIndex(localIdx) === messages.length - 1)"
+                v-if="extractPlan(msg.content) && !(isStreaming && toGlobalIndex(localIdx) === lastMessageIndex)"
                 :plan="extractPlan(msg.content)!"
                 :shiori-id="props.shioriId"
                 :applied="appliedPlanIndices.has(toGlobalIndex(localIdx))"
@@ -590,7 +600,7 @@ onMounted(loadHistory)
 
           <!-- 選択肢カード（最後のAIメッセージの後に表示） -->
           <div
-            v-if="msg.role === 'assistant' && toGlobalIndex(localIdx) === messages.length - 1 && !isStreaming && choiceCards.length > 0"
+            v-if="msg.role === 'assistant' && toGlobalIndex(localIdx) === lastMessageIndex && !isStreaming && choiceCards.length > 0"
             class="ml-12 space-y-3"
           >
             <!-- 2カラムのカードグリッド -->
@@ -641,7 +651,7 @@ onMounted(loadHistory)
             <div v-if="showOtherInput" class="flex gap-2">
               <UInput
                 v-model="otherInputText"
-                placeholder="希望を自由に入力してください..."
+                placeholder="希望を自由に入力してください…"
                 class="flex-1"
                 @keydown.enter="isMultiSelect ? null : sendOtherInput()"
               />
@@ -649,6 +659,7 @@ onMounted(loadHistory)
                 v-if="!isMultiSelect"
                 icon="i-lucide-arrow-right"
                 size="sm"
+                aria-label="送信"
                 :disabled="!otherInputText.trim()"
                 @click="sendOtherInput"
               />
@@ -679,25 +690,28 @@ onMounted(loadHistory)
         leave-from-class="translate-y-0 opacity-100"
         leave-to-class="translate-y-2 opacity-0"
       >
-        <button
+        <UButton
           v-if="!isNearBottom"
-          class="absolute -top-12 right-4 z-10 flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-xs font-medium text-stone-600 shadow-lg ring-1 ring-stone-200 transition-colors hover:bg-stone-50 dark:bg-stone-800 dark:text-stone-300 dark:ring-stone-700 dark:hover:bg-stone-700"
+          icon="i-lucide-arrow-down"
+          variant="outline"
+          color="neutral"
+          size="xs"
+          class="absolute -top-12 right-4 z-10 rounded-full shadow-lg"
           @click="scrollToBottom(true)"
         >
-          <UIcon name="i-lucide-arrow-down" class="size-3.5" />
-          <span>最新へ</span>
-          <span
+          最新へ
+          <UBadge
             v-if="newMessageCount > 0"
-            class="flex size-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white"
-          >
-            {{ newMessageCount }}
-          </span>
-        </button>
+            :label="String(newMessageCount)"
+            size="xs"
+            class="ml-1"
+          />
+        </UButton>
       </Transition>
       <div class="flex items-end gap-2">
         <UTextarea
           v-model="inputText"
-          placeholder="メッセージを入力..."
+          placeholder="メッセージを入力…"
           :rows="1"
           autoresize
           :maxrows="4"
@@ -707,6 +721,7 @@ onMounted(loadHistory)
         />
         <UButton
           icon="i-lucide-send"
+          aria-label="送信"
           :loading="isStreaming"
           :disabled="!inputText.trim() || isStreaming"
           @click="sendMessage"

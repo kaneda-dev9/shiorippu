@@ -66,7 +66,7 @@ const tmpl = computed(() => getTemplate(shiori.value?.template_id))
     <div class="relative overflow-hidden" :class="[tmpl.colors.headerBg, tmpl.colors.headerBgDark]">
       <div class="h-2 bg-gradient-to-r" :class="tmpl.colors.headerGradient" />
       <!-- 装飾アイコン -->
-      <div v-if="tmpl.decorations.length > 0" class="pointer-events-none relative h-20">
+      <div v-if="tmpl.decorations.length > 0" class="pointer-events-none relative h-20" aria-hidden="true">
         <UIcon
           v-for="(deco, i) in tmpl.decorations"
           :key="i"
@@ -136,6 +136,7 @@ const tmpl = computed(() => getTemplate(shiori.value?.template_id))
             <UIcon
               v-if="tmpl.decorations.length > 0"
               :name="tmpl.decorations[ev.sort_order % tmpl.decorations.length]!.icon"
+              aria-hidden="true"
               class="pointer-events-none absolute -bottom-3 -right-3 size-20 opacity-[0.08]"
               :class="[tmpl.colors.cardDecoColor, tmpl.colors.cardDecoColorDark]"
             />
@@ -148,7 +149,7 @@ const tmpl = computed(() => getTemplate(shiori.value?.template_id))
             <!-- イベント情報 -->
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2">
-                <span v-if="ev.start_time" class="text-xs font-medium text-stone-400">
+                <span v-if="ev.start_time" class="tabular-nums text-xs font-medium text-stone-400">
                   {{ ev.start_time.slice(0, 5) }}
                   <template v-if="ev.end_time"> - {{ ev.end_time.slice(0, 5) }}</template>
                 </span>

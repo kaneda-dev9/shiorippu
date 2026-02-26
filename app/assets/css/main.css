@@ -7,4 +7,36 @@
 /* しおりっぷ custom theme overrides */
 :root {
   --font-family-base: 'Noto Sans JP', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+  color-scheme: light dark;
+}
+
+/* タッチデバイスでダブルタップズーム遅延を防止 */
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+/* 見出しのテキストバランス */
+h1, h2, h3 {
+  text-wrap: balance;
+}
+
+/* 時刻・数値の等幅数字 */
+.tabular-nums,
+time,
+[data-time] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* prefers-reduced-motion: アニメーションを抑制 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

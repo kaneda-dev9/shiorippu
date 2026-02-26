@@ -65,6 +65,7 @@
                   icon="i-lucide-pencil"
                   variant="ghost"
                   size="xs"
+                  aria-label="イベントを編集"
                   class="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
                   @click.stop="emit('event-edit', ev, day.id)"
                 />

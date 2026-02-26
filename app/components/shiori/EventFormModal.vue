@@ -1,28 +1,35 @@
 <script setup lang="ts">
+import { z } from 'zod'
 import type { Event, EventCategory } from '~~/types/database'
 import type { PlaceResult } from '~~/app/components/map/PlaceAutocomplete.vue'
 import { categoryLabels, categoryIcons } from '~~/shared/category-icons'
 
 const props = defineProps<{
-  modelValue: boolean
   dayId: string
   event?: Event | null
 }>()
 
+const isOpen = defineModel<boolean>({ required: true })
+
 const emit = defineEmits<{
-  'update:modelValue': [value: boolean]
   'saved': [event: Event]
 }>()
 
 const { authFetch } = useAuthFetch()
 const toast = useToast()
 
-const isOpen = computed({
-  get: () => props.modelValue,
-  set: (v) => emit('update:modelValue', v),
-})
-
 const saving = ref(false)
+
+// バリデーションスキーマ
+const schema = z.object({
+  title: z.string().min(1, 'タイトルを入力してください'),
+  category: z.string(),
+  start_time: z.string(),
+  end_time: z.string(),
+  memo: z.string(),
+  url: z.string(),
+  address: z.string(),
+})
 
 // フォーム状態
 const form = reactive({
@@ -93,11 +100,6 @@ const categoryOptions = Object.entries(categoryLabels).map(([value, label]) => (
 }))
 
 async function handleSubmit() {
-  if (!form.title.trim()) {
-    toast.add({ title: 'タイトルを入力してください', color: 'error' })
-    return
-  }
-
   saving.value = true
   try {
     const payload = {
@@ -161,12 +163,12 @@ async function handleSubmit() {
     </template>
 
     <template #body>
-      <form class="space-y-4" @submit.prevent="handleSubmit">
+      <UForm :schema="schema" :state="form" class="space-y-4" @submit="handleSubmit">
         <!-- タイトル -->
-        <UFormField label="タイトル" required>
+        <UFormField name="title" label="タイトル" required>
           <UInput
             v-model="form.title"
-            placeholder="例: 東京駅で新幹線に乗る"
+            placeholder="例: 東京駅で新幹線に乗る…"
             icon="i-lucide-type"
             size="lg"
             class="w-full"
@@ -174,7 +176,7 @@ async function handleSubmit() {
         </UFormField>
 
         <!-- カテゴリ -->
-        <UFormField label="カテゴリ" class="w-1/2">
+        <UFormField name="category" label="カテゴリ" class="w-1/2">
           <USelectMenu
             v-model="form.category"
             :items="categoryOptions"
@@ -188,7 +190,7 @@ async function handleSubmit() {
 
         <!-- 時間 -->
         <div class="grid grid-cols-2 gap-3">
-          <UFormField label="開始時刻">
+          <UFormField name="start_time" label="開始時刻">
             <UInput
               v-model="form.start_time"
               type="time"
@@ -197,7 +199,7 @@ async function handleSubmit() {
               class="w-full"
             />
           </UFormField>
-          <UFormField label="終了時刻">
+          <UFormField name="end_time" label="終了時刻">
             <UInput
               v-model="form.end_time"
               type="time"
@@ -209,20 +211,20 @@ async function handleSubmit() {
         </div>
 
         <!-- 場所（Places Autocomplete） -->
-        <UFormField label="場所・住所">
+        <UFormField name="address" label="場所・住所">
           <MapPlaceAutocomplete
             v-model="form.address"
-            placeholder="場所を検索..."
+            placeholder="場所を検索…"
             @place-selected="onPlaceSelected"
             @place-cleared="onPlaceCleared"
           />
         </UFormField>
 
         <!-- URL -->
-        <UFormField label="URL">
+        <UFormField name="url" label="URL">
           <UInput
             v-model="form.url"
-            placeholder="https://..."
+            placeholder="https://…"
             icon="i-lucide-link"
             size="lg"
             class="w-full"
@@ -230,33 +232,32 @@ async function handleSubmit() {
         </UFormField>
 
         <!-- メモ -->
-        <UFormField label="メモ">
+        <UFormField name="memo" label="メモ">
           <UTextarea
             v-model="form.memo"
-            placeholder="メモや注意事項を記入..."
+            placeholder="メモや注意事項を記入…"
             :rows="3"
             size="lg"
             class="w-full"
           />
         </UFormField>
-      </form>
-    </template>
 
-    <template #footer>
-      <div class="flex justify-end gap-2">
-        <UButton
-          variant="ghost"
-          @click="isOpen = false"
-        >
-          キャンセル
-        </UButton>
-        <UButton
-          :loading="saving"
-          @click="handleSubmit"
-        >
-          {{ isEditMode ? '更新する' : '追加する' }}
-        </UButton>
-      </div>
+        <!-- フッターボタン（UForm内に配置して type="submit" を有効にする） -->
+        <div class="flex justify-end gap-2 border-t border-default pt-4">
+          <UButton
+            variant="ghost"
+            @click="isOpen = false"
+          >
+            キャンセル
+          </UButton>
+          <UButton
+            type="submit"
+            :loading="saving"
+          >
+            {{ isEditMode ? '更新する' : '追加する' }}
+          </UButton>
+        </div>
+      </UForm>
     </template>
   </UModal>
 </template>

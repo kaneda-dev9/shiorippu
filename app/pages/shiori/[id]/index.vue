@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import type { ShioriWithRole, Day, Event, DayWithEvents, CollaboratorRole } from '~~/types/database'
+import type { Event, DayWithEvents } from '~~/types/database'
 import { getCategoryIcon, getCategoryLabel } from '~~/shared/category-icons'
-import { getTemplate } from '~~/shared/templates'
 import draggable from 'vuedraggable'
 
 definePageMeta({
@@ -10,21 +9,31 @@ definePageMeta({
 })
 
 const route = useRoute()
-const { authFetch } = useAuthFetch()
-const { user } = useAuth()
 const toast = useToast()
 const shioriId = route.params.id as string
 
-const shiori = ref<ShioriWithRole | null>(null)
-const loading = ref(true)
-const userRole = ref<CollaboratorRole | null>(null)
+// データ操作は composable に集約
+const {
+  shiori,
+  loading,
+  isOwner,
+  tmpl,
+  otherOnlineUsers,
+  fetchShiori,
+  saveTitle,
+  addDay,
+  deleteDay,
+  onEventSaved,
+  deleteEvent,
+  reorderDays,
+  reorderEvents,
+  deleteShiori,
+  changeTemplate,
+} = useShioriEditor(shioriId)
 
-// ロールに基づくUI制御
-const isOwner = computed(() => userRole.value === 'owner')
-
-// UI状態
+// --- UI状態 ---
 const showChat = ref(false)
-const chatWidth = ref(480) // デフォルト 480px
+const chatWidth = ref(480)
 const isResizing = ref(false)
 const CHAT_MIN_WIDTH = 320
 const CHAT_MAX_WIDTH = 960
@@ -35,7 +44,6 @@ function startResize(e: PointerEvent) {
   const startWidth = chatWidth.value
 
   function onMove(ev: PointerEvent) {
-    // 左にドラッグ → 幅が広がる
     const delta = startX - ev.clientX
     chatWidth.value = Math.min(CHAT_MAX_WIDTH, Math.max(CHAT_MIN_WIDTH, startWidth + delta))
   }
@@ -67,107 +75,7 @@ const showEventDeleteModal = ref(false)
 const deleteEventTarget = ref<{ dayId: string; eventId: string; title: string } | null>(null)
 const deletingItem = ref(false)
 
-/** しおりデータを取得 */
-async function fetchShiori() {
-  loading.value = true
-  try {
-    const data = await authFetch<ShioriWithRole>(`/api/shiori/${shioriId}`)
-    shiori.value = data
-    userRole.value = data.userRole
-  }
-  catch {
-    toast.add({ title: 'しおりの取得に失敗しました', color: 'error' })
-    await navigateTo('/dashboard')
-  }
-  finally {
-    loading.value = false
-  }
-}
-
-// Realtime 同期
-const { onlineUsers, addPendingOp } = useRealtimeSync({
-  shioriId,
-  onShioriChange(payload) {
-    if (!shiori.value) return
-    // しおり本体の更新を反映（タイトル、日付、エリア等）
-    shiori.value.title = payload.new.title
-    shiori.value.start_date = payload.new.start_date
-    shiori.value.end_date = payload.new.end_date
-    shiori.value.area = payload.new.area
-    shiori.value.is_public = payload.new.is_public
-    shiori.value.invite_enabled = payload.new.invite_enabled
-    shiori.value.invite_token = payload.new.invite_token
-    shiori.value.template_id = payload.new.template_id
-  },
-  onDayChange(payload) {
-    if (!shiori.value) return
-    if (payload.eventType === 'INSERT') {
-      // 新しい Day を追加（既に存在しない場合のみ）
-      const exists = shiori.value.days.some((d) => d.id === payload.new.id)
-      if (!exists) {
-        shiori.value.days.push({ ...payload.new, events: [] })
-        shiori.value.days.sort((a, b) => a.sort_order - b.sort_order)
-      }
-    }
-    else if (payload.eventType === 'UPDATE') {
-      const idx = shiori.value.days.findIndex((d) => d.id === payload.new.id)
-      if (idx >= 0) {
-        shiori.value.days[idx] = { ...payload.new, events: shiori.value.days[idx]!.events }
-      }
-      shiori.value.days.sort((a, b) => a.sort_order - b.sort_order)
-    }
-    else if (payload.eventType === 'DELETE') {
-      shiori.value.days = shiori.value.days.filter((d) => d.id !== payload.old.id)
-    }
-  },
-  onEventChange(payload) {
-    if (!shiori.value) return
-    if (payload.eventType === 'INSERT') {
-      const day = shiori.value.days.find((d) => d.id === payload.new.day_id)
-      if (day) {
-        const exists = day.events.some((e) => e.id === payload.new.id)
-        if (!exists) {
-          day.events.push(payload.new)
-          day.events.sort((a, b) => a.sort_order - b.sort_order)
-        }
-      }
-    }
-    else if (payload.eventType === 'UPDATE') {
-      // day_id が変わった可能性があるので全 day を検索
-      for (const day of shiori.value.days) {
-        const idx = day.events.findIndex((e) => e.id === payload.new.id)
-        if (idx >= 0) {
-          if (day.id === payload.new.day_id) {
-            day.events[idx] = payload.new
-          }
-          else {
-            // day 間移動: 元の day から削除
-            day.events.splice(idx, 1)
-          }
-        }
-      }
-      // 移動先の day にない場合は追加
-      const targetDay = shiori.value.days.find((d) => d.id === payload.new.day_id)
-      if (targetDay && !targetDay.events.some((e) => e.id === payload.new.id)) {
-        targetDay.events.push(payload.new)
-      }
-      // ソート
-      for (const day of shiori.value.days) {
-        day.events.sort((a, b) => a.sort_order - b.sort_order)
-      }
-    }
-    else if (payload.eventType === 'DELETE') {
-      for (const day of shiori.value.days) {
-        day.events = day.events.filter((e) => e.id !== payload.old.id)
-      }
-    }
-  },
-})
-
-// 自分以外のオンラインユーザー
-const otherOnlineUsers = computed(() =>
-  onlineUsers.value.filter((u) => u.user_id !== user.value?.id),
-)
+// --- UIイベントハンドラ ---
 
 /** タイトル編集開始 */
 function startEditTitle() {
@@ -177,43 +85,9 @@ function startEditTitle() {
 }
 
 /** タイトル保存 */
-async function saveTitle() {
-  if (!shiori.value || !titleInput.value.trim()) return
-  try {
-    addPendingOp(shioriId)
-    await authFetch(`/api/shiori/${shioriId}`, {
-      method: 'PUT',
-      body: { title: titleInput.value.trim() },
-    })
-    shiori.value.title = titleInput.value.trim()
-  }
-  catch {
-    toast.add({ title: 'タイトルの更新に失敗しました', color: 'error' })
-  }
-  finally {
-    editingTitle.value = false
-  }
-}
-
-/** 日程を追加 */
-async function addDay() {
-  if (!shiori.value) return
-  const nextNumber = shiori.value.days.length + 1
-  try {
-    const day = await authFetch<Day>('/api/day', {
-      method: 'POST',
-      body: {
-        shiori_id: shioriId,
-        day_number: nextNumber,
-      },
-    })
-    addPendingOp(day.id)
-    shiori.value.days.push({ ...day, events: [] })
-    toast.add({ title: `Day ${nextNumber} を追加しました`, color: 'success' })
-  }
-  catch {
-    toast.add({ title: '日程の追加に失敗しました', color: 'error' })
-  }
+async function handleSaveTitle() {
+  await saveTitle(titleInput.value)
+  editingTitle.value = false
 }
 
 /** 日程削除の確認ダイアログを開く */
@@ -222,16 +96,12 @@ function confirmDeleteDay(dayId: string, dayNumber: number) {
   showDayDeleteModal.value = true
 }
 
-/** 日程を削除 */
-async function deleteDay() {
-  if (!shiori.value || !deleteDayTarget.value) return
+/** 日程を削除（UI状態のラッパー） */
+async function handleDeleteDay() {
+  if (!deleteDayTarget.value) return
   deletingItem.value = true
-  const { id: dayId, dayNumber } = deleteDayTarget.value
   try {
-    addPendingOp(dayId)
-    await authFetch(`/api/day/${dayId}`, { method: 'DELETE' })
-    shiori.value.days = shiori.value.days.filter((d) => d.id !== dayId)
-    toast.add({ title: `Day ${dayNumber} を削除しました`, color: 'success' })
+    await deleteDay(deleteDayTarget.value.id, deleteDayTarget.value.dayNumber)
   }
   catch {
     toast.add({ title: '日程の削除に失敗しました', color: 'error' })
@@ -257,44 +127,18 @@ function openEditEvent(dayId: string, event: Event) {
   showEventModal.value = true
 }
 
-/** イベント保存後のコールバック */
-function onEventSaved(savedEvent: Event) {
-  if (!shiori.value) return
-  addPendingOp(savedEvent.id)
-  const day = shiori.value.days.find((d) => d.id === savedEvent.day_id)
-  if (!day) return
-
-  const eventIndex = day.events.findIndex((e) => e.id === savedEvent.id)
-
-  if (eventIndex >= 0) {
-    // 更新
-    day.events[eventIndex] = savedEvent
-  }
-  else {
-    // 新規追加
-    day.events.push(savedEvent)
-  }
-}
-
 /** イベント削除の確認ダイアログを開く */
 function confirmDeleteEvent(dayId: string, eventId: string, title: string) {
   deleteEventTarget.value = { dayId, eventId, title }
   showEventDeleteModal.value = true
 }
 
-/** イベントを削除 */
-async function deleteEvent() {
-  if (!shiori.value || !deleteEventTarget.value) return
+/** イベントを削除（UI状態のラッパー） */
+async function handleDeleteEvent() {
+  if (!deleteEventTarget.value) return
   deletingItem.value = true
-  const { dayId, eventId } = deleteEventTarget.value
   try {
-    addPendingOp(eventId)
-    await authFetch(`/api/event/${eventId}`, { method: 'DELETE' })
-    const day = shiori.value.days.find((d) => d.id === dayId)
-    if (day) {
-      day.events = day.events.filter((e) => e.id !== eventId)
-    }
-    toast.add({ title: 'イベントを削除しました', color: 'success' })
+    await deleteEvent(deleteEventTarget.value.dayId, deleteEventTarget.value.eventId)
   }
   catch {
     toast.add({ title: 'イベントの削除に失敗しました', color: 'error' })
@@ -306,61 +150,11 @@ async function deleteEvent() {
   }
 }
 
-/** Day並び替え後のAPI保存 */
-async function onDayReorder() {
-  if (!shiori.value) return
-  // day_number を振り直す
-  shiori.value.days.forEach((d, i) => {
-    d.sort_order = i
-    d.day_number = i + 1
-    addPendingOp(d.id)
-  })
-  try {
-    await authFetch('/api/day/reorder', {
-      method: 'POST',
-      body: {
-        shiori_id: shioriId,
-        order: shiori.value.days.map((d, i) => ({ id: d.id, sort_order: i })),
-      },
-    })
-  }
-  catch {
-    toast.add({ title: '日程の並び替えに失敗しました', color: 'error' })
-    await fetchShiori()
-  }
-}
-
-/** イベント並び替え・Day間移動後のAPI保存 */
-async function onEventReorder() {
-  if (!shiori.value) return
-  const order: { id: string; day_id: string; sort_order: number }[] = []
-  for (const day of shiori.value.days) {
-    day.events.forEach((ev, i) => {
-      ev.sort_order = i
-      ev.day_id = day.id
-      addPendingOp(ev.id)
-      order.push({ id: ev.id, day_id: day.id, sort_order: i })
-    })
-  }
-  try {
-    await authFetch('/api/event/reorder', {
-      method: 'POST',
-      body: { shiori_id: shioriId, order },
-    })
-  }
-  catch {
-    toast.add({ title: 'イベントの並び替えに失敗しました', color: 'error' })
-    await fetchShiori()
-  }
-}
-
-/** しおりを削除 */
-async function deleteShiori() {
+/** しおりを削除（UI状態のラッパー） */
+async function handleDeleteShiori() {
   deleting.value = true
   try {
-    await authFetch(`/api/shiori/${shioriId}`, { method: 'DELETE' })
-    toast.add({ title: 'しおりを削除しました', color: 'success' })
-    await navigateTo('/dashboard')
+    await deleteShiori()
   }
   catch {
     toast.add({ title: 'しおりの削除に失敗しました', color: 'error' })
@@ -370,30 +164,6 @@ async function deleteShiori() {
     showDeleteModal.value = false
   }
 }
-
-// テンプレートスタイル
-const tmpl = computed(() => getTemplate(shiori.value?.template_id))
-
-/** テンプレートを変更 */
-async function changeTemplate(templateId: string) {
-  if (!shiori.value || shiori.value.template_id === templateId) return
-  const prev = shiori.value.template_id
-  shiori.value.template_id = templateId
-  try {
-    addPendingOp(shioriId)
-    await authFetch(`/api/shiori/${shioriId}`, {
-      method: 'PUT',
-      body: { template_id: templateId },
-    })
-    toast.add({ title: 'テンプレートを変更しました', color: 'success' })
-  }
-  catch {
-    shiori.value.template_id = prev
-    toast.add({ title: 'テンプレートの変更に失敗しました', color: 'error' })
-  }
-}
-
-onMounted(fetchShiori)
 </script>
 
 <template>
@@ -408,7 +178,7 @@ onMounted(fetchShiori)
       <div class="relative overflow-hidden" :class="[tmpl.colors.headerBg, tmpl.colors.headerBgDark]">
         <div class="h-1.5 bg-gradient-to-r" :class="tmpl.colors.headerGradient" />
         <!-- 装飾アイコン -->
-        <div v-if="tmpl.decorations.length > 0" class="relative h-12">
+        <div v-if="tmpl.decorations.length > 0" class="relative h-12" aria-hidden="true">
           <UIcon
             v-for="(deco, i) in tmpl.decorations"
             :key="i"
@@ -427,6 +197,7 @@ onMounted(fetchShiori)
             icon="i-lucide-arrow-left"
             variant="ghost"
             size="sm"
+            aria-label="ダッシュボードに戻る"
             to="/dashboard"
             class="shrink-0"
           />
@@ -436,15 +207,18 @@ onMounted(fetchShiori)
               v-model="titleInput"
               autofocus
               class="text-xl font-bold"
-              @keydown.enter="saveTitle"
+              @keydown.enter="handleSaveTitle"
               @keydown.escape="editingTitle = false"
-              @blur="saveTitle"
+              @blur="handleSaveTitle"
             />
           </div>
           <h1
             v-else
-            class="cursor-pointer truncate text-xl font-bold text-stone-900 hover:text-orange-500 dark:text-stone-50"
+            tabindex="0"
+            role="button"
+            class="cursor-pointer truncate text-xl font-bold text-stone-900 hover:text-orange-500 focus-visible:outline-2 focus-visible:outline-orange-500 dark:text-stone-50"
             @click="startEditTitle"
+            @keydown.enter="startEditTitle"
           >
             {{ shiori.title }}
             <UIcon name="i-lucide-pencil" class="ml-1 inline-block size-4 text-stone-400" />
@@ -463,6 +237,8 @@ onMounted(fetchShiori)
                 v-if="ou.avatar_url"
                 :src="ou.avatar_url"
                 :alt="ou.display_name || ''"
+                width="28"
+                height="28"
                 class="size-full object-cover"
               >
               <UIcon v-else name="i-lucide-user" class="size-3.5 text-orange-500" />
@@ -519,6 +295,7 @@ onMounted(fetchShiori)
             icon="i-lucide-trash-2"
             variant="ghost"
             size="sm"
+            aria-label="しおりを削除"
             class="text-stone-400 hover:!text-red-500"
             @click="showDeleteModal = true"
           />
@@ -579,7 +356,7 @@ onMounted(fetchShiori)
           handle=".day-drag-handle"
           animation="200"
           ghost-class="opacity-30"
-          @end="onDayReorder"
+          @end="reorderDays"
         >
           <template #item="{ element: day }: { element: DayWithEvents }">
             <div class="mb-6">
@@ -602,12 +379,14 @@ onMounted(fetchShiori)
                     icon="i-lucide-plus"
                     variant="ghost"
                     size="xs"
+                    aria-label="イベントを追加"
                     @click="openAddEvent(day.id)"
                   />
                   <UButton
                     icon="i-lucide-trash-2"
                     variant="ghost"
                     size="xs"
+                    aria-label="日程を削除"
                     class="text-stone-400 hover:text-red-500"
                     @click="confirmDeleteDay(day.id, day.day_number)"
                   />
@@ -623,7 +402,7 @@ onMounted(fetchShiori)
                 animation="200"
                 ghost-class="opacity-30"
                 class="min-h-[2rem] space-y-2"
-                @end="onEventReorder"
+                @end="reorderEvents"
               >
                 <template #item="{ element: ev }: { element: Event }">
                   <div
@@ -634,6 +413,7 @@ onMounted(fetchShiori)
                     <UIcon
                       v-if="tmpl.decorations.length > 0"
                       :name="tmpl.decorations[ev.sort_order % tmpl.decorations.length]!.icon"
+                      aria-hidden="true"
                       class="pointer-events-none absolute -bottom-3 -right-3 size-20 opacity-[0.08]"
                       :class="[tmpl.colors.cardDecoColor, tmpl.colors.cardDecoColorDark]"
                     />
@@ -656,7 +436,7 @@ onMounted(fetchShiori)
                     <!-- イベント情報 -->
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-2">
-                        <span v-if="ev.start_time" class="text-xs font-medium text-stone-400">
+                        <span v-if="ev.start_time" class="tabular-nums text-xs font-medium text-stone-400">
                           {{ ev.start_time.slice(0, 5) }}
                           <template v-if="ev.end_time"> - {{ ev.end_time.slice(0, 5) }}</template>
                         </span>
@@ -697,12 +477,14 @@ onMounted(fetchShiori)
                         icon="i-lucide-pencil"
                         variant="ghost"
                         size="xs"
+                        aria-label="イベントを編集"
                         @click="openEditEvent(day.id, ev)"
                       />
                       <UButton
                         icon="i-lucide-trash-2"
                         variant="ghost"
                         size="xs"
+                        aria-label="イベントを削除"
                         class="text-stone-400 hover:text-red-500"
                         @click="confirmDeleteEvent(day.id, ev.id, ev.title)"
                       />
@@ -712,27 +494,32 @@ onMounted(fetchShiori)
               </draggable>
 
               <!-- イベント追加ボタン -->
-              <button
-                class="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-stone-200 p-3 text-sm text-stone-400 transition-colors dark:border-stone-700"
+              <UButton
+                icon="i-lucide-plus"
+                variant="outline"
+                block
+                class="mt-2 rounded-xl border-2 border-dashed"
                 :class="[tmpl.colors.addBtnBorderHover, tmpl.colors.addBtnTextHover, tmpl.colors.addBtnBorderHoverDark]"
                 @click="openAddEvent(day.id)"
               >
-                <UIcon name="i-lucide-plus" class="size-4" />
                 イベントを追加
-              </button>
+              </UButton>
             </div>
           </template>
         </draggable>
 
         <!-- 日程追加ボタン -->
-        <button
-          class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-stone-300 p-4 text-stone-500 transition-colors dark:border-stone-600"
+        <UButton
+          icon="i-lucide-plus-circle"
+          variant="outline"
+          size="lg"
+          block
+          class="rounded-xl border-2 border-dashed"
           :class="[tmpl.colors.addBtnBorderHover, tmpl.colors.addBtnTextHover, tmpl.colors.addBtnBorderHoverDark]"
           @click="addDay"
         >
-          <UIcon name="i-lucide-plus-circle" class="size-5" />
           日程を追加
-        </button>
+        </UButton>
       </div>
     </div><!-- /px-4 py-6 -->
     </div><!-- /flex-1 -->
@@ -807,7 +594,7 @@ onMounted(fetchShiori)
       <UButton variant="ghost" @click="close">
         キャンセル
       </UButton>
-      <UButton color="error" :loading="deleting" @click="deleteShiori">
+      <UButton color="error" :loading="deleting" @click="handleDeleteShiori">
         削除する
       </UButton>
     </template>
@@ -829,7 +616,7 @@ onMounted(fetchShiori)
       <UButton variant="ghost" @click="close">
         キャンセル
       </UButton>
-      <UButton color="error" :loading="deletingItem" @click="deleteDay">
+      <UButton color="error" :loading="deletingItem" @click="handleDeleteDay">
         削除する
       </UButton>
     </template>
@@ -846,7 +633,7 @@ onMounted(fetchShiori)
       <UButton variant="ghost" @click="close">
         キャンセル
       </UButton>
-      <UButton color="error" :loading="deletingItem" @click="deleteEvent">
+      <UButton color="error" :loading="deletingItem" @click="handleDeleteEvent">
         削除する
       </UButton>
     </template>

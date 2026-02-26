@@ -2,24 +2,19 @@
 import type { Shiori, CollaboratorWithProfile } from '~~/types/database'
 
 const props = defineProps<{
-  modelValue: boolean
   shiori: Shiori
   isOwner: boolean
 }>()
 
+const isOpen = defineModel<boolean>({ required: true })
+
 const emit = defineEmits<{
-  'update:modelValue': [value: boolean]
   'updated': [isPublic: boolean]
 }>()
 
 const { authFetch } = useAuthFetch()
 const toast = useToast()
 const { copy, copied: publicCopied } = useClipboard()
-
-const isOpen = computed({
-  get: () => props.modelValue,
-  set: (v) => emit('update:modelValue', v),
-})
 
 const isPublic = ref(props.shiori.is_public)
 const toggling = ref(false)
@@ -31,16 +26,15 @@ const collaborators = ref<CollaboratorWithProfile[]>([])
 const loadingCollaborators = ref(false)
 const kickingId = ref<string | null>(null)
 
-// props変更に追従
-watch(() => props.shiori.is_public, (v) => {
-  isPublic.value = v
-})
-watch(() => props.shiori.invite_enabled, (v) => {
-  inviteEnabled.value = v
-})
-watch(() => props.shiori.invite_token, (v) => {
-  inviteToken.value = v
-})
+// props変更に追従（1つのwatchにまとめる）
+watch(
+  () => [props.shiori.is_public, props.shiori.invite_enabled, props.shiori.invite_token] as const,
+  ([pub, inv, tok]) => {
+    isPublic.value = pub
+    inviteEnabled.value = inv
+    inviteToken.value = tok
+  },
+)
 
 // モーダル開閉時にコラボレーター一覧を取得
 watch(isOpen, (open) => {
@@ -230,7 +224,7 @@ function roleLabel(role: string) {
         </div>
 
         <!-- 区切り線 -->
-        <div v-if="isOwner" class="border-t border-stone-200 dark:border-stone-700" />
+        <USeparator v-if="isOwner" />
 
         <!-- 招待リンク（オーナーのみ） -->
         <div v-if="isOwner">
@@ -274,7 +268,7 @@ function roleLabel(role: string) {
         </div>
 
         <!-- 区切り線 -->
-        <div class="border-t border-stone-200 dark:border-stone-700" />
+        <USeparator />
 
         <!-- コラボレーター一覧 -->
         <div>
@@ -308,6 +302,8 @@ function roleLabel(role: string) {
                   v-if="collab.profile?.avatar_url"
                   :src="collab.profile.avatar_url"
                   :alt="collab.profile?.display_name || ''"
+                  width="32"
+                  height="32"
                   class="size-full object-cover"
                 >
                 <UIcon v-else name="i-lucide-user" class="size-4 text-orange-500" />
@@ -329,6 +325,7 @@ function roleLabel(role: string) {
                 icon="i-lucide-x"
                 variant="ghost"
                 size="xs"
+                aria-label="メンバーを削除"
                 class="text-stone-400 hover:!text-red-500"
                 @click="confirmKick(collab)"
               />

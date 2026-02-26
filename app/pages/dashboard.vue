@@ -146,6 +146,7 @@ onMounted(fetchShioris)
           icon="i-lucide-trash-2"
           variant="ghost"
           size="xs"
+          aria-label="しおりを削除"
           class="absolute right-2 top-2 z-10 transition-opacity md:opacity-0 md:group-hover:opacity-100 hover:!text-red-500"
           @click="confirmDelete(shiori, $event)"
         />
@@ -158,6 +159,9 @@ onMounted(fetchShioris)
           <img
             :src="shiori.cover_image_url"
             :alt="shiori.title"
+            width="400"
+            height="112"
+            loading="lazy"
             class="size-full object-cover"
           >
         </div>
@@ -208,7 +212,7 @@ onMounted(fetchShioris)
               公開中
             </UBadge>
           </div>
-          <span class="text-xs text-stone-400">
+          <span class="tabular-nums text-xs text-stone-400">
             {{ dayjs(shiori.updated_at).format('YYYY/MM/DD HH:mm') }} 更新
           </span>
         </div>

@@ -36,6 +36,7 @@
             icon="i-lucide-x"
             variant="ghost"
             size="sm"
+            aria-label="サイドバーを閉じる"
             class="md:hidden"
             @click="showSidebar = false"
           />
@@ -71,6 +72,7 @@
           variant="solid"
           color="neutral"
           size="sm"
+          aria-label="イベント一覧"
           @click="showSidebar = !showSidebar"
         />
         <UButton
@@ -78,6 +80,7 @@
           variant="solid"
           color="neutral"
           size="sm"
+          aria-label="全体を表示"
           @click="mapViewRef?.fitBounds()"
         />
         <UButton

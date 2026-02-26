@@ -17,6 +17,7 @@
 | `dayjs` | ^1.11.0 | 日付処理 (日本語ロケール) |
 | `@vueuse/nuxt` | latest | VueUse Nuxt統合 |
 | `@vueuse/core` | latest | VueUse コアユーティリティ |
+| `zod` | ^4.3.0 | フォームバリデーション (Standard Schema) |
 
 ### devDependencies
 | パッケージ | バージョン | 用途 |
