@@ -499,6 +499,12 @@ onMounted(fetchShiori)
           >
             <span class="hidden sm:inline">テーマ</span>
           </UButton>
+          <ShioriPdfExportButton
+            v-if="shiori"
+            :shiori="shiori"
+            variant="ghost"
+            size="sm"
+          />
           <UButton
             icon="i-lucide-share-2"
             variant="ghost"

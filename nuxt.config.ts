@@ -52,6 +52,7 @@ export default defineNuxtConfig({
   // Route rules
   routeRules: {
     '/shiori/**': { ssr: false }, // Editor is client-side only (heavy interactivity)
+    '/fonts/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
   },
 
   devtools: { enabled: true },

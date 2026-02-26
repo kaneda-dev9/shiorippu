@@ -187,8 +187,19 @@ const tmpl = computed(() => getTemplate(shiori.value?.template_id))
       </div>
     </div>
 
+    <!-- PDF出力ボタン -->
+    <div class="mt-8 flex justify-center">
+      <ShioriPdfExportButton
+        :shiori="shiori"
+        variant="outline"
+        size="md"
+      >
+        PDFでダウンロード
+      </ShioriPdfExportButton>
+    </div>
+
     <!-- フッター -->
-    <div class="mt-12 border-t border-stone-200 pt-6 text-center text-xs text-stone-400 dark:border-stone-700">
+    <div class="mt-8 border-t border-stone-200 pt-6 text-center text-xs text-stone-400 dark:border-stone-700">
       <p>
         <NuxtLink to="/" class="hover:underline" :class="tmpl.colors.link">
           しおりっぷ
