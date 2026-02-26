@@ -32,64 +32,68 @@ const schema = z.object({
 })
 
 // フォーム状態
-const form = reactive({
+interface FormValue {
+  title: string
+  category: EventCategory
+  start_time: string
+  end_time: string
+  memo: string
+  url: string
+  address: string
+  lat: number | null
+  lng: number | null
+  place_id: string | null
+}
+
+const initialFormValue: FormValue = {
   title: '',
-  category: 'other' as EventCategory,
+  category: 'other',
   start_time: '',
   end_time: '',
   memo: '',
   url: '',
   address: '',
-  lat: null as number | null,
-  lng: null as number | null,
-  place_id: null as string | null,
-})
+  lat: null,
+  lng: null,
+  place_id: null,
+}
+
+const form = ref<FormValue>({ ...initialFormValue })
 
 // 編集モードの場合、既存データで初期化
 watch(() => props.event, (ev) => {
   if (ev) {
-    form.title = ev.title
-    form.category = ev.category
-    form.start_time = ev.start_time?.slice(0, 5) || ''
-    form.end_time = ev.end_time?.slice(0, 5) || ''
-    form.memo = ev.memo || ''
-    form.url = ev.url || ''
-    form.address = ev.address || ''
-    form.lat = ev.lat
-    form.lng = ev.lng
-    form.place_id = ev.place_id
+    form.value = {
+      title: ev.title,
+      category: ev.category,
+      start_time: ev.start_time?.slice(0, 5) || '',
+      end_time: ev.end_time?.slice(0, 5) || '',
+      memo: ev.memo || '',
+      url: ev.url || '',
+      address: ev.address || '',
+      lat: ev.lat,
+      lng: ev.lng,
+      place_id: ev.place_id,
+    }
   }
   else {
-    resetForm()
+    form.value = { ...initialFormValue }
   }
 }, { immediate: true })
-
-function resetForm() {
-  form.title = ''
-  form.category = 'other'
-  form.start_time = ''
-  form.end_time = ''
-  form.memo = ''
-  form.url = ''
-  form.address = ''
-  form.lat = null
-  form.lng = null
-  form.place_id = null
-}
 
 const isEditMode = computed(() => !!props.event)
 
 function onPlaceSelected(result: PlaceResult) {
-  form.lat = result.lat
-  form.lng = result.lng
-  form.place_id = result.placeId
-  form.address = result.address
+  form.value.lat = result.lat
+  form.value.lng = result.lng
+  form.value.place_id = result.placeId
+  form.value.address = result.address
 }
 
 function onPlaceCleared() {
-  form.lat = null
-  form.lng = null
-  form.place_id = null
+  form.value.lat = null
+  form.value.lng = null
+  form.value.place_id = null
 }
 
 // カテゴリの選択肢を生成
@@ -102,18 +106,19 @@ const categoryOptions = Object.entries(categoryLabels).map(([value, label]) => (
 async function handleSubmit() {
   saving.value = true
   try {
+    const f = form.value
     const payload = {
-      title: form.title.trim(),
-      category: form.category,
-      icon: categoryIcons[form.category],
-      start_time: form.start_time || null,
-      end_time: form.end_time || null,
-      memo: form.memo.trim() || null,
-      url: form.url.trim() || null,
-      address: form.address.trim() || null,
-      lat: form.lat,
-      lng: form.lng,
-      place_id: form.place_id,
+      title: f.title.trim(),
+      category: f.category,
+      icon: categoryIcons[f.category],
+      start_time: f.start_time || null,
+      end_time: f.end_time || null,
+      memo: f.memo.trim() || null,
+      url: f.url.trim() || null,
+      address: f.address.trim() || null,
+      lat: f.lat,
+      lng: f.lng,
+      place_id: f.place_id,
     }
 
     let result: Event
