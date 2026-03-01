@@ -730,23 +730,24 @@ onMounted(loadHistory)
         leave-from-class="translate-y-0 opacity-100"
         leave-to-class="translate-y-2 opacity-0"
       >
-        <UButton
-          v-if="!isNearBottom"
-          icon="i-lucide-arrow-down"
-          variant="outline"
-          color="neutral"
-          size="xs"
-          class="absolute -top-12 right-4 z-10 rounded-full shadow-lg"
-          @click="scrollToBottom(true)"
-        >
-          最新へ
-          <UBadge
-            v-if="newMessageCount > 0"
-            :label="String(newMessageCount)"
+        <div v-if="!isNearBottom" class="absolute -top-12 right-4 z-10">
+          <UButton
+            icon="i-lucide-arrow-down"
+            variant="outline"
+            color="neutral"
             size="xs"
-            class="ml-1"
-          />
-        </UButton>
+            class="rounded-full shadow-lg"
+            @click="scrollToBottom(true)"
+          >
+            最新へ
+            <UBadge
+              v-if="newMessageCount > 0"
+              :label="String(newMessageCount)"
+              size="xs"
+              class="ml-1"
+            />
+          </UButton>
+        </div>
       </Transition>
       <div class="flex items-end gap-2">
         <UTextarea

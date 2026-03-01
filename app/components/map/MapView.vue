@@ -26,7 +26,7 @@ let map: google.maps.Map | null = null
 let markers: google.maps.marker.AdvancedMarkerElement[] = []
 let polylines: google.maps.Polyline[] = []
 let infoWindow: google.maps.InfoWindow | null = null
-// Routes API (Route.computeRoutes) を使用。DirectionsService はレガシー
+// Routes API (Route.computeRoutes) を使用
 // 型定義が @types/google.maps にまだないため any
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let routeClass: any = null
@@ -48,9 +48,13 @@ function categoryToRouteMode(category: EventCategory): RouteMode | null {
 
 /** 2つのイベント間の移動手段を推定 */
 function inferTravelMode(from: Event, to: Event): RouteMode {
-  // 出発側 or 到着側に移動カテゴリがあればそれを使う
   const fromMode = categoryToRouteMode(from.category)
   const toMode = categoryToRouteMode(to.category)
+
+  // 飛行機・船はどちらか一方にあれば直線（ルート検索不要）
+  if (fromMode === 'STRAIGHT' || toMode === 'STRAIGHT') return 'STRAIGHT'
+
+  // 到着側 → 出発側の順で判定
   return toMode || fromMode || 'DRIVING'
 }
 
@@ -125,7 +129,7 @@ async function renderAll(preserveViewport = false) {
         content: pinEl,
       })
 
-      marker.addListener('click', () => {
+      marker.addListener('gmp-click', () => {
         if (!infoWindow || !map) return
         infoWindow.setContent(createInfoContent(loc.event, day.day_number, color))
         infoWindow.open({ anchor: marker, map })
@@ -280,7 +284,7 @@ async function drawRoute(batch: Segment[], color: string) {
   // 1. 指定モードで試行
   if (await tryRoute(mode)) return
 
-  // 2. TRANSIT/WALKING失敗時は DRIVING にフォールバック
+  // 2. 失敗時は DRIVING にフォールバック
   if (mode !== 'DRIVING') {
     if (await tryRoute('DRIVING')) return
   }
