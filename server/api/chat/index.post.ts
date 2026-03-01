@@ -247,7 +247,7 @@ export default defineEventHandler(async (event) => {
     }))
 
     const stream = anthropic.messages.stream({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 8192,
       system: SYSTEM_PROMPT + contextPrompt,
       messages: claudeMessages,

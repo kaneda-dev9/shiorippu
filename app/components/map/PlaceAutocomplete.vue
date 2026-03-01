@@ -78,7 +78,7 @@ const emit = defineEmits<{
 
 const { load } = useGoogleMaps()
 
-const containerRef = ref<HTMLElement>()
+const containerRef = useTemplateRef<HTMLElement>('containerRef')
 const displayValue = ref(props.modelValue)
 const showDropdown = ref(false)
 const suggestions = ref<Suggestion[]>([])

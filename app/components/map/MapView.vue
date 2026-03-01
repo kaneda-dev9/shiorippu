@@ -20,7 +20,7 @@ const emit = defineEmits<{
 }>()
 
 const { createMap } = useGoogleMaps()
-const mapContainer = ref<HTMLElement>()
+const mapContainer = useTemplateRef<HTMLElement>('mapContainer')
 
 let map: google.maps.Map | null = null
 let markers: google.maps.marker.AdvancedMarkerElement[] = []

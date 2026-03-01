@@ -17,6 +17,7 @@
 | `dayjs` | ^1.11.0 | 日付処理 (日本語ロケール) |
 | `@vueuse/nuxt` | latest | VueUse Nuxt統合 |
 | `@vueuse/core` | latest | VueUse コアユーティリティ |
+| `vue-draggable-plus` | ^0.6.1 | ドラッグ&ドロップ |
 | `zod` | ^4.3.0 | フォームバリデーション (Standard Schema) |
 
 ### devDependencies
@@ -28,7 +29,6 @@
 ### 今後追加予定
 | パッケージ | 用途 |
 |-----------|------|
-| `vuedraggable` / `@vueuse/integrations` | ドラッグ&ドロップ |
 | `@googlemaps/js-api-loader` | Google Maps |
 
 ## 外部API

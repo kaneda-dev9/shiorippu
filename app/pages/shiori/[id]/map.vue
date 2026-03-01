@@ -140,7 +140,7 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 const showSidebar = ref(true)
 const selectedDays = ref<number[]>([])
-const mapViewRef = ref<InstanceType<typeof MapViewComponent> | null>(null)
+const mapViewRef = useTemplateRef<InstanceType<typeof MapViewComponent>>('mapViewRef')
 
 // イベント編集モーダル用
 const showEventModal = ref(false)

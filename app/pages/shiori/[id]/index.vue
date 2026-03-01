@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Event, DayWithEvents } from '~~/types/database'
 import { getCategoryIcon, getCategoryLabel } from '~~/shared/category-icons'
-import draggable from 'vuedraggable'
+import { VueDraggable } from 'vue-draggable-plus'
 
 definePageMeta({
   middleware: 'auth',
@@ -350,16 +350,14 @@ async function handleDeleteShiori() {
 
       <!-- 日程リスト -->
       <div v-else class="space-y-6">
-        <draggable
+        <VueDraggable
           v-model="shiori.days"
-          item-key="id"
           handle=".day-drag-handle"
-          animation="200"
-          ghost-class="opacity-30"
+          :animation="200"
+          ghostClass="opacity-30"
           @end="reorderDays"
         >
-          <template #item="{ element: day }: { element: DayWithEvents }">
-            <div class="mb-6">
+          <div v-for="day in shiori.days" :key="day.id" class="mb-6">
               <!-- 日程ヘッダー -->
               <div class="mb-3 flex items-center justify-between">
                 <h2 class="flex items-center gap-2 text-sm font-semibold" :class="tmpl.colors.dayHeader">
@@ -394,18 +392,18 @@ async function handleDeleteShiori() {
               </div>
 
               <!-- イベントリスト（ドラッグ&ドロップ対応、Day間移動可） -->
-              <draggable
+              <VueDraggable
                 v-model="day.events"
-                item-key="id"
                 group="events"
                 handle=".event-drag-handle"
-                animation="200"
-                ghost-class="opacity-30"
+                :animation="200"
+                ghostClass="opacity-30"
                 class="min-h-[2rem] space-y-2"
                 @end="reorderEvents"
               >
-                <template #item="{ element: ev }: { element: Event }">
-                  <div
+                <div
+                  v-for="ev in day.events"
+                  :key="ev.id"
                     class="group relative flex items-start gap-3 overflow-hidden rounded-xl border border-l-[3px] border-stone-200 bg-white p-3 transition-all dark:border-stone-700 dark:bg-stone-900"
                     :class="[tmpl.colors.cardLeftBorder, tmpl.colors.cardBorderHover]"
                   >
@@ -489,9 +487,8 @@ async function handleDeleteShiori() {
                         @click="confirmDeleteEvent(day.id, ev.id, ev.title)"
                       />
                     </div>
-                  </div>
-                </template>
-              </draggable>
+                </div>
+              </VueDraggable>
 
               <!-- イベント追加ボタン -->
               <UButton
@@ -505,8 +502,7 @@ async function handleDeleteShiori() {
                 イベントを追加
               </UButton>
             </div>
-          </template>
-        </draggable>
+        </VueDraggable>
 
         <!-- 日程追加ボタン -->
         <UButton
