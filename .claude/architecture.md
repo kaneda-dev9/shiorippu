@@ -40,9 +40,10 @@ shiorippu/
 │   │   │   ├── [id].put.ts        # 更新
 │   │   │   └── [id].delete.ts     # 削除
 │   │   └── chat/
-│   │       └── index.post.ts      # AIチャット (Claude API, SSEストリーミング)
+│   │       └── index.post.ts      # AIチャット (Claude API, Tool Use, Web Search, SSEストリーミング)
 │   └── utils/
 │       ├── auth.ts                # requireAuth, useSupabaseWithAuth
+│       ├── google-maps.ts         # searchPlaces, getPlaceDetails, getDirections
 │       └── supabase.ts            # useServerSupabase (service role)
 ├── types/database.ts              # 全DB型定義
 └── nuxt.config.ts

@@ -34,10 +34,19 @@ const appliedPlanIndices = ref<Set<number>>(new Set())
 const messages = ref<ChatMessage[]>([])
 const inputText = ref('')
 const isStreaming = ref(false)
+const toolActivity = ref<string | null>(null)
 const chatContainer = useTemplateRef<HTMLElement>('chatContainer')
 const selectedReplies = ref<Set<string>>(new Set())
 const showOtherInput = ref(false)
 const otherInputText = ref('')
+
+/** ツール名を日本語ラベルに変換 */
+const TOOL_LABELS: Record<string, string> = {
+  search_places: 'スポットを検索中',
+  get_place_details: 'スポットの詳細を取得中',
+  get_directions: '移動時間を計算中',
+  web_search: '最新情報を検索中',
+}
 
 // 折りたたみ
 const showAllMessages = ref(false)
@@ -397,11 +406,23 @@ async function sendMessage() {
         try {
           const data = JSON.parse(line.slice(6))
           if (data.type === 'text') {
+            toolActivity.value = null
             const msg = messages.value[assistantIndex]
             if (msg) msg.content += data.text
             autoScrollIfNeeded()
           }
+          else if (data.type === 'tool_use') {
+            // ツール使用中の表示
+            const toolNames = data.tools as string[]
+            const label = toolNames.map(t => TOOL_LABELS[t] ?? t).join('、')
+            toolActivity.value = label
+            autoScrollIfNeeded()
+          }
+          else if (data.type === 'done') {
+            toolActivity.value = null
+          }
           else if (data.type === 'error') {
+            toolActivity.value = null
             toast.add({ title: data.message, color: 'error' })
           }
         }
@@ -419,6 +440,7 @@ async function sendMessage() {
   }
   finally {
     isStreaming.value = false
+    toolActivity.value = null
     scrollToBottom()
   }
 }
@@ -548,6 +570,15 @@ onMounted(loadHistory)
                   v-if="isStreaming && toGlobalIndex(localIdx) === lastMessageIndex && !isPlanStreaming(msg.content)"
                   class="inline-block h-4 w-0.5 animate-pulse bg-stone-400"
                 />
+              </div>
+
+              <!-- ツール使用中インジケーター -->
+              <div
+                v-if="isStreaming && toGlobalIndex(localIdx) === lastMessageIndex && toolActivity"
+                class="mt-2 flex items-center gap-2 text-xs text-orange-500"
+              >
+                <UIcon name="i-lucide-search" class="size-3.5 animate-pulse" />
+                <span>{{ toolActivity }}…</span>
               </div>
 
               <!-- プラン生成中インジケーター -->
