@@ -4,7 +4,6 @@ import type { Shiori } from '~~/types/database'
 
 definePageMeta({
   middleware: 'auth',
-  ssr: false,
 })
 
 const { authFetch } = useAuthFetch()

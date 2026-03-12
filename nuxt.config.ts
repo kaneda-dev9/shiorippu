@@ -8,6 +8,7 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@pinia/nuxt',
     '@vueuse/nuxt',
+    '@vite-pwa/nuxt',
   ],
 
   css: ['~/assets/css/main.css'],
@@ -42,9 +43,12 @@ export default defineNuxtConfig({
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'description', content: 'AIと一緒に旅のプランを作って、おしゃれなしおりにしよう' },
+        { name: 'theme-color', content: '#f97316' },
       ],
       link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'icon', href: '/favicon.ico', sizes: '48x48' },
+        { rel: 'icon', href: '/logo.svg', sizes: 'any', type: 'image/svg+xml' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon-180x180.png' },
       ],
     },
   },
@@ -53,6 +57,33 @@ export default defineNuxtConfig({
   routeRules: {
     '/shiori/**': { ssr: false }, // Editor is client-side only (heavy interactivity)
     '/fonts/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
+  },
+
+  pwa: {
+    registerType: 'autoUpdate',
+    manifest: {
+      name: 'しおりっぷ',
+      short_name: 'しおりっぷ',
+      description: 'AIと一緒に旅のプランを作って、おしゃれなしおりにしよう',
+      lang: 'ja',
+      theme_color: '#f97316',
+      background_color: '#ffffff',
+      display: 'standalone',
+      icons: [
+        { src: 'pwa-64x64.png', sizes: '64x64', type: 'image/png' },
+        { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+        { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+        { src: 'maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      ],
+    },
+    workbox: {
+      globPatterns: ['**/*.{js,css,html}'],
+      globIgnores: ['covers/**', 'fonts/**'],
+      runtimeCaching: [],
+    },
+    devOptions: {
+      enabled: false,
+    },
   },
 
   devtools: { enabled: true },
