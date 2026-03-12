@@ -36,6 +36,7 @@ export function useShioriEditor(shioriId: string) {
       shiori.value.invite_enabled = payload.new.invite_enabled
       shiori.value.invite_token = payload.new.invite_token
       shiori.value.template_id = payload.new.template_id
+      shiori.value.cover_image_url = payload.new.cover_image_url
     },
     onDayChange(payload) {
       if (!shiori.value) return
@@ -276,6 +277,25 @@ export function useShioriEditor(shioriId: string) {
     }
   }
 
+  /** カバー画像を変更 */
+  async function changeCoverImage(coverImageUrl: string | null) {
+    if (!shiori.value) return
+    const prev = shiori.value.cover_image_url
+    shiori.value.cover_image_url = coverImageUrl
+    try {
+      addPendingOp(shioriId)
+      await authFetch(`/api/shiori/${shioriId}`, {
+        method: 'PUT',
+        body: { cover_image_url: coverImageUrl },
+      })
+      toast.add({ title: 'カバー画像を変更しました', color: 'success' })
+    }
+    catch {
+      shiori.value.cover_image_url = prev
+      toast.add({ title: 'カバー画像の変更に失敗しました', color: 'error' })
+    }
+  }
+
   onMounted(fetchShiori)
 
   return {
@@ -298,5 +318,6 @@ export function useShioriEditor(shioriId: string) {
     reorderEvents,
     deleteShiori,
     changeTemplate,
+    changeCoverImage,
   }
 }

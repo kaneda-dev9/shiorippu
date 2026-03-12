@@ -62,26 +62,28 @@ const tmpl = computed(() => getTemplate(shiori.value?.template_id))
 
   <!-- 公開しおり表示 -->
   <div v-else-if="shiori" class="mx-auto max-w-3xl">
-    <!-- テンプレートヘッダーバナー -->
-    <div class="relative overflow-hidden" :class="[tmpl.colors.headerBg, tmpl.colors.headerBgDark]">
-      <div class="h-2 bg-gradient-to-r" :class="tmpl.colors.headerGradient" />
-      <!-- 装飾アイコン -->
-      <div v-if="tmpl.decorations.length > 0" class="pointer-events-none relative h-20" aria-hidden="true">
-        <UIcon
-          v-for="(deco, i) in tmpl.decorations"
-          :key="i"
-          :name="deco.icon"
-          class="absolute opacity-30"
-          :class="[deco.size, deco.position, tmpl.colors.decoColor, tmpl.colors.decoColorDark]"
-        />
-      </div>
-      <!-- ヘッダーコンテンツ -->
-      <div class="px-4 pb-6" :class="tmpl.decorations.length > 0 ? '-mt-4' : 'pt-6'">
+    <!-- カバー画像ヒーロー -->
+    <div class="relative h-56 overflow-hidden sm:h-64">
+      <img
+        v-if="shiori.cover_image_url"
+        :src="shiori.cover_image_url"
+        :alt="shiori.title"
+        class="size-full object-cover"
+      >
+      <div
+        v-else
+        class="size-full bg-gradient-to-r"
+        :class="tmpl.colors.headerGradient"
+      />
+      <!-- ダークオーバーレイ -->
+      <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/10" />
+      <!-- ヘッダーコンテンツ（オーバーレイ上） -->
+      <div class="absolute inset-x-0 bottom-0 px-4 pb-6">
         <div class="text-center">
-          <h1 class="text-2xl font-bold text-stone-900 dark:text-stone-50 sm:text-3xl">
+          <h1 class="text-2xl font-bold text-white drop-shadow-md sm:text-3xl">
             {{ shiori.title }}
           </h1>
-          <div class="mt-3 flex flex-wrap items-center justify-center gap-3 text-sm text-stone-500">
+          <div class="mt-3 flex flex-wrap items-center justify-center gap-3 text-sm text-white/80">
             <span v-if="shiori.area" class="flex items-center gap-1">
               <UIcon name="i-lucide-map-pin" class="size-4" />
               {{ shiori.area }}
@@ -132,15 +134,6 @@ const tmpl = computed(() => getTemplate(shiori.value?.template_id))
             class="relative flex items-start gap-3 overflow-hidden rounded-xl border border-l-[3px] border-stone-200 bg-white p-3 dark:border-stone-700 dark:bg-stone-900"
             :class="tmpl.colors.cardLeftBorder"
           >
-            <!-- カード内装飾アイコン（デコレーション配列をローテーション） -->
-            <UIcon
-              v-if="tmpl.decorations.length > 0"
-              :name="tmpl.decorations[ev.sort_order % tmpl.decorations.length]!.icon"
-              aria-hidden="true"
-              class="pointer-events-none absolute -bottom-3 -right-3 size-20 opacity-[0.08]"
-              :class="[tmpl.colors.cardDecoColor, tmpl.colors.cardDecoColorDark]"
-            />
-
             <!-- カテゴリアイコン -->
             <div class="flex size-10 shrink-0 items-center justify-center rounded-lg" :class="[tmpl.colors.eventIconBg, tmpl.colors.accentBgDark]">
               <UIcon :name="getCategoryIcon(ev.category)" class="size-5" :class="tmpl.colors.eventIconText" />

@@ -28,6 +28,7 @@ const {
   reorderEvents,
   deleteShiori,
   changeTemplate,
+  changeCoverImage,
 } = useShioriEditor(shioriId)
 
 // --- UI状態 ---
@@ -234,19 +235,32 @@ async function handleDeleteShiori() {
   <div v-else-if="shiori" class="flex h-full">
     <!-- メインエディタ -->
     <div class="flex-1 overflow-y-auto" :class="showChat ? '' : 'mx-auto max-w-5xl'">
-      <!-- テンプレートヘッダーバナー -->
-      <div class="relative overflow-hidden" :class="[tmpl.colors.headerBg, tmpl.colors.headerBgDark]">
-        <div class="h-1.5 bg-gradient-to-r" :class="tmpl.colors.headerGradient" />
-        <!-- 装飾アイコン -->
-        <div v-if="tmpl.decorations.length > 0" class="relative h-12" aria-hidden="true">
-          <UIcon
-            v-for="(deco, i) in tmpl.decorations"
-            :key="i"
-            :name="deco.icon"
-            class="absolute opacity-40"
-            :class="[deco.size, deco.position, tmpl.colors.decoColor, tmpl.colors.decoColorDark]"
-          />
-        </div>
+      <!-- カバー画像ヒーロー -->
+      <div class="relative h-48 overflow-hidden sm:h-56">
+        <img
+          v-if="shiori.cover_image_url"
+          :src="shiori.cover_image_url"
+          :alt="shiori.title"
+          class="size-full object-cover"
+        >
+        <div
+          v-else
+          class="size-full bg-gradient-to-r"
+          :class="tmpl.colors.headerGradient"
+        />
+        <!-- ダークオーバーレイ -->
+        <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-black/10" />
+        <!-- カバー画像変更ボタン（オーナーのみ） -->
+        <UButton
+          v-if="isOwner"
+          icon="i-lucide-image"
+          variant="soft"
+          size="xs"
+          class="absolute bottom-3 right-3 bg-black/30 text-white backdrop-blur-sm hover:bg-black/50"
+          @click="showTemplateSelector = !showTemplateSelector"
+        >
+          カバー変更
+        </UButton>
       </div>
 
       <div class="px-4 py-6">
@@ -375,16 +389,30 @@ async function handleDeleteShiori() {
         </span>
       </div>
 
-      <!-- テンプレート選択（オーナーのみ） -->
-      <div v-if="isOwner && showTemplateSelector" class="mb-6 rounded-xl border border-stone-200 bg-stone-50 p-4 dark:border-stone-700 dark:bg-stone-900">
-        <h3 class="mb-3 flex items-center gap-2 text-sm font-semibold text-stone-700 dark:text-stone-300">
-          <UIcon name="i-lucide-palette" class="size-4" />
-          デザインテンプレート
-        </h3>
-        <ContainersShioriTemplateSelector
-          :selected="shiori.template_id"
-          @update:selected="changeTemplate"
-        />
+      <!-- テーマ設定（オーナーのみ） -->
+      <div v-if="isOwner && showTemplateSelector" class="mb-6 space-y-5 rounded-xl border border-stone-200 bg-stone-50 p-4 dark:border-stone-700 dark:bg-stone-900">
+        <!-- カラーテーマ -->
+        <div>
+          <h3 class="mb-3 flex items-center gap-2 text-sm font-semibold text-stone-700 dark:text-stone-300">
+            <UIcon name="i-lucide-palette" class="size-4" />
+            カラーテーマ
+          </h3>
+          <ContainersShioriTemplateSelector
+            :selected="shiori.template_id"
+            @update:selected="changeTemplate"
+          />
+        </div>
+        <!-- カバー画像 -->
+        <div>
+          <h3 class="mb-3 flex items-center gap-2 text-sm font-semibold text-stone-700 dark:text-stone-300">
+            <UIcon name="i-lucide-image" class="size-4" />
+            カバー画像
+          </h3>
+          <ContainersShioriCoverImagePicker
+            :selected="shiori.cover_image_url"
+            @update:selected="changeCoverImage"
+          />
+        </div>
       </div>
 
       <!-- 空の状態 -->
@@ -476,15 +504,6 @@ async function handleDeleteShiori() {
               class="group relative flex items-start gap-3 overflow-hidden rounded-xl border border-l-[3px] border-stone-200 bg-white p-3 transition-all dark:border-stone-700 dark:bg-stone-900"
               :class="[tmpl.colors.cardLeftBorder, tmpl.colors.cardBorderHover]"
             >
-              <!-- カード内装飾アイコン（デコレーション配列をローテーション） -->
-              <UIcon
-                v-if="tmpl.decorations.length > 0"
-                :name="tmpl.decorations[ev.sort_order % tmpl.decorations.length]!.icon"
-                aria-hidden="true"
-                class="pointer-events-none absolute -bottom-3 -right-3 size-20 opacity-[0.08]"
-                :class="[tmpl.colors.cardDecoColor, tmpl.colors.cardDecoColorDark]"
-              />
-
               <!-- ドラッグハンドル -->
               <div class="flex shrink-0 flex-col items-center gap-1">
                 <span class="event-drag-handle -m-1 flex cursor-grab items-center justify-center p-2 active:cursor-grabbing">

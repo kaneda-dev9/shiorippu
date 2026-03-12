@@ -1,11 +1,5 @@
 /** しおりデザインテンプレートの定義 */
 
-export interface TemplateDecoration {
-  icon: string
-  position: string  // Tailwind positioning classes
-  size: string      // Tailwind size classes
-}
-
 export interface ShioriTemplate {
   id: string
   name: string
@@ -22,8 +16,8 @@ export interface ShioriTemplate {
     accentBg: string
     accentBgDark: string
     eventIconBg: string
-    headerGradient: string
-    headerBg: string       // ヘッダーエリアの背景色
+    headerGradient: string   // カバー画像なし時のフォールバック
+    headerBg: string
     headerBgDark: string
     // イベントカード
     cardBorderHover: string
@@ -37,16 +31,8 @@ export interface ShioriTemplate {
     addBtnBorderHoverDark: string
     // ドラッグハンドル
     dragHandleHover: string
-    // 装飾アイコン色（ヘッダー）
-    decoColor: string
-    decoColorDark: string
-    // 装飾アイコン色（カード内・やや濃い）
-    cardDecoColor: string
-    cardDecoColorDark: string
   }
   previewGradient: string
-  // 装飾アイコン（ヘッダー背景に透過表示）
-  decorations: TemplateDecoration[]
 }
 
 export const templates: Record<string, ShioriTemplate> = {
@@ -75,13 +61,8 @@ export const templates: Record<string, ShioriTemplate> = {
       addBtnTextHover: 'hover:text-stone-600',
       addBtnBorderHoverDark: 'dark:hover:border-stone-500',
       dragHandleHover: 'hover:text-stone-500',
-      decoColor: 'text-stone-200',
-      decoColorDark: 'dark:text-stone-700',
-      cardDecoColor: 'text-stone-300',
-      cardDecoColorDark: 'dark:text-stone-600',
     },
     previewGradient: 'from-stone-300 to-stone-500',
-    decorations: [],
   },
   pop: {
     id: 'pop',
@@ -108,17 +89,8 @@ export const templates: Record<string, ShioriTemplate> = {
       addBtnTextHover: 'hover:text-orange-500',
       addBtnBorderHoverDark: 'dark:hover:border-orange-600',
       dragHandleHover: 'hover:text-orange-400',
-      decoColor: 'text-orange-200',
-      decoColorDark: 'dark:text-orange-800/40',
-      cardDecoColor: 'text-orange-300',
-      cardDecoColorDark: 'dark:text-orange-700/40',
     },
     previewGradient: 'from-orange-400 via-pink-400 to-yellow-400',
-    decorations: [
-      { icon: 'i-lucide-star', position: 'top-4 right-8', size: 'size-16' },
-      { icon: 'i-lucide-sparkles', position: 'top-10 right-32', size: 'size-10' },
-      { icon: 'i-lucide-party-popper', position: 'top-2 left-6', size: 'size-12' },
-    ],
   },
   wafuu: {
     id: 'wafuu',
@@ -145,17 +117,8 @@ export const templates: Record<string, ShioriTemplate> = {
       addBtnTextHover: 'hover:text-amber-600',
       addBtnBorderHoverDark: 'dark:hover:border-amber-600',
       dragHandleHover: 'hover:text-amber-500',
-      decoColor: 'text-amber-200',
-      decoColorDark: 'dark:text-amber-800/40',
-      cardDecoColor: 'text-amber-300',
-      cardDecoColorDark: 'dark:text-amber-700/40',
     },
     previewGradient: 'from-amber-600 via-amber-500 to-yellow-600',
-    decorations: [
-      { icon: 'i-lucide-fan', position: 'top-3 right-6', size: 'size-20' },
-      { icon: 'i-lucide-flower-2', position: 'top-8 right-28', size: 'size-10' },
-      { icon: 'i-lucide-landmark', position: 'top-4 left-4', size: 'size-14' },
-    ],
   },
   resort: {
     id: 'resort',
@@ -182,17 +145,8 @@ export const templates: Record<string, ShioriTemplate> = {
       addBtnTextHover: 'hover:text-cyan-500',
       addBtnBorderHoverDark: 'dark:hover:border-cyan-600',
       dragHandleHover: 'hover:text-cyan-400',
-      decoColor: 'text-cyan-200',
-      decoColorDark: 'dark:text-cyan-800/40',
-      cardDecoColor: 'text-cyan-300',
-      cardDecoColorDark: 'dark:text-cyan-700/40',
     },
     previewGradient: 'from-cyan-400 via-sky-400 to-blue-400',
-    decorations: [
-      { icon: 'i-lucide-palm-tree', position: 'top-2 right-4', size: 'size-24' },
-      { icon: 'i-lucide-waves', position: 'bottom-2 right-24', size: 'size-12' },
-      { icon: 'i-lucide-sun', position: 'top-3 left-6', size: 'size-14' },
-    ],
   },
   nature: {
     id: 'nature',
@@ -219,17 +173,8 @@ export const templates: Record<string, ShioriTemplate> = {
       addBtnTextHover: 'hover:text-green-600',
       addBtnBorderHoverDark: 'dark:hover:border-green-600',
       dragHandleHover: 'hover:text-green-500',
-      decoColor: 'text-green-200',
-      decoColorDark: 'dark:text-green-800/40',
-      cardDecoColor: 'text-green-300',
-      cardDecoColorDark: 'dark:text-green-700/40',
     },
     previewGradient: 'from-green-500 via-emerald-400 to-lime-400',
-    decorations: [
-      { icon: 'i-lucide-trees', position: 'top-2 right-6', size: 'size-20' },
-      { icon: 'i-lucide-mountain', position: 'top-6 right-28', size: 'size-14' },
-      { icon: 'i-lucide-leaf', position: 'top-3 left-4', size: 'size-12' },
-    ],
   },
 }
 

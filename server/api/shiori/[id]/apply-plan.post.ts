@@ -255,6 +255,24 @@ export default defineEventHandler(async (event) => {
     createdEvents = eventsData || []
   }
 
+  // カバー画像を自動選択（未設定の場合のみ）
+  const { data: currentShiori } = await supabase
+    .from('shioris')
+    .select('area, cover_image_url')
+    .eq('id', id)
+    .single()
+
+  if (currentShiori && !currentShiori.cover_image_url) {
+    const allEvents = body.plan.days.flatMap((d) =>
+      d.events.map((e) => ({ title: e.title, category: e.category, address: e.address })),
+    )
+    const coverPath = selectCoverImage(currentShiori.area, allEvents)
+    await supabase
+      .from('shioris')
+      .update({ cover_image_url: coverPath })
+      .eq('id', id)
+  }
+
   // レスポンスを組み立て
   const result: DayWithEvents[] = createdDays.map((day) => ({
     ...day,

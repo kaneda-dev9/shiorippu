@@ -70,6 +70,16 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // カバー画像URLのバリデーション（プリセットパス or null のみ許可）
+  if (body.cover_image_url !== undefined && body.cover_image_url !== null) {
+    if (!body.cover_image_url.startsWith('/covers/')) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: '無効なカバー画像URLです。',
+      })
+    }
+  }
+
   // undefined のフィールドは除外
   const updateData: Record<string, unknown> = {}
   if (body.title !== undefined) updateData.title = body.title.trim()
