@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Event, DayWithEvents } from '~~/types/database'
 import { getCategoryIcon, getCategoryLabel } from '~~/shared/category-icons'
+import { bookingStatusConfig } from '~~/shared/booking-status'
 import { VueDraggable } from 'vue-draggable-plus'
 
 definePageMeta({
@@ -532,6 +533,16 @@ async function handleDeleteShiori() {
                   >
                     {{ getCategoryLabel(ev.category) }}
                   </span>
+                  <!-- 予約ステータスバッジ -->
+                  <UBadge
+                    v-if="ev.booking_status && ev.booking_status !== 'none'"
+                    :color="bookingStatusConfig[ev.booking_status].color as any"
+                    variant="subtle"
+                    size="xs"
+                  >
+                    <UIcon :name="bookingStatusConfig[ev.booking_status].icon" class="size-3" />
+                    {{ bookingStatusConfig[ev.booking_status].label }}
+                  </UBadge>
                 </div>
                 <p class="mt-0.5 font-medium text-stone-900 dark:text-stone-50">
                   {{ ev.title }}

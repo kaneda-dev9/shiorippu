@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { z } from 'zod'
-import type { Event, EventCategory, DayWithEvents } from '~~/types/database'
+import type { Event, EventCategory, BookingStatus, DayWithEvents } from '~~/types/database'
 import type { PlaceResult } from '~~/app/components/containers/map/PlaceAutocomplete.vue'
 import { categoryLabels, categoryIcons } from '~~/shared/category-icons'
+import { bookingStatusConfig } from '~~/shared/booking-status'
 
 const props = defineProps<{
   dayId: string
@@ -31,6 +32,7 @@ const schema = z.object({
   memo: z.string(),
   url: z.string(),
   address: z.string(),
+  booking_status: z.string(),
 })
 
 // フォーム状態
@@ -43,6 +45,7 @@ interface FormValue {
   memo: string
   url: string
   address: string
+  booking_status: BookingStatus
   lat: number | null
   lng: number | null
   place_id: string | null
@@ -57,6 +60,7 @@ const initialFormValue: FormValue = {
   memo: '',
   url: '',
   address: '',
+  booking_status: 'none',
   lat: null,
   lng: null,
   place_id: null,
@@ -76,6 +80,7 @@ watch([() => props.event, () => props.dayId], ([ev, dayId]) => {
       memo: ev.memo || '',
       url: ev.url || '',
       address: ev.address || '',
+      booking_status: ev.booking_status || 'none',
       lat: ev.lat,
       lng: ev.lng,
       place_id: ev.place_id,
@@ -116,6 +121,13 @@ const categoryOptions = Object.entries(categoryLabels).map(([value, label]) => (
   icon: categoryIcons[value as EventCategory],
 }))
 
+// 予約ステータスの選択肢
+const bookingStatusOptions = Object.entries(bookingStatusConfig).map(([value, config]) => ({
+  label: config.label,
+  value,
+  icon: config.icon,
+}))
+
 async function handleSubmit() {
   saving.value = true
   try {
@@ -132,6 +144,7 @@ async function handleSubmit() {
       lat: f.lat,
       lng: f.lng,
       place_id: f.place_id,
+      booking_status: f.booking_status,
     }
 
     let result: Event
@@ -257,6 +270,18 @@ async function handleSubmit() {
             v-model="form.url"
             placeholder="https://…"
             icon="i-lucide-link"
+            size="lg"
+            class="w-full"
+          />
+        </UFormField>
+
+        <!-- 予約状況 -->
+        <UFormField name="booking_status" label="予約状況">
+          <USelectMenu
+            v-model="form.booking_status"
+            :items="bookingStatusOptions"
+            value-key="value"
+            placeholder="予約状況を選択"
             size="lg"
             class="w-full"
           />
