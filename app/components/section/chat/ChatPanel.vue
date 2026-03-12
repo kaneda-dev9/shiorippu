@@ -243,11 +243,14 @@ const lastMessage = computed(() => messages.value[messages.value.length - 1] ?? 
 /** 最後のメッセージのグローバルインデックス */
 const lastMessageIndex = computed(() => messages.value.length - 1)
 
-/** 複数選択モードかどうか */
-const isMultiSelect = computed(() => {
+/** 単一選択モードかどうか（デフォルトは複数選択） */
+const isSingleSelect = computed(() => {
   if (!lastMessage.value || lastMessage.value.role !== 'assistant') return false
-  return /複数/.test(lastMessage.value.content)
+  return /1つ選/.test(lastMessage.value.content)
 })
+
+/** 複数選択モードかどうか */
+const isMultiSelect = computed(() => !isSingleSelect.value)
 
 /** 選択肢カードをクリック */
 function toggleChoice(label: string) {
@@ -413,7 +416,7 @@ async function sendMessage() {
           }
           else if (data.type === 'tool_use') {
             // ツール使用中の表示
-            const toolNames = data.tools as string[]
+            const toolNames = [...new Set(data.tools as string[])]
             const label = toolNames.map(t => TOOL_LABELS[t] ?? t).join('、')
             toolActivity.value = label
             autoScrollIfNeeded()
