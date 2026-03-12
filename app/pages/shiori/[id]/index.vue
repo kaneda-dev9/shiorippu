@@ -25,7 +25,6 @@ const {
   deleteDay,
   onEventSaved,
   deleteEvent,
-  reorderDays,
   reorderEvents,
   deleteShiori,
   changeTemplate,
@@ -68,6 +67,48 @@ const showShareModal = ref<boolean>(false)
 const showTemplateSelector = ref<boolean>(false)
 const deleting = ref<boolean>(false)
 
+// タブナビゲーション
+const activeDay = ref<string>('')
+
+const dayTabItems = computed(() => {
+  if (!shiori.value) return []
+  return [...shiori.value.days]
+    .sort((a, b) => a.day_number - b.day_number)
+    .map((d) => ({
+      label: `Day ${d.day_number}`,
+      value: d.id,
+    }))
+})
+
+// テンプレートに応じたアクティブタブの色
+const tabActiveClass = computed<string>(() => {
+  const map: Record<string, string> = {
+    simple: 'bg-stone-700 dark:bg-stone-300 dark:text-stone-900',
+    pop: 'bg-orange-500 dark:bg-orange-500',
+    wafuu: 'bg-amber-600 dark:bg-amber-500',
+    resort: 'bg-cyan-500 dark:bg-cyan-500',
+    nature: 'bg-green-600 dark:bg-green-500',
+  }
+  return map[tmpl.value.id] || map.simple!
+})
+
+const currentDay = computed<DayWithEvents | undefined>(() => {
+  if (!shiori.value) return undefined
+  return shiori.value.days.find((d) => d.id === activeDay.value)
+})
+
+// activeDay が無効な場合、先頭の Day にフォールバック
+watch(() => shiori.value?.days, (days) => {
+  if (!days || days.length === 0) {
+    activeDay.value = ''
+    return
+  }
+  const valid = days.some((d) => d.id === activeDay.value)
+  if (!valid) {
+    activeDay.value = days[0]!.id
+  }
+}, { immediate: true, deep: true })
+
 // Day/イベント削除確認
 const showDayDeleteModal = ref<boolean>(false)
 const deleteDayTarget = ref<{ id: string; dayNumber: number } | null>(null)
@@ -98,10 +139,21 @@ function confirmDeleteDay(dayId: string, dayNumber: number) {
 
 /** 日程を削除（UI状態のラッパー） */
 async function handleDeleteDay() {
-  if (!deleteDayTarget.value) return
+  if (!deleteDayTarget.value || !shiori.value) return
   deletingItem.value = true
+
+  // 削除前に切り替え先を計算
+  const idx = shiori.value.days.findIndex((d) => d.id === deleteDayTarget.value!.id)
+  const days = shiori.value.days
+  const nextActiveId = idx > 0
+    ? days[idx - 1]!.id
+    : days.length > 1
+      ? days[1]!.id
+      : ''
+
   try {
     await deleteDay(deleteDayTarget.value.id, deleteDayTarget.value.dayNumber)
+    activeDay.value = nextActiveId
   }
   catch {
     toast.add({ title: '日程の削除に失敗しました', color: 'error' })
@@ -110,6 +162,14 @@ async function handleDeleteDay() {
     deletingItem.value = false
     showDayDeleteModal.value = false
     deleteDayTarget.value = null
+  }
+}
+
+/** 日程を追加してタブをアクティブにする */
+async function handleAddDay() {
+  const newDayId = await addDay()
+  if (newDayId) {
+    activeDay.value = newDayId
   }
 }
 
@@ -342,167 +402,175 @@ async function handleDeleteShiori() {
           <UButton icon="i-lucide-sparkles" @click="showChat = true">
             AIでプランを作る
           </UButton>
-          <UButton icon="i-lucide-plus" variant="outline" @click="addDay">
+          <UButton icon="i-lucide-plus" variant="outline" @click="handleAddDay">
             日程を追加
           </UButton>
         </div>
       </div>
 
-      <!-- 日程リスト -->
-      <div v-else class="space-y-6">
-        <VueDraggable
-          v-model="shiori.days"
-          handle=".day-drag-handle"
-          :animation="200"
-          ghostClass="opacity-30"
-          @end="reorderDays"
-        >
-          <div v-for="day in shiori.days" :key="day.id" class="mb-6">
-              <!-- 日程ヘッダー -->
-              <div class="mb-3 flex items-center justify-between">
-                <h2 class="flex items-center gap-2 text-sm font-semibold" :class="tmpl.colors.dayHeader">
-                  <span class="day-drag-handle -m-1.5 flex cursor-grab items-center justify-center p-1.5 active:cursor-grabbing">
-                    <UIcon
-                      name="i-lucide-grip-vertical"
-                      class="size-4 text-stone-300"
-                      :class="tmpl.colors.dragHandleHover"
-                    />
-                  </span>
-                  <UIcon name="i-lucide-calendar-days" class="size-4" />
-                  Day {{ day.day_number }}
-                  <span v-if="day.date" class="text-stone-400">{{ day.date }}</span>
-                </h2>
-                <div class="flex items-center gap-1">
-                  <UButton
-                    icon="i-lucide-plus"
-                    variant="ghost"
-                    size="xs"
-                    aria-label="イベントを追加"
-                    @click="openAddEvent(day.id)"
+      <!-- 日程タブ -->
+      <div v-else>
+        <!-- Day タブバー -->
+        <div class="day-tab-scroll flex items-center gap-1.5 overflow-x-auto">
+          <button
+            v-for="tab in dayTabItems"
+            :key="tab.value"
+            class="relative shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold whitespace-nowrap transition-all duration-200"
+            :class="activeDay === tab.value
+              ? ['text-white shadow-sm', tabActiveClass]
+              : ['text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800']
+            "
+            @click="activeDay = tab.value as string"
+          >
+            {{ tab.label }}
+          </button>
+          <UButton
+            v-if="currentDay"
+            icon="i-lucide-trash-2"
+            variant="ghost"
+            size="xs"
+            aria-label="日程を削除"
+            class="shrink-0 text-stone-400 hover:text-red-500"
+            @click="confirmDeleteDay(currentDay.id, currentDay.day_number)"
+          />
+          <UButton
+            icon="i-lucide-plus"
+            variant="ghost"
+            size="xs"
+            aria-label="日程を追加"
+            class="shrink-0"
+            @click="handleAddDay"
+          />
+        </div>
+
+        <!-- 選択中の Day のイベントリスト -->
+        <div v-if="currentDay" class="mt-4">
+          <!-- 日程ヘッダー -->
+          <div class="mb-3 flex items-center justify-between">
+            <h2 class="flex items-center gap-2 text-sm font-semibold" :class="tmpl.colors.dayHeader">
+              <UIcon name="i-lucide-calendar-days" class="size-4" />
+              Day {{ currentDay.day_number }}
+              <span v-if="currentDay.date" class="text-stone-400">{{ currentDay.date }}</span>
+            </h2>
+            <UButton
+              icon="i-lucide-plus"
+              variant="ghost"
+              size="xs"
+              aria-label="イベントを追加"
+              @click="openAddEvent(currentDay.id)"
+            />
+          </div>
+
+          <!-- イベントリスト（同一Day内のドラッグ&ドロップ） -->
+          <VueDraggable
+            v-model="currentDay.events"
+            handle=".event-drag-handle"
+            :animation="200"
+            ghostClass="opacity-30"
+            class="min-h-[2rem] space-y-2"
+            @end="reorderEvents"
+          >
+            <div
+              v-for="ev in currentDay.events"
+              :key="ev.id"
+              class="group relative flex items-start gap-3 overflow-hidden rounded-xl border border-l-[3px] border-stone-200 bg-white p-3 transition-all dark:border-stone-700 dark:bg-stone-900"
+              :class="[tmpl.colors.cardLeftBorder, tmpl.colors.cardBorderHover]"
+            >
+              <!-- カード内装飾アイコン（デコレーション配列をローテーション） -->
+              <UIcon
+                v-if="tmpl.decorations.length > 0"
+                :name="tmpl.decorations[ev.sort_order % tmpl.decorations.length]!.icon"
+                aria-hidden="true"
+                class="pointer-events-none absolute -bottom-3 -right-3 size-20 opacity-[0.08]"
+                :class="[tmpl.colors.cardDecoColor, tmpl.colors.cardDecoColorDark]"
+              />
+
+              <!-- ドラッグハンドル -->
+              <div class="flex shrink-0 flex-col items-center gap-1">
+                <span class="event-drag-handle -m-1 flex cursor-grab items-center justify-center p-2 active:cursor-grabbing">
+                  <UIcon
+                    name="i-lucide-grip-vertical"
+                    class="size-4 text-stone-300"
+                    :class="tmpl.colors.dragHandleHover"
                   />
-                  <UButton
-                    icon="i-lucide-trash-2"
-                    variant="ghost"
-                    size="xs"
-                    aria-label="日程を削除"
-                    class="text-stone-400 hover:text-red-500"
-                    @click="confirmDeleteDay(day.id, day.day_number)"
-                  />
+                </span>
+                <!-- カテゴリアイコン -->
+                <div class="flex size-10 items-center justify-center rounded-lg" :class="[tmpl.colors.eventIconBg, tmpl.colors.accentBgDark]">
+                  <UIcon :name="getCategoryIcon(ev.category)" class="size-5" :class="tmpl.colors.eventIconText" />
                 </div>
               </div>
 
-              <!-- イベントリスト（ドラッグ&ドロップ対応、Day間移動可） -->
-              <VueDraggable
-                v-model="day.events"
-                group="events"
-                handle=".event-drag-handle"
-                :animation="200"
-                ghostClass="opacity-30"
-                class="min-h-[2rem] space-y-2"
-                @end="reorderEvents"
-              >
-                <div
-                  v-for="ev in day.events"
-                  :key="ev.id"
-                    class="group relative flex items-start gap-3 overflow-hidden rounded-xl border border-l-[3px] border-stone-200 bg-white p-3 transition-all dark:border-stone-700 dark:bg-stone-900"
-                    :class="[tmpl.colors.cardLeftBorder, tmpl.colors.cardBorderHover]"
+              <!-- イベント情報 -->
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <span v-if="ev.start_time" class="tabular-nums text-xs font-medium text-stone-400">
+                    {{ ev.start_time.slice(0, 5) }}
+                    <template v-if="ev.end_time"> - {{ ev.end_time.slice(0, 5) }}</template>
+                  </span>
+                  <span
+                    class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium"
+                    :class="[tmpl.colors.badgeText, tmpl.colors.badgeBg]"
                   >
-                    <!-- カード内装飾アイコン（デコレーション配列をローテーション） -->
-                    <UIcon
-                      v-if="tmpl.decorations.length > 0"
-                      :name="tmpl.decorations[ev.sort_order % tmpl.decorations.length]!.icon"
-                      aria-hidden="true"
-                      class="pointer-events-none absolute -bottom-3 -right-3 size-20 opacity-[0.08]"
-                      :class="[tmpl.colors.cardDecoColor, tmpl.colors.cardDecoColorDark]"
-                    />
-
-                    <!-- ドラッグハンドル -->
-                    <div class="flex shrink-0 flex-col items-center gap-1">
-                      <span class="event-drag-handle -m-1 flex cursor-grab items-center justify-center p-2 active:cursor-grabbing">
-                        <UIcon
-                          name="i-lucide-grip-vertical"
-                          class="size-4 text-stone-300"
-                          :class="tmpl.colors.dragHandleHover"
-                        />
-                      </span>
-                      <!-- カテゴリアイコン -->
-                      <div class="flex size-10 items-center justify-center rounded-lg" :class="[tmpl.colors.eventIconBg, tmpl.colors.accentBgDark]">
-                        <UIcon :name="getCategoryIcon(ev.category)" class="size-5" :class="tmpl.colors.eventIconText" />
-                      </div>
-                    </div>
-
-                    <!-- イベント情報 -->
-                    <div class="min-w-0 flex-1">
-                      <div class="flex items-center gap-2">
-                        <span v-if="ev.start_time" class="tabular-nums text-xs font-medium text-stone-400">
-                          {{ ev.start_time.slice(0, 5) }}
-                          <template v-if="ev.end_time"> - {{ ev.end_time.slice(0, 5) }}</template>
-                        </span>
-                        <span
-                          class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium"
-                          :class="[tmpl.colors.badgeText, tmpl.colors.badgeBg]"
-                        >
-                          {{ getCategoryLabel(ev.category) }}
-                        </span>
-                      </div>
-                      <p class="mt-0.5 font-medium text-stone-900 dark:text-stone-50">
-                        {{ ev.title }}
-                      </p>
-                      <p v-if="ev.address" class="mt-0.5 flex items-center gap-1 text-xs text-stone-400">
-                        <UIcon name="i-lucide-map-pin" class="size-3" />
-                        {{ ev.address }}
-                      </p>
-                      <p v-if="ev.memo" class="mt-1 text-xs text-stone-500">
-                        {{ ev.memo }}
-                      </p>
-                      <!-- URLリンク -->
-                      <a
-                        v-if="ev.url"
-                        :href="ev.url"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="mt-1 inline-flex items-center gap-1 text-xs hover:underline"
-                        :class="[tmpl.colors.link, tmpl.colors.linkHover]"
-                      >
-                        <UIcon name="i-lucide-external-link" class="size-3" />
-                        {{ ev.url.replace(/^https?:\/\//, '').split('/')[0] }}
-                      </a>
-                    </div>
-
-                    <!-- アクションボタン -->
-                    <div class="flex shrink-0 gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100">
-                      <UButton
-                        icon="i-lucide-pencil"
-                        variant="ghost"
-                        size="xs"
-                        aria-label="イベントを編集"
-                        @click="openEditEvent(day.id, ev)"
-                      />
-                      <UButton
-                        icon="i-lucide-trash-2"
-                        variant="ghost"
-                        size="xs"
-                        aria-label="イベントを削除"
-                        class="text-stone-400 hover:text-red-500"
-                        @click="confirmDeleteEvent(day.id, ev.id, ev.title)"
-                      />
-                    </div>
+                    {{ getCategoryLabel(ev.category) }}
+                  </span>
                 </div>
-              </VueDraggable>
+                <p class="mt-0.5 font-medium text-stone-900 dark:text-stone-50">
+                  {{ ev.title }}
+                </p>
+                <p v-if="ev.address" class="mt-0.5 flex items-center gap-1 text-xs text-stone-400">
+                  <UIcon name="i-lucide-map-pin" class="size-3" />
+                  {{ ev.address }}
+                </p>
+                <p v-if="ev.memo" class="mt-1 text-xs text-stone-500">
+                  {{ ev.memo }}
+                </p>
+                <!-- URLリンク -->
+                <a
+                  v-if="ev.url"
+                  :href="ev.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="mt-1 inline-flex items-center gap-1 text-xs hover:underline"
+                  :class="[tmpl.colors.link, tmpl.colors.linkHover]"
+                >
+                  <UIcon name="i-lucide-external-link" class="size-3" />
+                  {{ ev.url.replace(/^https?:\/\//, '').split('/')[0] }}
+                </a>
+              </div>
 
-              <!-- イベント追加ボタン -->
-              <UButton
-                icon="i-lucide-plus"
-                variant="outline"
-                block
-                class="mt-2 rounded-xl border-2 border-dashed"
-                :class="[tmpl.colors.addBtnBorderHover, tmpl.colors.addBtnTextHover, tmpl.colors.addBtnBorderHoverDark]"
-                @click="openAddEvent(day.id)"
-              >
-                イベントを追加
-              </UButton>
+              <!-- アクションボタン -->
+              <div class="flex shrink-0 gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100">
+                <UButton
+                  icon="i-lucide-pencil"
+                  variant="ghost"
+                  size="xs"
+                  aria-label="イベントを編集"
+                  @click="openEditEvent(currentDay!.id, ev)"
+                />
+                <UButton
+                  icon="i-lucide-trash-2"
+                  variant="ghost"
+                  size="xs"
+                  aria-label="イベントを削除"
+                  class="text-stone-400 hover:text-red-500"
+                  @click="confirmDeleteEvent(currentDay!.id, ev.id, ev.title)"
+                />
+              </div>
             </div>
-        </VueDraggable>
+          </VueDraggable>
+
+          <!-- イベント追加ボタン -->
+          <UButton
+            icon="i-lucide-plus"
+            variant="outline"
+            block
+            class="mt-2 rounded-xl border-2 border-dashed"
+            :class="[tmpl.colors.addBtnBorderHover, tmpl.colors.addBtnTextHover, tmpl.colors.addBtnBorderHoverDark]"
+            @click="openAddEvent(currentDay.id)"
+          >
+            イベントを追加
+          </UButton>
+        </div>
 
         <!-- 日程追加ボタン -->
         <UButton
@@ -510,9 +578,9 @@ async function handleDeleteShiori() {
           variant="outline"
           size="lg"
           block
-          class="rounded-xl border-2 border-dashed"
+          class="mt-6 rounded-xl border-2 border-dashed"
           :class="[tmpl.colors.addBtnBorderHover, tmpl.colors.addBtnTextHover, tmpl.colors.addBtnBorderHoverDark]"
-          @click="addDay"
+          @click="handleAddDay"
         >
           日程を追加
         </UButton>
@@ -561,6 +629,7 @@ async function handleDeleteShiori() {
     v-model:show="showEventModal"
     :day-id="selectedDayId"
     :event="selectedEvent"
+    :days="shiori?.days || []"
     @saved="onEventSaved"
   />
 

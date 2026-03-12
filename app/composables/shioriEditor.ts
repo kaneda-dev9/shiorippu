@@ -135,8 +135,8 @@ export function useShioriEditor(shioriId: string) {
     }
   }
 
-  /** 日程を追加 */
-  async function addDay() {
+  /** 日程を追加（追加された Day の ID を返す） */
+  async function addDay(): Promise<string | undefined> {
     if (!shiori.value) return
     const nextNumber = shiori.value.days.length + 1
     try {
@@ -150,6 +150,7 @@ export function useShioriEditor(shioriId: string) {
       addPendingOp(day.id)
       shiori.value.days.push({ ...day, events: [] })
       toast.add({ title: `Day ${nextNumber} を追加しました`, color: 'success' })
+      return day.id
     }
     catch {
       toast.add({ title: '日程の追加に失敗しました', color: 'error' })
@@ -165,19 +166,28 @@ export function useShioriEditor(shioriId: string) {
     toast.add({ title: `Day ${dayNumber} を削除しました`, color: 'success' })
   }
 
-  /** イベント保存後のコールバック */
+  /** イベント保存後のコールバック（Day間移動にも対応） */
   function onEventSaved(savedEvent: Event) {
     if (!shiori.value) return
     addPendingOp(savedEvent.id)
-    const day = shiori.value.days.find((d) => d.id === savedEvent.day_id)
-    if (!day) return
 
-    const eventIndex = day.events.findIndex((e) => e.id === savedEvent.id)
+    // 元のDayからイベントを削除（Day間移動の場合）
+    for (const day of shiori.value.days) {
+      const idx = day.events.findIndex((e) => e.id === savedEvent.id)
+      if (idx >= 0 && day.id !== savedEvent.day_id) {
+        day.events.splice(idx, 1)
+      }
+    }
+
+    const targetDay = shiori.value.days.find((d) => d.id === savedEvent.day_id)
+    if (!targetDay) return
+
+    const eventIndex = targetDay.events.findIndex((e) => e.id === savedEvent.id)
     if (eventIndex >= 0) {
-      day.events[eventIndex] = savedEvent
+      targetDay.events[eventIndex] = savedEvent
     }
     else {
-      day.events.push(savedEvent)
+      targetDay.events.push(savedEvent)
     }
   }
 

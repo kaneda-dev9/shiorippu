@@ -29,6 +29,15 @@ time,
   font-variant-numeric: tabular-nums;
 }
 
+/* スクロールバー非表示（横スクロール対応コンテナ用） */
+.day-tab-scroll {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+.day-tab-scroll::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
 /* prefers-reduced-motion: アニメーションを抑制 */
 @media (prefers-reduced-motion: reduce) {
   *,

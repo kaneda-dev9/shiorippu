@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { z } from 'zod'
-import type { Event, EventCategory } from '~~/types/database'
+import type { Event, EventCategory, DayWithEvents } from '~~/types/database'
 import type { PlaceResult } from '~~/app/components/containers/map/PlaceAutocomplete.vue'
 import { categoryLabels, categoryIcons } from '~~/shared/category-icons'
 
 const props = defineProps<{
   dayId: string
   event?: Event | null
+  days?: DayWithEvents[]
 }>()
 
 const isOpen = defineModel<boolean>('show', { required: true })
@@ -24,6 +25,7 @@ const saving = ref<boolean>(false)
 const schema = z.object({
   title: z.string().min(1, 'タイトルを入力してください'),
   category: z.string(),
+  day_id: z.string(),
   start_time: z.string(),
   end_time: z.string(),
   memo: z.string(),
@@ -35,6 +37,7 @@ const schema = z.object({
 interface FormValue {
   title: string
   category: EventCategory
+  day_id: string
   start_time: string
   end_time: string
   memo: string
@@ -48,6 +51,7 @@ interface FormValue {
 const initialFormValue: FormValue = {
   title: '',
   category: 'other',
+  day_id: '',
   start_time: '',
   end_time: '',
   memo: '',
@@ -61,11 +65,12 @@ const initialFormValue: FormValue = {
 const form = ref<FormValue>({ ...initialFormValue })
 
 // 編集モードの場合、既存データで初期化
-watch(() => props.event, (ev) => {
+watch([() => props.event, () => props.dayId], ([ev, dayId]) => {
   if (ev) {
     form.value = {
       title: ev.title,
       category: ev.category,
+      day_id: ev.day_id,
       start_time: ev.start_time?.slice(0, 5) || '',
       end_time: ev.end_time?.slice(0, 5) || '',
       memo: ev.memo || '',
@@ -77,9 +82,17 @@ watch(() => props.event, (ev) => {
     }
   }
   else {
-    form.value = { ...initialFormValue }
+    form.value = { ...initialFormValue, day_id: dayId }
   }
 }, { immediate: true })
+
+// Day選択肢を生成
+const dayOptions = computed(() =>
+  (props.days || []).map((d) => ({
+    label: `Day ${d.day_number}${d.date ? ` (${d.date})` : ''}`,
+    value: d.id,
+  })),
+)
 
 const isEditMode = computed(() => !!props.event)
 
@@ -126,13 +139,13 @@ async function handleSubmit() {
     if (isEditMode.value && props.event) {
       result = await authFetch<Event>(`/api/event/${props.event.id}`, {
         method: 'PUT',
-        body: payload,
+        body: { ...payload, day_id: f.day_id },
       })
     }
     else {
       result = await authFetch<Event>('/api/event', {
         method: 'POST',
-        body: { ...payload, day_id: props.dayId },
+        body: { ...payload, day_id: f.day_id },
       })
     }
 
@@ -180,18 +193,31 @@ async function handleSubmit() {
           />
         </UFormField>
 
-        <!-- カテゴリ -->
-        <UFormField name="category" label="カテゴリ" class="w-1/2">
-          <USelectMenu
-            v-model="form.category"
-            :items="categoryOptions"
-            value-key="value"
-            placeholder="カテゴリを選択"
-            size="lg"
-            class="w-full"
-            :ui="{ content: 'min-w-48' }"
-          />
-        </UFormField>
+        <!-- カテゴリ & 所属する日程 -->
+        <div class="grid grid-cols-2 gap-3">
+          <UFormField name="category" label="カテゴリ">
+            <USelectMenu
+              v-model="form.category"
+              :items="categoryOptions"
+              value-key="value"
+              placeholder="カテゴリを選択"
+              size="lg"
+              class="w-full"
+              :ui="{ content: 'min-w-48' }"
+            />
+          </UFormField>
+
+          <UFormField v-if="dayOptions.length > 1" name="day_id" label="所属する日程">
+            <USelectMenu
+              v-model="form.day_id"
+              :items="dayOptions"
+              value-key="value"
+              placeholder="日程を選択"
+              size="lg"
+              class="w-full"
+            />
+          </UFormField>
+        </div>
 
         <!-- 時間 -->
         <div class="grid grid-cols-2 gap-3">

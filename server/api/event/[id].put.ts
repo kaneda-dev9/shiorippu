@@ -18,6 +18,7 @@ export default defineEventHandler(async (event) => {
     title?: string
     category?: EventCategory
     icon?: string
+    day_id?: string
     start_time?: string | null
     end_time?: string | null
     memo?: string | null
@@ -65,6 +66,11 @@ export default defineEventHandler(async (event) => {
 
   await requireDayAccess(event, existingEvent.day_id)
 
+  // Day間移動の場合、移動先Dayのアクセス権もチェック
+  if (body.day_id && body.day_id !== existingEvent.day_id) {
+    await requireDayAccess(event, body.day_id)
+  }
+
   const updateData: Record<string, unknown> = {}
   if (body.title !== undefined) updateData.title = body.title.trim()
   if (body.category !== undefined) updateData.category = body.category
@@ -77,6 +83,7 @@ export default defineEventHandler(async (event) => {
   if (body.lat !== undefined) updateData.lat = body.lat
   if (body.lng !== undefined) updateData.lng = body.lng
   if (body.address !== undefined) updateData.address = body.address
+  if (body.day_id !== undefined) updateData.day_id = body.day_id
   if (body.booking_status !== undefined) updateData.booking_status = body.booking_status
 
   const { data, error } = await supabase
