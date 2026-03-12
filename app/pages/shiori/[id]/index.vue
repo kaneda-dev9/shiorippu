@@ -275,7 +275,7 @@ async function handleDeleteShiori() {
           >
             <span class="hidden sm:inline">テーマ</span>
           </UButton>
-          <ShioriPdfExportButton
+          <SectionShioriPdfExportButton
             v-if="shiori"
             :shiori="shiori"
             variant="ghost"
@@ -321,7 +321,7 @@ async function handleDeleteShiori() {
           <UIcon name="i-lucide-palette" class="size-4" />
           デザインテンプレート
         </h3>
-        <ShioriTemplateSelector
+        <ContainersShioriTemplateSelector
           :selected="shiori.template_id"
           @update:selected="changeTemplate"
         />
@@ -522,7 +522,7 @@ async function handleDeleteShiori() {
 
     <!-- モバイル: チャットパネル フルスクリーンオーバーレイ -->
     <div v-if="showChat" class="fixed inset-0 z-50 bg-white dark:bg-stone-900 md:hidden">
-      <ChatPanel :shiori-id="shioriId" @close="showChat = false" @plan-applied="fetchShiori" />
+      <SectionChatPanel :shiori-id="shioriId" @close="showChat = false" @plan-applied="fetchShiori" />
     </div>
 
     <!-- デスクトップ: リサイズハンドル + AIチャットパネル サイドバー -->
@@ -548,7 +548,7 @@ async function handleDeleteShiori() {
         class="hidden shrink-0 bg-white md:block dark:bg-stone-900"
         :style="{ width: `${chatWidth}px` }"
       >
-        <ChatPanel :shiori-id="shioriId" @close="showChat = false" @plan-applied="fetchShiori" />
+        <SectionChatPanel :shiori-id="shioriId" @close="showChat = false" @plan-applied="fetchShiori" />
       </div>
     </template>
 
@@ -557,7 +557,7 @@ async function handleDeleteShiori() {
   </div>
 
   <!-- イベント追加・編集モーダル -->
-  <ShioriEventFormModal
+  <SectionShioriEventFormModal
     v-model:show="showEventModal"
     :day-id="selectedDayId"
     :event="selectedEvent"
@@ -565,7 +565,7 @@ async function handleDeleteShiori() {
   />
 
   <!-- 共有設定モーダル -->
-  <ShioriShareModal
+  <SectionShioriShareModal
     v-if="shiori"
     v-model:show="showShareModal"
     :shiori="shiori"
@@ -574,64 +574,42 @@ async function handleDeleteShiori() {
   />
 
   <!-- しおり削除確認モーダル（オーナーのみ） -->
-  <UModal
+  <AtomsConfirmModal
     v-if="isOwner"
-    v-model:open="showDeleteModal"
+    v-model:show="showDeleteModal"
     title="しおりを削除"
     :description="`「${shiori?.title}」を削除しますか？`"
-    :ui="{ footer: 'justify-end' }"
+    :loading="deleting"
+    @confirm="handleDeleteShiori"
   >
     <template #body>
       <p class="text-xs text-stone-400">
         日程・イベント・チャット履歴もすべて削除されます。この操作は取り消せません。
       </p>
     </template>
-    <template #footer="{ close }">
-      <UButton variant="ghost" @click="close">
-        キャンセル
-      </UButton>
-      <UButton color="error" :loading="deleting" @click="handleDeleteShiori">
-        削除する
-      </UButton>
-    </template>
-  </UModal>
+  </AtomsConfirmModal>
 
   <!-- 日程削除確認モーダル -->
-  <UModal
-    v-model:open="showDayDeleteModal"
+  <AtomsConfirmModal
+    v-model:show="showDayDeleteModal"
     title="日程を削除"
     :description="`「Day ${deleteDayTarget?.dayNumber}」を削除しますか？`"
-    :ui="{ footer: 'justify-end' }"
+    :loading="deletingItem"
+    @confirm="handleDeleteDay"
   >
     <template #body>
       <p class="text-xs text-stone-400">
         この日程に含まれるイベントもすべて削除されます。
       </p>
     </template>
-    <template #footer="{ close }">
-      <UButton variant="ghost" @click="close">
-        キャンセル
-      </UButton>
-      <UButton color="error" :loading="deletingItem" @click="handleDeleteDay">
-        削除する
-      </UButton>
-    </template>
-  </UModal>
+  </AtomsConfirmModal>
 
   <!-- イベント削除確認モーダル -->
-  <UModal
-    v-model:open="showEventDeleteModal"
+  <AtomsConfirmModal
+    v-model:show="showEventDeleteModal"
     title="イベントを削除"
     :description="`「${deleteEventTarget?.title}」を削除しますか？`"
-    :ui="{ footer: 'justify-end' }"
-  >
-    <template #footer="{ close }">
-      <UButton variant="ghost" @click="close">
-        キャンセル
-      </UButton>
-      <UButton color="error" :loading="deletingItem" @click="handleDeleteEvent">
-        削除する
-      </UButton>
-    </template>
-  </UModal>
+    :loading="deletingItem"
+    @confirm="handleDeleteEvent"
+  />
 </template>

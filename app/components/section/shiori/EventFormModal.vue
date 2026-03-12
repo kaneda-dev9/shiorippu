@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { Event, EventCategory } from '~~/types/database'
-import type { PlaceResult } from '~~/app/components/map/PlaceAutocomplete.vue'
+import type { PlaceResult } from '~~/app/components/containers/map/PlaceAutocomplete.vue'
 import { categoryLabels, categoryIcons } from '~~/shared/category-icons'
 
 const props = defineProps<{
@@ -217,7 +217,7 @@ async function handleSubmit() {
 
         <!-- 場所（Places Autocomplete） -->
         <UFormField name="address" label="場所・住所">
-          <MapPlaceAutocomplete
+          <ContainersMapPlaceAutocomplete
             v-model:value="form.address"
             placeholder="場所を検索…"
             @place-selected="onPlaceSelected"

@@ -44,7 +44,7 @@
 
         <!-- イベントリスト -->
         <div class="h-[calc(100dvh-3.5rem)]">
-          <MapEventList
+          <SectionMapEventList
             :days="shiori.days || []"
             v-model:selected-day-numbers="selectedDays"
             @event-click="focusEvent"
@@ -102,7 +102,7 @@
         {{ eventsWithoutLocation }}件のイベントに位置情報がありません
       </div>
 
-      <MapView
+      <SectionMapView
         ref="mapViewRef"
         :days="shiori.days || []"
         :selected-day-numbers="selectedDays"
@@ -111,7 +111,7 @@
     </div>
 
     <!-- イベント編集モーダル -->
-    <ShioriEventFormModal
+    <SectionShioriEventFormModal
       v-model:show="showEventModal"
       :day-id="editDayId"
       :event="editEvent"
@@ -122,7 +122,7 @@
 
 <script setup lang="ts">
 import type { ShioriWithRole, Event } from '~~/types/database'
-import MapViewComponent from '~~/app/components/map/MapView.vue'
+import MapViewComponent from '~~/app/components/section/map/MapView.vue'
 
 definePageMeta({
   layout: false,

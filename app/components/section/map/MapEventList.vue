@@ -96,15 +96,11 @@
       </template>
 
       <!-- Dayがない場合 -->
-      <div
+      <AtomsEmptyState
         v-if="filteredDays.length === 0"
-        class="flex flex-col items-center justify-center px-4 py-12 text-center"
-      >
-        <UIcon name="i-lucide-calendar-off" class="mb-2 size-8 text-stone-300" />
-        <p class="text-sm text-stone-400">
-          表示する日程がありません
-        </p>
-      </div>
+        icon="i-lucide-calendar-off"
+        message="表示する日程がありません"
+      />
     </div>
   </div>
 </template>

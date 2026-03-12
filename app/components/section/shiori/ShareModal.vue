@@ -14,14 +14,12 @@ const emit = defineEmits<{
 
 const { authFetch } = useAuthFetch()
 const toast = useToast()
-const { copy, copied: publicCopied } = useClipboard()
 
 const isPublic = ref(props.shiori.is_public)
 const toggling = ref<boolean>(false)
 const inviteEnabled = ref(props.shiori.invite_enabled)
 const inviteToken = ref(props.shiori.invite_token)
 const inviteToggling = ref<boolean>(false)
-const { copy: copyInvite, copied: inviteCopied } = useClipboard()
 const collaborators = ref<CollaboratorWithProfile[]>([])
 const loadingCollaborators = ref<boolean>(false)
 const kickingId = ref<string | null>(null)
@@ -82,12 +80,6 @@ async function togglePublic(value: boolean) {
   }
 }
 
-/** URLをクリップボードにコピー */
-function copyPublicUrl() {
-  copy(shareUrl.value)
-  toast.add({ title: 'URLをコピーしました', color: 'success' })
-}
-
 /** 招待リンクの有効化/無効化 */
 async function toggleInvite(value: boolean) {
   inviteToggling.value = true
@@ -112,11 +104,7 @@ async function toggleInvite(value: boolean) {
   }
 }
 
-/** 招待URLをコピー */
-function copyInviteUrl() {
-  copyInvite(inviteUrl.value)
-  toast.add({ title: '招待URLをコピーしました', color: 'success' })
-}
+
 
 /** コラボレーター一覧を取得 */
 async function fetchCollaborators() {
@@ -203,21 +191,11 @@ function roleLabel(role: string) {
 
         <!-- 共有URL（公開時のみ表示） -->
         <div v-if="isPublic" class="space-y-3">
-          <div class="flex items-center gap-2">
-            <UInput
-              :model-value="shareUrl"
-              readonly
-              class="flex-1"
-              icon="i-lucide-link"
-            />
-            <UButton
-              :icon="publicCopied ? 'i-lucide-check' : 'i-lucide-copy'"
-              :variant="publicCopied ? 'soft' : 'solid'"
-              @click="copyPublicUrl"
-            >
-              {{ publicCopied ? 'コピー済み' : 'コピー' }}
-            </UButton>
-          </div>
+          <AtomsCopyableInput
+            :value="shareUrl"
+            icon="i-lucide-link"
+            toast-message="URLをコピーしました"
+          />
           <p class="text-xs text-stone-400">
             ログインなしで閲覧専用ページとして表示されます
           </p>
@@ -246,21 +224,11 @@ function roleLabel(role: string) {
 
           <!-- 招待URL（有効時のみ） -->
           <div v-if="inviteEnabled && inviteToken" class="mt-3 space-y-2">
-            <div class="flex items-center gap-2">
-              <UInput
-                :model-value="inviteUrl"
-                readonly
-                class="flex-1"
-                icon="i-lucide-user-plus"
-              />
-              <UButton
-                :icon="inviteCopied ? 'i-lucide-check' : 'i-lucide-copy'"
-                :variant="inviteCopied ? 'soft' : 'solid'"
-                @click="copyInviteUrl"
-              >
-                {{ inviteCopied ? 'コピー済み' : 'コピー' }}
-              </UButton>
-            </div>
+            <AtomsCopyableInput
+              :value="inviteUrl"
+              icon="i-lucide-user-plus"
+              toast-message="招待URLをコピーしました"
+            />
             <p class="text-xs text-stone-400">
               このリンクを共有すると、ログインしたユーザーが編集者として参加できます
             </p>
@@ -345,19 +313,11 @@ function roleLabel(role: string) {
   </UModal>
 
   <!-- キック確認ダイアログ -->
-  <UModal
-    v-model:open="showKickConfirm"
+  <AtomsConfirmModal
+    v-model:show="showKickConfirm"
     title="メンバーを削除"
     :description="`「${kickTarget?.profile?.display_name || 'ゲストユーザー'}」をこのしおりから削除しますか？`"
-    :ui="{ footer: 'justify-end' }"
-  >
-    <template #footer="{ close }">
-      <UButton variant="ghost" @click="close">
-        キャンセル
-      </UButton>
-      <UButton color="error" :loading="kickingId !== null" @click="kickCollaborator">
-        削除する
-      </UButton>
-    </template>
-  </UModal>
+    :loading="kickingId !== null"
+    @confirm="kickCollaborator"
+  />
 </template>

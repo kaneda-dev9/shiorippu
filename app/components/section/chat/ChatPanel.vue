@@ -615,7 +615,7 @@ onMounted(loadHistory)
               </div>
 
               <!-- プランプレビュー（PLAN_JSONが含まれるメッセージ、完了後） -->
-              <ChatPlanPreview
+              <SectionChatPlanPreview
                 v-if="extractPlan(msg.content) && !(isStreaming && toGlobalIndex(localIdx) === lastMessageIndex)"
                 :plan="extractPlan(msg.content)!"
                 :shiori-id="props.shioriId"

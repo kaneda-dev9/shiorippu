@@ -111,24 +111,22 @@ onMounted(fetchShioris)
     <!-- 空状態 -->
     <div v-else-if="shioris.length === 0">
       <UCard class="py-8">
-        <div class="flex flex-col items-center text-center">
-          <div class="mb-4 flex size-20 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30">
-            <UIcon name="i-lucide-map" class="size-10 text-orange-500" />
-          </div>
-          <h3 class="mb-2 text-lg font-semibold text-stone-900 dark:text-stone-50">
-            まだしおりがありません
-          </h3>
-          <p class="mb-6 max-w-sm text-sm text-stone-500">
-            AIと一緒に旅のプランを作ってみましょう！行き先やテーマを伝えるだけで、最適なプランを提案します。
-          </p>
-          <UButton
-            icon="i-lucide-sparkles"
-            size="lg"
-            @click="createShiori"
-          >
-            AIで旅を計画する
-          </UButton>
-        </div>
+        <AtomsEmptyState
+          icon="i-lucide-map"
+          icon-bg
+          title="まだしおりがありません"
+          message="AIと一緒に旅のプランを作ってみましょう！行き先やテーマを伝えるだけで、最適なプランを提案します。"
+        >
+          <template #action>
+            <UButton
+              icon="i-lucide-sparkles"
+              size="lg"
+              @click="createShiori"
+            >
+              AIで旅を計画する
+            </UButton>
+          </template>
+        </AtomsEmptyState>
       </UCard>
     </div>
 
@@ -219,30 +217,18 @@ onMounted(fetchShioris)
       </UCard>
     </div>
     <!-- 削除確認モーダル -->
-    <UModal
-      v-model:open="showDeleteModal"
+    <AtomsConfirmModal
+      v-model:show="showDeleteModal"
       title="しおりを削除"
       :description="`「${deleteTarget?.title}」を削除しますか？`"
-      :ui="{ footer: 'justify-end' }"
+      :loading="deleting"
+      @confirm="deleteShiori"
     >
       <template #body>
         <p class="text-xs text-stone-400">
           日程・イベント・チャット履歴もすべて削除されます。この操作は取り消せません。
         </p>
       </template>
-
-      <template #footer="{ close }">
-        <UButton variant="ghost" @click="close">
-          キャンセル
-        </UButton>
-        <UButton
-          color="error"
-          :loading="deleting"
-          @click="deleteShiori"
-        >
-          削除する
-        </UButton>
-      </template>
-    </UModal>
+    </AtomsConfirmModal>
   </div>
 </template>

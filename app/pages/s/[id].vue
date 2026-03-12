@@ -190,13 +190,13 @@ const tmpl = computed(() => getTemplate(shiori.value?.template_id))
 
     <!-- PDF出力ボタン -->
     <div class="mt-8 flex justify-center">
-      <ShioriPdfExportButton
+      <SectionShioriPdfExportButton
         :shiori="shiori"
         variant="outline"
         size="md"
       >
         PDFでダウンロード
-      </ShioriPdfExportButton>
+      </SectionShioriPdfExportButton>
     </div>
 
     <!-- フッター -->
