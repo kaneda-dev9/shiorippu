@@ -6,7 +6,7 @@ export const useShioriStore = defineStore('shiori', () => {
 
   // State
   const currentShiori = ref<ShioriWithDays | null>(null)
-  const loading = ref(false)
+  const loading = ref<boolean>(false)
 
   // Fetch a shiori with all its data
   async function fetchShiori(id: string) {

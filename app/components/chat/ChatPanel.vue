@@ -32,13 +32,13 @@ const toast = useToast()
 const appliedPlanIndices = ref<Set<number>>(new Set())
 
 const messages = ref<ChatMessage[]>([])
-const inputText = ref('')
-const isStreaming = ref(false)
+const inputText = ref<string>('')
+const isStreaming = ref<boolean>(false)
 const toolActivity = ref<string | null>(null)
 const chatContainer = useTemplateRef<HTMLElement>('chatContainer')
 const selectedReplies = ref<Set<string>>(new Set())
-const showOtherInput = ref(false)
-const otherInputText = ref('')
+const showOtherInput = ref<boolean>(false)
+const otherInputText = ref<string>('')
 
 /** ツール名を日本語ラベルに変換 */
 const TOOL_LABELS: Record<string, string> = {
@@ -49,7 +49,7 @@ const TOOL_LABELS: Record<string, string> = {
 }
 
 // 折りたたみ
-const showAllMessages = ref(false)
+const showAllMessages = ref<boolean>(false)
 const VISIBLE_COUNT = 6
 
 const visibleMessages = computed(() => {
@@ -77,7 +77,7 @@ const { arrivedState } = useScroll(chatContainer, {
   offset: { bottom: 100 },
 })
 const isNearBottom = computed(() => arrivedState.bottom)
-const newMessageCount = ref(0)
+const newMessageCount = ref<number>(0)
 
 watch(isNearBottom, (val) => {
   if (val) newMessageCount.value = 0

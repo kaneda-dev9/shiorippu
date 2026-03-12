@@ -57,7 +57,7 @@ const props = defineProps<{
 }>()
 
 const { generating, previewUrl, generatePreview, downloadPdf, revokePreview } = usePdfExport()
-const showPreview = ref(false)
+const showPreview = ref<boolean>(false)
 
 async function onGenerate() {
   showPreview.value = true

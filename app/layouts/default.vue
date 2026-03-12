@@ -3,7 +3,7 @@ const { user, profile, signOut } = useAuth()
 const route = useRoute()
 
 // モバイルメニュー開閉状態
-const mobileMenuOpen = ref(false)
+const mobileMenuOpen = ref<boolean>(false)
 
 // ナビゲーション項目
 const navigation = computed(() => [

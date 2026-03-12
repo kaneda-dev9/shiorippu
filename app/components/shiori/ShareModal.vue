@@ -6,7 +6,7 @@ const props = defineProps<{
   isOwner: boolean
 }>()
 
-const isOpen = defineModel<boolean>({ required: true })
+const isOpen = defineModel<boolean>('show', { required: true })
 
 const emit = defineEmits<{
   'updated': [isPublic: boolean]
@@ -17,13 +17,13 @@ const toast = useToast()
 const { copy, copied: publicCopied } = useClipboard()
 
 const isPublic = ref(props.shiori.is_public)
-const toggling = ref(false)
+const toggling = ref<boolean>(false)
 const inviteEnabled = ref(props.shiori.invite_enabled)
 const inviteToken = ref(props.shiori.invite_token)
-const inviteToggling = ref(false)
+const inviteToggling = ref<boolean>(false)
 const { copy: copyInvite, copied: inviteCopied } = useClipboard()
 const collaborators = ref<CollaboratorWithProfile[]>([])
-const loadingCollaborators = ref(false)
+const loadingCollaborators = ref<boolean>(false)
 const kickingId = ref<string | null>(null)
 
 // props変更に追従（1つのwatchにまとめる）
@@ -137,7 +137,7 @@ async function fetchCollaborators() {
 
 // キック確認ダイアログ
 const kickTarget = ref<CollaboratorWithProfile | null>(null)
-const showKickConfirm = ref(false)
+const showKickConfirm = ref<boolean>(false)
 
 /** キック確認ダイアログを開く */
 function confirmKick(collab: CollaboratorWithProfile) {

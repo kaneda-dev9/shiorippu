@@ -1,5 +1,6 @@
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import type { PresenceUser, Day, Event, Shiori } from '~~/types/database'
+import { tryOnScopeDispose } from '@vueuse/core'
 
 interface RealtimeSyncOptions {
   shioriId: string
@@ -164,9 +165,8 @@ export function useRealtimeSync(options: RealtimeSyncOptions) {
     setupChannel()
   })
 
-  onUnmounted(() => {
-    cleanup()
-  })
+  // スコープ破棄時にチャネルをクリーンアップ
+  tryOnScopeDispose(cleanup)
 
   return {
     onlineUsers: readonly(onlineUsers),

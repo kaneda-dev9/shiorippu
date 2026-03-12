@@ -6,7 +6,7 @@ const toast = useToast()
 
 const token = route.params.token as string
 const status = ref<'loading' | 'error' | 'redirecting'>('loading')
-const errorMessage = ref('')
+const errorMessage = ref<string>('')
 
 async function acceptInvite() {
   status.value = 'loading'

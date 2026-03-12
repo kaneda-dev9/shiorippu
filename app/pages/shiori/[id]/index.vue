@@ -32,9 +32,9 @@ const {
 } = useShioriEditor(shioriId)
 
 // --- UI状態 ---
-const showChat = ref(false)
-const chatWidth = ref(480)
-const isResizing = ref(false)
+const showChat = ref<boolean>(false)
+const chatWidth = ref<number>(480)
+const isResizing = ref<boolean>(false)
 const CHAT_MIN_WIDTH = 320
 const CHAT_MAX_WIDTH = 960
 
@@ -58,22 +58,22 @@ function startResize(e: PointerEvent) {
   document.addEventListener('pointerup', onUp)
 }
 
-const editingTitle = ref(false)
-const titleInput = ref('')
-const showEventModal = ref(false)
-const selectedDayId = ref('')
+const editingTitle = ref<boolean>(false)
+const titleInput = ref<string>('')
+const showEventModal = ref<boolean>(false)
+const selectedDayId = ref<string>('')
 const selectedEvent = ref<Event | null>(null)
-const showDeleteModal = ref(false)
-const showShareModal = ref(false)
-const showTemplateSelector = ref(false)
-const deleting = ref(false)
+const showDeleteModal = ref<boolean>(false)
+const showShareModal = ref<boolean>(false)
+const showTemplateSelector = ref<boolean>(false)
+const deleting = ref<boolean>(false)
 
 // Day/イベント削除確認
-const showDayDeleteModal = ref(false)
+const showDayDeleteModal = ref<boolean>(false)
 const deleteDayTarget = ref<{ id: string; dayNumber: number } | null>(null)
-const showEventDeleteModal = ref(false)
+const showEventDeleteModal = ref<boolean>(false)
 const deleteEventTarget = ref<{ dayId: string; eventId: string; title: string } | null>(null)
-const deletingItem = ref(false)
+const deletingItem = ref<boolean>(false)
 
 // --- UIイベントハンドラ ---
 
@@ -322,8 +322,8 @@ async function handleDeleteShiori() {
           デザインテンプレート
         </h3>
         <ShioriTemplateSelector
-          :model-value="shiori.template_id"
-          @update:model-value="changeTemplate"
+          :selected="shiori.template_id"
+          @update:selected="changeTemplate"
         />
       </div>
 
@@ -558,7 +558,7 @@ async function handleDeleteShiori() {
 
   <!-- イベント追加・編集モーダル -->
   <ShioriEventFormModal
-    v-model="showEventModal"
+    v-model:show="showEventModal"
     :day-id="selectedDayId"
     :event="selectedEvent"
     @saved="onEventSaved"
@@ -567,7 +567,7 @@ async function handleDeleteShiori() {
   <!-- 共有設定モーダル -->
   <ShioriShareModal
     v-if="shiori"
-    v-model="showShareModal"
+    v-model:show="showShareModal"
     :shiori="shiori"
     :is-owner="isOwner"
     @updated="(v) => { if (shiori) shiori.is_public = v }"

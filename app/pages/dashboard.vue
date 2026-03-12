@@ -12,10 +12,10 @@ const { user } = useAuth()
 const toast = useToast()
 
 const shioris = ref<Shiori[]>([])
-const loading = ref(true)
+const loading = ref<boolean>(true)
 const deleteTarget = ref<Shiori | null>(null)
-const showDeleteModal = ref(false)
-const deleting = ref(false)
+const showDeleteModal = ref<boolean>(false)
+const deleting = ref<boolean>(false)
 
 async function fetchShioris() {
   loading.value = true

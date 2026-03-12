@@ -16,7 +16,7 @@ export function useShioriEditor(shioriId: string) {
 
   // コアデータ
   const shiori = ref<ShioriWithRole | null>(null)
-  const loading = ref(true)
+  const loading = ref<boolean>(true)
   const userRole = ref<CollaboratorRole | null>(null)
 
   // 派生状態

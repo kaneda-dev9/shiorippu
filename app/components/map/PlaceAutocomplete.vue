@@ -63,15 +63,14 @@ interface Suggestion {
 }
 
 const props = withDefaults(defineProps<{
-  modelValue?: string
   placeholder?: string
 }>(), {
-  modelValue: '',
   placeholder: '場所を検索...',
 })
 
+const value = defineModel<string>('value', { default: '' })
+
 const emit = defineEmits<{
-  'update:modelValue': [value: string]
   'place-selected': [result: PlaceResult]
   'place-cleared': []
 }>()
@@ -79,19 +78,19 @@ const emit = defineEmits<{
 const { load } = useGoogleMaps()
 
 const containerRef = useTemplateRef<HTMLElement>('containerRef')
-const displayValue = ref(props.modelValue)
-const showDropdown = ref(false)
+const displayValue = ref<string>(value.value)
+const showDropdown = ref<boolean>(false)
 const suggestions = ref<Suggestion[]>([])
 const selectedPlace = ref<PlaceResult | null>(null)
-const mapsLoaded = ref(false)
+const mapsLoaded = ref<boolean>(false)
 
 // 外部クリックでドロップダウンを閉じる
 onClickOutside(containerRef, () => {
   showDropdown.value = false
 })
 
-// modelValue が外から変わったら同期
-watch(() => props.modelValue, (v) => {
+// value が外から変わったら同期
+watch(value, (v) => {
   displayValue.value = v
 })
 
@@ -135,10 +134,10 @@ const searchPlaces = useDebounceFn(async (input: string) => {
   }
 }, 300)
 
-function onInput(value: string | number) {
-  const str = String(value)
+function onInput(inputVal: string | number) {
+  const str = String(inputVal)
   displayValue.value = str
-  emit('update:modelValue', str)
+  value.value = str
 
   // 手入力で変更されたら選択状態をクリア
   if (selectedPlace.value) {
@@ -160,7 +159,7 @@ async function selectPlace(sug: Suggestion) {
 
     if (!place.location) {
       displayValue.value = sug.description
-      emit('update:modelValue', sug.description)
+      value.value = sug.description
       return
     }
 
@@ -173,13 +172,13 @@ async function selectPlace(sug: Suggestion) {
 
     displayValue.value = result.address
     selectedPlace.value = result
-    emit('update:modelValue', result.address)
+    value.value = result.address
     emit('place-selected', result)
   }
   catch (e) {
     console.error('Place詳細取得エラー:', e)
     displayValue.value = sug.description
-    emit('update:modelValue', sug.description)
+    value.value = sug.description
   }
 }
 </script>

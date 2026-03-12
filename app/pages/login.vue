@@ -6,7 +6,7 @@ definePageMeta({
 
 const { signInWithGoogle } = useAuth()
 const route = useRoute()
-const loading = ref(false)
+const loading = ref<boolean>(false)
 const error = ref<string | null>(null)
 
 async function handleGoogleLogin() {

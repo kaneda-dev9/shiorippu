@@ -2,13 +2,10 @@
 import { getTemplateList } from '~~/shared/templates'
 
 defineProps<{
-  modelValue: string
   disabled?: boolean
 }>()
 
-const emit = defineEmits<{
-  'update:modelValue': [value: string]
-}>()
+const selected = defineModel<string>('selected', { required: true })
 
 const templateList = getTemplateList()
 </script>
@@ -21,12 +18,12 @@ const templateList = getTemplateList()
       :disabled="disabled"
       class="group relative flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 transition-all"
       :class="[
-        modelValue === t.id
+        selected === t.id
           ? 'border-orange-400 bg-orange-50/50 ring-2 ring-orange-400/30 dark:bg-orange-900/10'
           : 'border-stone-200 hover:border-stone-300 dark:border-stone-700 dark:hover:border-stone-600',
         disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
       ]"
-      @click="emit('update:modelValue', t.id)"
+      @click="selected = t.id"
     >
       <!-- グラデーションプレビュー -->
       <div
@@ -42,7 +39,7 @@ const templateList = getTemplateList()
       </div>
       <!-- 選択チェック -->
       <div
-        v-if="modelValue === t.id"
+        v-if="selected === t.id"
         class="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-orange-500 text-white"
       >
         <UIcon name="i-lucide-check" class="size-3" />

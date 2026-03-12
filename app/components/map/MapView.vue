@@ -6,6 +6,7 @@
 import type { DayWithEvents, Event, EventCategory } from '~~/types/database'
 import { getCategoryLabel } from '~~/shared/category-icons'
 import { getDayColor } from '~~/shared/day-colors'
+import { tryOnScopeDispose } from '@vueuse/core'
 
 const props = withDefaults(defineProps<{
   days: DayWithEvents[]
@@ -463,7 +464,8 @@ function clearAll() {
   infoWindow?.close()
 }
 
-onUnmounted(() => {
+// スコープ破棄時にリソースをクリーンアップ
+tryOnScopeDispose(() => {
   clearAll()
   map = null
   infoWindow = null

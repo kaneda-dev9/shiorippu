@@ -12,7 +12,7 @@ const emit = defineEmits<{
   apply: [plan: TripPlan]
 }>()
 
-const applying = ref(false)
+const applying = ref<boolean>(false)
 
 function handleApply() {
   if (applying.value || props.applied) return

@@ -12,8 +12,8 @@ const route = useRoute()
 const shioriId = route.params.id as string
 
 const shiori = ref<ShioriWithDays | null>(null)
-const loading = ref(true)
-const error = ref(false)
+const loading = ref<boolean>(true)
+const error = ref<boolean>(false)
 
 async function fetchShiori() {
   loading.value = true

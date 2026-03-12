@@ -9,7 +9,7 @@ const props = defineProps<{
   event?: Event | null
 }>()
 
-const isOpen = defineModel<boolean>({ required: true })
+const isOpen = defineModel<boolean>('show', { required: true })
 
 const emit = defineEmits<{
   'saved': [event: Event]
@@ -18,7 +18,7 @@ const emit = defineEmits<{
 const { authFetch } = useAuthFetch()
 const toast = useToast()
 
-const saving = ref(false)
+const saving = ref<boolean>(false)
 
 // バリデーションスキーマ
 const schema = z.object({
@@ -218,7 +218,7 @@ async function handleSubmit() {
         <!-- 場所（Places Autocomplete） -->
         <UFormField name="address" label="場所・住所">
           <MapPlaceAutocomplete
-            v-model="form.address"
+            v-model:value="form.address"
             placeholder="場所を検索…"
             @place-selected="onPlaceSelected"
             @place-cleared="onPlaceCleared"

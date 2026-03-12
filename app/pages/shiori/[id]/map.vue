@@ -112,7 +112,7 @@
 
     <!-- イベント編集モーダル -->
     <ShioriEventFormModal
-      v-model="showEventModal"
+      v-model:show="showEventModal"
       :day-id="editDayId"
       :event="editEvent"
       @saved="onEventSaved"
@@ -136,16 +136,16 @@ const toast = useToast()
 const shioriId = route.params.id as string
 
 const shiori = ref<ShioriWithRole | null>(null)
-const loading = ref(true)
+const loading = ref<boolean>(true)
 const error = ref<string | null>(null)
-const showSidebar = ref(true)
+const showSidebar = ref<boolean>(true)
 const selectedDays = ref<number[]>([])
 const mapViewRef = useTemplateRef<InstanceType<typeof MapViewComponent>>('mapViewRef')
 
 // イベント編集モーダル用
-const showEventModal = ref(false)
+const showEventModal = ref<boolean>(false)
 const editEvent = ref<Event | null>(null)
-const editDayId = ref('')
+const editDayId = ref<string>('')
 
 // 位置情報のないイベント数
 const eventsWithoutLocation = computed(() => {

@@ -1,9 +1,10 @@
 import type { jsPDF } from 'jspdf'
 import type { ShioriWithDays } from '~~/types/database'
+import { tryOnScopeDispose } from '@vueuse/core'
 
 /** PDF出力の状態管理とプレビュー・ダウンロード機能を提供 */
 export function usePdfExport() {
-  const generating = ref(false)
+  const generating = ref<boolean>(false)
   const error = ref<string | null>(null)
   const previewUrl = ref<string | null>(null)
   const toast = useToast()
@@ -57,8 +58,8 @@ export function usePdfExport() {
     currentDoc = null
   }
 
-  // コンポーネントのアンマウント時にURLを解放
-  onUnmounted(revokePreview)
+  // スコープ破棄時にURLを解放
+  tryOnScopeDispose(revokePreview)
 
   return {
     generating,
