@@ -136,6 +136,27 @@ export function useShioriEditor(shioriId: string) {
     }
   }
 
+  /** 旅行日程（start_date / end_date）を保存 */
+  async function saveDates(startDate: string | null, endDate: string | null) {
+    if (!shiori.value) return
+    const prevStart = shiori.value.start_date
+    const prevEnd = shiori.value.end_date
+    shiori.value.start_date = startDate
+    shiori.value.end_date = endDate
+    try {
+      addPendingOp(shioriId)
+      await authFetch(`/api/shiori/${shioriId}`, {
+        method: 'PUT',
+        body: { start_date: startDate, end_date: endDate },
+      })
+    }
+    catch {
+      shiori.value.start_date = prevStart
+      shiori.value.end_date = prevEnd
+      toast.add({ title: '日程の更新に失敗しました', color: 'error' })
+    }
+  }
+
   /** 日程を追加（追加された Day の ID を返す） */
   async function addDay(): Promise<string | undefined> {
     if (!shiori.value) return
@@ -310,6 +331,7 @@ export function useShioriEditor(shioriId: string) {
     // 操作
     fetchShiori,
     saveTitle,
+    saveDates,
     addDay,
     deleteDay,
     onEventSaved,

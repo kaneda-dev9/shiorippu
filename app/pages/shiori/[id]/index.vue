@@ -13,6 +13,16 @@ const route = useRoute()
 const toast = useToast()
 const shioriId = route.params.id as string
 
+// Googleカレンダー接続完了時のtoast表示
+onMounted(() => {
+  if (route.query.calendar_connected === 'true') {
+    toast.add({ title: 'Googleカレンダーに接続しました', color: 'success' })
+    // クエリパラメータを除去
+    const { calendar_connected: _, ...rest } = route.query
+    navigateTo({ query: rest }, { replace: true })
+  }
+})
+
 // データ操作は composable に集約
 const {
   shiori,
@@ -22,6 +32,7 @@ const {
   otherOnlineUsers,
   fetchShiori,
   saveTitle,
+  saveDates,
   addDay,
   deleteDay,
   onEventSaved,
@@ -132,6 +143,24 @@ async function handleSaveTitle() {
   await saveTitle(titleInput.value)
   editingTitle.value = false
 }
+
+// 日程の v-model ブリッジ（range では start/end が同時更新されるため debounce で1回にまとめる）
+const shioriStartDate = ref<string | null>(null)
+const shioriEndDate = ref<string | null>(null)
+
+// shiori データからの同期
+watch(() => shiori.value?.start_date, (val) => { shioriStartDate.value = val ?? null }, { immediate: true })
+watch(() => shiori.value?.end_date, (val) => { shioriEndDate.value = val ?? null }, { immediate: true })
+
+// ピッカー変更 → API保存（同一tickの変更をまとめる）
+let saveDatesTimer: ReturnType<typeof setTimeout> | null = null
+watch([shioriStartDate, shioriEndDate], ([start, end]) => {
+  if (!shiori.value) return
+  // shiori側の値と同じなら保存不要
+  if (start === (shiori.value.start_date ?? null) && end === (shiori.value.end_date ?? null)) return
+  if (saveDatesTimer) clearTimeout(saveDatesTimer)
+  saveDatesTimer = setTimeout(() => saveDates(start, end), 0)
+})
 
 /** 日程削除の確認ダイアログを開く */
 function confirmDeleteDay(dayId: string, dayNumber: number) {
@@ -350,6 +379,12 @@ async function handleDeleteShiori() {
           >
             <span class="hidden sm:inline">テーマ</span>
           </UButton>
+          <SectionShioriCalendarExportButton
+            :shiori-id="shioriId"
+            :start-date="shiori.start_date"
+            variant="ghost"
+            size="sm"
+          />
           <SectionShioriPdfExportButton
             v-if="shiori"
             :shiori="shiori"
@@ -378,16 +413,21 @@ async function handleDeleteShiori() {
       </div>
 
       <!-- しおり情報 -->
-      <div v-if="shiori.area || shiori.start_date" class="mb-6 flex flex-wrap gap-3 text-sm text-stone-500">
+      <div class="mb-6 flex flex-wrap items-center gap-3 text-sm text-stone-500">
         <span v-if="shiori.area" class="flex items-center gap-1">
           <UIcon name="i-lucide-map-pin" class="size-4" />
           {{ shiori.area }}
         </span>
-        <span v-if="shiori.start_date" class="flex items-center gap-1">
-          <UIcon name="i-lucide-calendar" class="size-4" />
-          {{ shiori.start_date }}
-          <template v-if="shiori.end_date">〜 {{ shiori.end_date }}</template>
-        </span>
+
+        <!-- 日程ピッカー -->
+        <AtomsDatePicker
+          v-model:start-date="shioriStartDate"
+          v-model:end-date="shioriEndDate"
+          range
+          clearable
+          :maximum-days="shiori.days.length || undefined"
+          placeholder="日程を設定"
+        />
       </div>
 
       <!-- テーマ設定（オーナーのみ） -->

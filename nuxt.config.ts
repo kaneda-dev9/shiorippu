@@ -21,6 +21,9 @@ export default defineNuxtConfig({
     // Server-only
     supabaseServiceKey: '',
     claudeApiKey: '',
+    googleClientId: '',
+    googleClientSecret: '',
+    tokenEncryptionKey: '',
     // Public (exposed to client)
     public: {
       supabaseUrl: '',

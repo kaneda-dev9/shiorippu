@@ -69,7 +69,11 @@ async function deleteShiori() {
   }
 }
 
-onMounted(fetchShioris)
+const isMounted = ref(false)
+onMounted(() => {
+  isMounted.value = true
+  fetchShioris()
+})
 </script>
 
 <template>
@@ -217,6 +221,7 @@ onMounted(fetchShioris)
     </div>
     <!-- 削除確認モーダル -->
     <AtomsConfirmModal
+      v-if="isMounted"
       v-model:show="showDeleteModal"
       title="しおりを削除"
       :description="`「${deleteTarget?.title}」を削除しますか？`"

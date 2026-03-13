@@ -1,22 +1,33 @@
 <script setup lang="ts">
 // OAuth PKCE callback handler
+// detectSessionInUrl: true により Supabase SDK が自動で code 交換する
+// ここでは結果の session を取得してリダイレクトする
 const route = useRoute()
 const supabase = useSupabase()
 const { init } = useAuth()
 
 onMounted(async () => {
   try {
-    const code = route.query.code as string
-
-    if (!code) {
+    if (!route.query.code) {
       await navigateTo('/login?error=auth_failed')
       return
     }
 
-    // PKCE: codeをセッションに交換
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (error) {
-      console.error('Auth callback error:', error)
+    // SDK の自動 code 交換が完了するまでポーリング
+    const MAX_RETRIES = 25
+    const RETRY_INTERVAL_MS = 200
+    let session = null
+    for (let i = 0; i < MAX_RETRIES; i++) {
+      const { data } = await supabase.auth.getSession()
+      if (data.session) {
+        session = data.session
+        break
+      }
+      await new Promise(r => setTimeout(r, RETRY_INTERVAL_MS))
+    }
+
+    if (!session) {
+      console.error('Auth callback: session not available after waiting')
       await navigateTo('/login?error=auth_failed')
       return
     }
@@ -24,8 +35,32 @@ onMounted(async () => {
     // 認証状態を再初期化
     await init()
 
-    const redirect = (route.query.redirect as string) || '/dashboard'
-    await navigateTo(redirect)
+    // Google provider_refresh_token が返された場合、DBに保存
+    if (session.provider_refresh_token) {
+      try {
+        await $fetch('/api/auth/save-google-token', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          body: { refreshToken: session.provider_refresh_token },
+        })
+      }
+      catch (e) {
+        console.error('Failed to save Google refresh token:', e)
+      }
+    }
+
+    // オープンリダイレクト防止: 相対パスのみ許可
+    const rawRedirect = (route.query.redirect as string) || '/dashboard'
+    const redirect = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/dashboard'
+    const calendarConnected = route.query.calendar_connected === 'true'
+
+    if (calendarConnected && redirect) {
+      const separator = redirect.includes('?') ? '&' : '?'
+      await navigateTo(`${redirect}${separator}calendar_connected=true`)
+    }
+    else {
+      await navigateTo(redirect)
+    }
   }
   catch (e) {
     console.error('Auth callback unexpected error:', e)

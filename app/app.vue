@@ -1,5 +1,9 @@
+<script setup lang="ts">
+import { ja } from '@nuxt/ui/locale'
+</script>
+
 <template>
-  <UApp>
+  <UApp :locale="ja">
     <NuxtPwaManifest />
     <NuxtLayout>
       <NuxtPage />

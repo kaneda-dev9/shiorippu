@@ -26,7 +26,7 @@ const userMenuItems = computed(() => [
     {
       label: 'ログアウト',
       icon: 'i-lucide-log-out',
-      click: () => signOut(),
+      onSelect: () => signOut(),
     },
   ],
 ])
