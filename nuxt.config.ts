@@ -58,6 +58,7 @@ export default defineNuxtConfig({
 
   // Route rules
   routeRules: {
+    '/dashboard': { ssr: false }, // 認証必須ページ — SSR時にauth未初期化でhydration mismatch防止
     '/shiori/**': { ssr: false }, // Editor is client-side only (heavy interactivity)
     '/fonts/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
   },
