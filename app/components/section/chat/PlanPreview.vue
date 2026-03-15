@@ -9,7 +9,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  apply: [plan: TripPlan]
+  'apply-plan': [plan: TripPlan]
 }>()
 
 const applying = ref<boolean>(false)
@@ -17,7 +17,7 @@ const applying = ref<boolean>(false)
 function handleApply() {
   if (applying.value || props.applied) return
   applying.value = true
-  emit('apply', props.plan)
+  emit('apply-plan', props.plan)
 }
 
 // 親から適用完了が通知されたらボタン状態を戻す

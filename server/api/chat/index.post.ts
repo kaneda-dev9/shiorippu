@@ -1,57 +1,9 @@
-import type { ChatRole } from '~~/types/database'
+import dayjs from 'dayjs'
+import { createAnthropic } from '@ai-sdk/anthropic'
+import { streamText, convertToModelMessages, tool, stepCountIs } from 'ai'
+import type { UIMessage } from 'ai'
+import { z } from 'zod'
 import { searchPlaces, getPlaceDetails, getDirections } from '~~/server/utils/google-maps'
-
-interface ChatRequestMessage {
-  role: ChatRole
-  content: string
-}
-
-// --- ツール定義 ---
-
-/** カスタムツール（Google Maps Platform） */
-const CUSTOM_TOOLS = [
-  {
-    name: 'search_places',
-    description: 'Google Places APIでスポットを検索する。レストラン、カフェ、観光地、ホテルなど日本国内の実在する場所を検索できる。スポットを提案する前に必ずこのツールで実在を確認すること。',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        query: { type: 'string', description: '検索クエリ（例: "京都 抹茶カフェ", "箱根 温泉旅館"）' },
-        location: { type: 'string', description: '検索エリア（例: "京都市", "箱根町"）。query に含まれていない場合に指定' },
-        type: { type: 'string', description: 'Google Places タイプ（restaurant, cafe, tourist_attraction, lodging, spa 等）。絞り込みたい場合に指定' },
-      },
-      required: ['query'],
-    },
-  },
-  {
-    name: 'get_place_details',
-    description: '特定のスポットの詳細情報を取得する（住所、営業時間、評価、口コミ数、公式サイト）。search_places で見つけた place_id を使う。',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        place_id: { type: 'string', description: 'Google Places のプレースID（search_places の結果に含まれる placeId）' },
-      },
-      required: ['place_id'],
-    },
-  },
-  {
-    name: 'get_directions',
-    description: '2地点間の移動ルート・所要時間・距離を取得する。プランの移動時間を現実的に計算するために使う。',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        origin: { type: 'string', description: '出発地（住所または場所名）' },
-        destination: { type: 'string', description: '目的地（住所または場所名）' },
-        mode: {
-          type: 'string',
-          enum: ['driving', 'walking', 'transit'],
-          description: '移動手段（driving=車, walking=徒歩, transit=公共交通機関）。デフォルトは transit',
-        },
-      },
-      required: ['origin', 'destination'],
-    },
-  },
-] as const
 
 /** 旅行プランナーとしてのシステムプロンプト */
 const SYSTEM_PROMPT = `あなたは「しおりっぷ」の旅行プランナーAIです。
@@ -248,45 +200,6 @@ start_time, end_time は "HH:MM" 形式で設定してください。
 - 安全面での注意事項があれば伝えてください
 - ユーザーが「早くプランが欲しい」と言った場合は、最低限の情報（行き先・日程・人数）だけ確認してプラン生成に進んでよい`
 
-// --- ツール実行 ---
-
-/** カスタムツールを実行して結果を JSON 文字列で返す */
-async function executeTool(name: string, input: Record<string, unknown>): Promise<string> {
-  try {
-    switch (name) {
-      case 'search_places': {
-        const results = await searchPlaces(
-          input.query as string,
-          input.location as string | undefined,
-          input.type as string | undefined,
-        )
-        if (results.length === 0) return JSON.stringify({ message: '該当するスポットが見つかりませんでした。検索条件を変えてみてください。' })
-        return JSON.stringify(results)
-      }
-      case 'get_place_details': {
-        const result = await getPlaceDetails(input.place_id as string)
-        if (!result) return JSON.stringify({ error: 'スポット情報の取得に失敗しました。' })
-        return JSON.stringify(result)
-      }
-      case 'get_directions': {
-        const result = await getDirections(
-          input.origin as string,
-          input.destination as string,
-          (input.mode as string) || 'transit',
-        )
-        if (!result) return JSON.stringify({ error: 'ルート情報の取得に失敗しました。住所を確認するか、別の移動手段をお試しください。' })
-        return JSON.stringify(result)
-      }
-      default:
-        return JSON.stringify({ error: `未知のツール: ${name}` })
-    }
-  }
-  catch (err) {
-    console.error(`ツール実行エラー (${name}):`, err)
-    return JSON.stringify({ error: 'ツールの実行中にエラーが発生しました。' })
-  }
-}
-
 // --- コンテキスト構築 ---
 
 /** しおりの既存情報（基本情報 + 日程・イベント）をプロンプト用テキストに変換 */
@@ -357,19 +270,17 @@ async function buildShioriContext(shioriId: string): Promise<string> {
 
 // --- メインハンドラ ---
 
-/** ツール使用ループの最大回数（無限ループ防止） */
-const MAX_TOOL_ROUNDS = 10
-
 /**
  * POST /api/chat
- * Claude API を使った AI チャット（Tool Use + Web Search + ストリーミング対応）
+ * AI SDK streamText を使った AI チャット（Tool Use + Web Search + ストリーミング対応）
  */
 export default defineEventHandler(async (event) => {
   await requireAuth(event)
 
   const body = await readBody<{
+    id?: string
     shioriId?: string
-    messages?: ChatRequestMessage[]
+    messages?: UIMessage[]
   }>(event)
 
   if (!body?.messages?.length) {
@@ -377,15 +288,6 @@ export default defineEventHandler(async (event) => {
       statusCode: 400,
       statusMessage: 'メッセージを入力してください。',
     })
-  }
-
-  for (const msg of body.messages) {
-    if (!msg.role || !msg.content) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'メッセージの形式が不正です。role と content は必須です。',
-      })
-    }
   }
 
   const config = useRuntimeConfig()
@@ -405,158 +307,117 @@ export default defineEventHandler(async (event) => {
   }
 
   // 今日の日付を追加（季節のアドバイスに活用）
-  const today = new Date().toISOString().slice(0, 10)
+  const today = dayjs().format('YYYY-MM-DD')
   const systemPrompt = SYSTEM_PROMPT + `\n\n## 今日の日付\n${today}` + contextPrompt
 
   try {
-    const { default: Anthropic } = await import('@anthropic-ai/sdk')
-    const anthropic = new Anthropic({ apiKey: config.claudeApiKey })
+    const anthropic = createAnthropic({ apiKey: config.claudeApiKey })
 
-    // ツール定義（カスタム + Web Search）
-    const tools = [
-      // Web Search（Anthropic がサーバー側で実行）
-      {
-        type: 'web_search_20250305' as const,
-        name: 'web_search',
-        max_uses: 3,
+    // UIMessage[] → ModelMessage[] に変換
+    const modelMessages = await convertToModelMessages(body.messages, {
+      ignoreIncompleteToolCalls: true,
+    })
+
+    // メッセージ数制限（先頭2 + 直近のメッセージを保持）
+    const MAX_MESSAGES = 40
+    let truncatedMessages = modelMessages
+    if (modelMessages.length > MAX_MESSAGES) {
+      const head = modelMessages.slice(0, 2)
+      const tail = modelMessages.slice(-(MAX_MESSAGES - 2))
+      truncatedMessages = [...head, ...tail]
+    }
+
+    const result = streamText({
+      model: anthropic('claude-sonnet-4-6'),
+      maxOutputTokens: 16384,
+      system: systemPrompt,
+      messages: truncatedMessages,
+      tools: {
+        search_places: tool({
+          description: 'Google Places APIでスポットを検索する。レストラン、カフェ、観光地、ホテルなど日本国内の実在する場所を検索できる。スポットを提案する前に必ずこのツールで実在を確認すること。',
+          inputSchema: z.object({
+            query: z.string().describe('検索クエリ（例: "京都 抹茶カフェ", "箱根 温泉旅館"）'),
+            location: z.string().optional().describe('検索エリア（例: "京都市", "箱根町"）。query に含まれていない場合に指定'),
+            type: z.string().optional().describe('Google Places タイプ（restaurant, cafe, tourist_attraction, lodging, spa 等）。絞り込みたい場合に指定'),
+          }),
+          execute: async ({ query, location, type }) => {
+            const results = await searchPlaces(query, location, type)
+            if (results.length === 0) return { message: '該当するスポットが見つかりませんでした。検索条件を変えてみてください。' }
+            return results
+          },
+        }),
+        get_place_details: tool({
+          description: '特定のスポットの詳細情報を取得する（住所、営業時間、評価、口コミ数、公式サイト）。search_places で見つけた place_id を使う。',
+          inputSchema: z.object({
+            place_id: z.string().describe('Google Places のプレースID（search_places の結果に含まれる placeId）'),
+          }),
+          execute: async ({ place_id }) => {
+            const result = await getPlaceDetails(place_id)
+            if (!result) return { error: 'スポット情報の取得に失敗しました。' }
+            return result
+          },
+        }),
+        get_directions: tool({
+          description: '2地点間の移動ルート・所要時間・距離を取得する。プランの移動時間を現実的に計算するために使う。',
+          inputSchema: z.object({
+            origin: z.string().describe('出発地（住所または場所名）'),
+            destination: z.string().describe('目的地（住所または場所名）'),
+            mode: z.enum(['driving', 'walking', 'transit']).default('transit').describe('移動手段（driving=車, walking=徒歩, transit=公共交通機関）'),
+          }),
+          execute: async ({ origin, destination, mode }) => {
+            const result = await getDirections(origin, destination, mode)
+            if (!result) return { error: 'ルート情報の取得に失敗しました。住所を確認するか、別の移動手段をお試しください。' }
+            return result
+          },
+        }),
+        // Web Search（Anthropic サーバーサイド実行）
+        web_search: anthropic.tools.webSearch_20250305({
+          maxUses: 3,
+        }),
       },
-      // カスタムツール（Google Maps Platform）
-      ...CUSTOM_TOOLS,
-    ]
+      stopWhen: stepCountIs(10),
+      onFinish: async ({ text }) => {
+        // ストリーミング完了後にチャット履歴をDBに保存
+        if (!body.shioriId) return
 
-    // API に送るメッセージ配列（ツール使用ループで追記される）
-    const apiMessages: Array<{
-      role: 'user' | 'assistant'
-      content: string | Array<Record<string, unknown>>
-    }> = body.messages!.map(msg => ({
-      role: msg.role as 'user' | 'assistant',
-      content: msg.content,
-    }))
+        const supabase = useServerSupabase()
 
-    // SSE 形式でストリーミング
-    setResponseHeader(event, 'Content-Type', 'text/event-stream')
-    setResponseHeader(event, 'Cache-Control', 'no-cache')
-    setResponseHeader(event, 'Connection', 'keep-alive')
-
-    const encoder = new TextEncoder()
-    let fullAssistantContent = ''
-
-    const readableStream = new ReadableStream({
-      async start(controller) {
-        const send = (data: Record<string, unknown>) => {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
+        // 最後のユーザーメッセージを取得して保存
+        const lastUserMsg = [...body.messages!].reverse().find(m => m.role === 'user')
+        if (lastUserMsg) {
+          const userText = lastUserMsg.parts
+            .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+            .map(p => p.text)
+            .join('')
+          if (userText) {
+            const { error: userErr } = await supabase
+              .from('chat_messages')
+              .insert({
+                shiori_id: body.shioriId,
+                role: 'user',
+                content: userText,
+                metadata: {},
+              })
+            if (userErr) console.error('ユーザーメッセージ保存エラー:', userErr)
+          }
         }
 
-        try {
-          let totalUsage = { input_tokens: 0, output_tokens: 0 }
-
-          // ツール使用ループ: Claude がツールを要求する限り繰り返す
-          for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-            const stream = anthropic.messages.stream({
-              model: 'claude-sonnet-4-6',
-              max_tokens: 16384,
-              system: systemPrompt,
-              tools: tools as unknown[],
-              messages: apiMessages as unknown[],
-            } as Parameters<typeof anthropic.messages.stream>[0])
-
-            // テキストチャンクをクライアントにストリーミング
-            for await (const chunk of stream) {
-              if (chunk.type === 'content_block_delta' && 'text' in chunk.delta) {
-                fullAssistantContent += chunk.delta.text
-                send({ type: 'text', text: chunk.delta.text })
-              }
-              // Web Search 実行中の通知
-              if (chunk.type === 'content_block_start' && 'content_block' in chunk) {
-                const block = chunk.content_block as { type: string; name?: string }
-                if (block.type === 'server_tool_use') {
-                  send({ type: 'tool_use', tools: [block.name ?? 'web_search'] })
-                }
-              }
-            }
-
-            const finalMsg = await stream.finalMessage()
-            totalUsage.input_tokens += finalMsg.usage.input_tokens
-            totalUsage.output_tokens += finalMsg.usage.output_tokens
-
-            // ツール使用がなければループ終了
-            if (finalMsg.stop_reason !== 'tool_use') break
-
-            // ツール使用ブロックを抽出
-            const toolUseBlocks = finalMsg.content
-              .filter(b => b.type === 'tool_use')
-              .map(b => b as unknown as { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> })
-
-            if (toolUseBlocks.length === 0) break
-
-            // クライアントにツール使用を通知
-            send({ type: 'tool_use', tools: toolUseBlocks.map(t => t.name) })
-
-            // ツールを実行して結果を収集
-            const toolResults = await Promise.all(
-              toolUseBlocks.map(async toolBlock => ({
-                type: 'tool_result' as const,
-                tool_use_id: toolBlock.id,
-                content: await executeTool(toolBlock.name, toolBlock.input),
-              })),
-            )
-
-            // 次のラウンド用にメッセージを追加
-            apiMessages.push({
+        // AI応答を保存
+        if (text) {
+          const { error: assistantErr } = await supabase
+            .from('chat_messages')
+            .insert({
+              shiori_id: body.shioriId,
               role: 'assistant',
-              content: finalMsg.content as unknown as Array<Record<string, unknown>>,
+              content: text,
+              metadata: {},
             })
-            apiMessages.push({
-              role: 'user',
-              content: toolResults as unknown as Array<Record<string, unknown>>,
-            })
-          }
-
-          send({ type: 'done' })
-          send({ type: 'usage', usage: totalUsage })
-          controller.close()
-
-          // ストリーミング完了後にチャット履歴をDBに保存
-          if (body.shioriId) {
-            const supabase = useServerSupabase()
-            const lastUserMessage = body.messages![body.messages!.length - 1]
-
-            // ユーザーメッセージを保存
-            if (lastUserMessage?.role === 'user') {
-              const { error: userErr } = await supabase
-                .from('chat_messages')
-                .insert({
-                  shiori_id: body.shioriId,
-                  role: 'user',
-                  content: lastUserMessage.content,
-                  metadata: {},
-                })
-              if (userErr) console.error('ユーザーメッセージ保存エラー:', userErr)
-            }
-
-            // AI応答を保存
-            if (fullAssistantContent) {
-              const { error: assistantErr } = await supabase
-                .from('chat_messages')
-                .insert({
-                  shiori_id: body.shioriId,
-                  role: 'assistant',
-                  content: fullAssistantContent,
-                  metadata: {},
-                })
-              if (assistantErr) console.error('AI応答保存エラー:', assistantErr)
-            }
-          }
-        }
-        catch (streamError) {
-          console.error('ストリーミングエラー:', streamError)
-          send({ type: 'error', message: 'ストリーミング中にエラーが発生しました。' })
-          controller.close()
+          if (assistantErr) console.error('AI応答保存エラー:', assistantErr)
         }
       },
     })
 
-    return sendStream(event, readableStream)
+    return result.toUIMessageStreamResponse()
   }
   catch (error: unknown) {
     console.error('Claude API エラー:', error)
