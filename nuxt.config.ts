@@ -91,6 +91,15 @@ export default defineNuxtConfig({
     },
   },
 
+  // Vercel デプロイ設定
+  nitro: {
+    vercel: {
+      functions: {
+        maxDuration: 60, // AIチャットのSSEストリーミング用（デフォルト10秒では不足）
+      },
+    },
+  },
+
   devtools: { enabled: true },
   compatibilityDate: '2025-01-01',
 })
