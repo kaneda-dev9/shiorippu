@@ -1,6 +1,6 @@
 {
   "extends": "./.nuxt/tsconfig.json",
   "compilerOptions": {
-    "types": ["google.maps"]
+    "types": ["google.maps", "vitest/globals"]
   }
 }

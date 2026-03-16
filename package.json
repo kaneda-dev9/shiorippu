@@ -10,7 +10,13 @@
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "test": "vitest",
+    "test:run": "vitest --run",
+    "test:unit": "vitest --project unit",
+    "test:nuxt": "vitest --project nuxt",
+    "test:rls": "vitest --project rls",
+    "test:agent": "vitest --run --reporter=agent"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.58",
@@ -38,10 +44,15 @@
   "devDependencies": {
     "@nuxt/devtools": "^3.2.3",
     "@nuxt/eslint": "^1.15.2",
+    "@nuxt/test-utils": "^4.0.0",
     "@types/google.maps": "^3.58.1",
     "@vite-pwa/nuxt": "^1.1.1",
+    "@vue/test-utils": "^2.4.6",
     "eslint": "^10.0.3",
-    "typescript": "^5.7.0"
+    "happy-dom": "^20.8.4",
+    "postgres": "^3.4.8",
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.0"
   },
   "packageManager": "pnpm@10.6.0",
   "pnpm": {
