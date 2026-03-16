@@ -4,12 +4,14 @@
 
 | レイヤー | 技術 |
 |---------|------|
-| フロントエンド | Nuxt v4.3.1, Vue 3.5, Nuxt UI v4.4 |
+| フロントエンド | Nuxt v4.4 / Vue 3.5 / TypeScript |
+| UI | Nuxt UI v4.5 / Tailwind CSS v4 |
 | 状態管理 | Pinia v3 (クライアントキャッシュのみ、永続化なし) |
-| バックエンド | Supabase (PostgreSQL, Auth, Realtime, Storage) |
-| AI | Claude API (Function Calling / Tool Use) |
-| 地図 | Google Maps Platform (Places, Maps JS, Directions) |
-| デプロイ | Cloudflare Pages (予定) |
+| バックエンド | Supabase (PostgreSQL / Auth / Realtime / Storage) |
+| AI | Claude API (Vercel AI SDK / Tool Use / SSE Streaming) |
+| 地図 | Google Maps Platform (Places / Maps JS / Directions) |
+| デプロイ | Vercel (GitHub連携自動デプロイ) |
+| CI | GitHub Actions (lint / typecheck / test) |
 
 ## ディレクトリ構成
 
@@ -18,34 +20,99 @@ shiorippu/
 ├── app/
 │   ├── app.vue                    # ルートコンポーネント (<UApp>ラッパー)
 │   ├── app.config.ts              # Nuxt UI テーマ (orange/stone)
-│   ├── assets/css/main.css        # Tailwind + Nuxt UI (@import)
-│   ├── composables/               # useAuth, useSupabase, useAuthFetch
+│   ├── assets/css/main.css        # Tailwind CSS v4 + Nuxt UI
+│   ├── composables/
+│   │   ├── auth.ts                # useAuth — 認証状態管理
+│   │   ├── authFetch.ts           # useAuthFetch — 認証付きAPI呼び出し
+│   │   ├── supabase.ts            # useSupabase — Supabaseクライアント
+│   │   ├── chatStream.ts          # useChatStream — AI SDK useChat統合
+│   │   ├── shioriEditor.ts        # useShioriEditor — エディタ状態管理
+│   │   ├── realtimeSync.ts        # useRealtimeSync — Supabase Realtime
+│   │   ├── googleMaps.ts          # useGoogleMaps — Maps JS API
+│   │   ├── pdfExport.ts           # usePdfExport — PDF出力 (jspdf)
+│   │   └── calendarExport.ts      # useCalendarExport — Googleカレンダー連携
+│   ├── components/
+│   │   ├── atoms/                 # 汎用UIパーツ (ドメイン知識なし)
+│   │   │   ├── ConfirmModal.vue
+│   │   │   ├── CopyableInput.vue
+│   │   │   ├── DatePicker.vue
+│   │   │   ├── EmptyState.vue
+│   │   │   └── Tab.vue
+│   │   ├── containers/            # ドメイン知識を持つ汎用コンポーネント
+│   │   │   ├── map/PlaceAutocomplete.vue
+│   │   │   └── shiori/
+│   │   │       ├── CoverImagePicker.vue
+│   │   │       └── TemplateSelector.vue
+│   │   └── section/               # ページ固有コンポーネント
+│   │       ├── chat/
+│   │       │   ├── ChatPanel.vue        # AIチャットサイドパネル
+│   │       │   ├── ChoiceCards.vue       # 選択肢カード表示
+│   │       │   ├── MessageContent.vue   # Markdown→HTML変換表示
+│   │       │   ├── PlanPreview.vue      # AIプランプレビュー
+│   │       │   ├── ToolIndicator.vue    # ツール実行状態表示
+│   │       │   └── Welcome.vue          # 初期ウェルカム
+│   │       ├── map/
+│   │       │   ├── MapView.vue          # Google Maps表示
+│   │       │   └── MapEventList.vue     # マップ連動イベント一覧
+│   │       └── shiori/
+│   │           ├── CalendarExportButton.vue
+│   │           ├── EventFormModal.vue
+│   │           ├── PdfExportButton.vue
+│   │           └── ShareModal.vue
 │   ├── layouts/default.vue        # レスポンシブヘッダー・モバイルメニュー・フッター
-│   ├── middleware/                 # auth (認証必須), guest (未認証のみ)
-│   ├── pages/                     # ルーティング
+│   ├── pages/
 │   │   ├── index.vue              # トップ (ヒーロー、特徴、3ステップ)
 │   │   ├── login.vue              # ログイン (Google OAuth)
-│   │   ├── dashboard.vue          # マイしおり一覧 (サーバーAPI経由)
+│   │   ├── dashboard.vue          # マイしおり一覧
 │   │   ├── auth/callback.vue      # OAuth PKCE コールバック
-│   │   └── shiori/[id]/           # エディタ (Sprint 2)
+│   │   ├── shiori/[id]/index.vue  # エディタ (AIチャットパネル統合)
+│   │   ├── shiori/[id]/map.vue    # マップビュー
+│   │   ├── invite/[token].vue     # 招待受付
+│   │   └── s/[id].vue             # 公開しおり閲覧
 │   ├── plugins/                   # supabase.client, auth.client (dependsOnで順序制御)
-│   ├── utils/date.ts              # dayjs 日付フォーマットユーティリティ
-│   └── stores/shiori.ts           # Pinia しおりCRUD
+│   ├── stores/shiori.ts           # Pinia しおりCRUD
+│   └── utils/date.ts              # dayjs 日付フォーマットユーティリティ
 ├── server/
 │   ├── api/
-│   │   ├── shiori/                # しおりCRUD API (5エンドポイント)
+│   │   ├── shiori/                # しおりCRUD (5エンドポイント)
 │   │   │   ├── index.get.ts       # 一覧取得
 │   │   │   ├── index.post.ts      # 新規作成
 │   │   │   ├── [id].get.ts        # 詳細取得
 │   │   │   ├── [id].put.ts        # 更新
-│   │   │   └── [id].delete.ts     # 削除
-│   │   └── chat/
-│   │       └── index.post.ts      # AIチャット (Claude API, Tool Use, Web Search, SSEストリーミング)
+│   │   │   ├── [id].delete.ts     # 削除
+│   │   │   └── [id]/
+│   │   │       ├── apply-plan.post.ts              # AIプラン適用
+│   │   │       ├── collaborators.get.ts            # コラボレーター一覧
+│   │   │       ├── collaborators/[collaboratorId].delete.ts
+│   │   │       ├── export-calendar.post.ts         # Googleカレンダーエクスポート
+│   │   │       └── invite.put.ts                   # 招待設定
+│   │   ├── chat/
+│   │   │   ├── index.post.ts              # AIチャット (Vercel AI SDK, Tool Use, SSE)
+│   │   │   └── [shioriId]/messages.get.ts # チャット履歴取得
+│   │   ├── day/                   # 日程CRUD (4エンドポイント)
+│   │   │   ├── index.post.ts
+│   │   │   ├── [id].put.ts
+│   │   │   ├── [id].delete.ts
+│   │   │   └── reorder.post.ts
+│   │   ├── event/                 # イベントCRUD (4エンドポイント)
+│   │   │   ├── index.post.ts
+│   │   │   ├── [id].put.ts
+│   │   │   ├── [id].delete.ts
+│   │   │   └── reorder.post.ts
+│   │   ├── auth/
+│   │   │   └── save-google-token.post.ts  # Googleトークン暗号化保存
+│   │   └── invite/
+│   │       └── [token].post.ts            # 招待トークン処理
 │   └── utils/
-│       ├── auth.ts                # requireAuth, useSupabaseWithAuth
+│       ├── auth.ts                # requireAuth — JWT検証
+│       ├── supabase.ts            # useServerSupabase (service role)
 │       ├── google-maps.ts         # searchPlaces, getPlaceDetails, getDirections
-│       └── supabase.ts            # useServerSupabase (service role)
+│       ├── google-calendar.ts     # Google Calendar API連携
+│       ├── token-encryption.ts    # AES-256-GCM 暗号化/復号化
+│       └── cover-image.ts         # カバー画像ユーティリティ
+├── shared/                        # テンプレート定義等 (Tailwind CSS スキャン対象)
 ├── types/database.ts              # 全DB型定義
+├── vercel.json                    # Vercel設定
 └── nuxt.config.ts
 ```
 
@@ -80,15 +147,15 @@ supabase_realtime publication: shioris, days, events, collaborators
 
 ## 認証
 
-- **MVP**: Google OAuth のみ (PKCE flow)
-- **将来**: LINE OAuth 追加予定
+- Google OAuth のみ (PKCE flow)
 - フロー: login.vue → Google → /auth/callback → dashboard
+- Google refresh token は AES-256-GCM で暗号化してサーバーに保存（カレンダー連携用）
 
 ## 共同編集
 
 - **編集権限**: 招待リンク方式 (invite_token: UUID v4)
   1. オーナーがinvite_enabled=trueに設定
-  2. `/shiori/{id}/invite/{invite_token}` のURLを共有
+  2. 招待リンクURLを共有
   3. 受け取った人がアクセス → 未ログインならGoogleログイン
   4. collaboratorsテーブルにINSERT (role='editor')
 - **閲覧**: is_public=trueのしおりは認証不要で閲覧可
@@ -96,18 +163,25 @@ supabase_realtime publication: shioris, days, events, collaborators
 
 ## AI相談フロー
 
-ステップ型 + 選択肢カードUI (7ステップ):
-1. 行き先 (5択 + その他)
-2. 日程
-3. 人数
-4. テーマ (複数選択可)
-5. 予算
-6. 出発地
-7. 特別リクエスト
+エディタ内のサイドパネル（ChatPanel）でAIチャットを実行。
 
-### Function Calling ツール
-- `present_choices` — 選択肢カードをUIに提示 (3〜5個 + その他)
-- `search_spots` — Google Places API でスポット検索
-- `get_spot_details` — スポット詳細情報取得
-- `create_trip_plan` — 旅行プランを構造化JSONで生成
-- `calculate_route` — 2地点間の移動ルート・所要時間を計算
+### Tool Use ツール一覧
+| ツール | 説明 |
+|--------|------|
+| `search_places` | Google Places API でスポット検索 |
+| `get_place_details` | スポット詳細情報取得 |
+| `get_directions` | 2地点間の移動ルート・所要時間を計算 |
+| `web_search` | Anthropic Web Search で最新情報を取得 |
+
+### 技術実装
+- Vercel AI SDK (`streamText`) による SSE ストリーミング
+- `@ai-sdk/anthropic` で Claude API 接続
+- `result.toUIMessageStreamResponse()` で標準的なSSE形式に変換
+- `onFinish` コールバックでストリーミング完了後にDBに履歴保存
+- 生成プランはワンクリックでDB INSERT（apply-plan API）
+
+## デプロイ
+
+- **Vercel**: GitHub連携で main push 時に自動デプロイ
+- **Nitro設定**: `maxDuration: 60` (AIチャットSSEストリーミング用)
+- **CI**: GitHub Actions で lint / typecheck / test を並列実行

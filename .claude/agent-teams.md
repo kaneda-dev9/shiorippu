@@ -10,7 +10,7 @@ Lead + 3 Teammate で効率的にMVPを構築する。
 |-------------|------|---------|
 | **Lead** | 全体統合・設計 | nuxt.config.ts, 型定義, Supabaseスキーマ, composables, タスク分配, マージ |
 | **UI Agent** | 画面実装 | pages/, components/, layouts/, CSS, レスポンシブ |
-| **API Agent** | サーバー側 | server/api/, Edge Functions, Claude API連携, Google Maps連携 |
+| **API Agent** | サーバー側 | server/api/, Claude API連携, Google Maps連携, Google Calendar連携 |
 | **Test Agent** | テスト・品質 | Vitest, Playwright, RLSテスト, 動作検証, パフォーマンス |
 
 ## Sprint計画
@@ -21,7 +21,7 @@ Lead + 3 Teammate で効率的にMVPを構築する。
 | Lead | プロジェクト設定、composables整理、dayjs/VueUse導入 | ✅ |
 | UI Agent | レスポンシブヘッダー、モバイルメニュー、トップ・ログイン・ダッシュボード改善 | ✅ |
 | API Agent | server/api/shiori/ (CRUD 5本), server/api/chat/ (Claude SSE) | ✅ |
-| Test Agent | 認証フローE2Eテスト、RLSポリシーテスト | 🔲 未着手 |
+| Test Agent | テスト環境構築 (Vitest設定、3プロジェクト構成) | ✅ |
 
 ### Sprint 2: AIチャット + エディタ ✅ 完了
 | エージェント | タスク | 状態 |
@@ -29,7 +29,7 @@ Lead + 3 Teammate で効率的にMVPを構築する。
 | Lead | Realtime統合設計、状態管理最適化 | ✅ |
 | UI Agent | しおりエディタ（ドラッグ&ドロップ）、AIチャットサイドパネル（ChatPanel, PlanPreview） | ✅ |
 | API Agent | 日程/イベントCRUD、並び替え、プラン適用API、チャット履歴API | ✅ |
-| Test Agent | AIチャットフローテスト、エディタ操作テスト | 🔲 未着手 |
+| Test Agent | ユニットテスト・Nuxtテスト作成 | ✅ |
 
 ### Sprint 3: 共同編集 + デザイン ✅ 完了
 | エージェント | タスク | 状態 |
@@ -37,15 +37,20 @@ Lead + 3 Teammate で効率的にMVPを構築する。
 | Lead | Realtime同期、ロールベースUI制御 | ✅ |
 | UI Agent | テンプレート選択、ShareModal、招待ページ、公開しおりページ | ✅ |
 | API Agent | 招待リンクAPI、コラボレーターAPI、Realtime同期 | ✅ |
-| Test Agent | リアルタイム同期テスト、マルチユーザーテスト | 🔲 未着手 |
+| Test Agent | RLSポリシーテスト | ✅ |
 
-### Sprint 4: 地図 + 仕上げ
-| エージェント | タスク |
-|-------------|--------|
-| Lead | 最終統合、デプロイ設定 |
-| UI Agent | Google Maps表示、ルート可視化、モバイル最適化 |
-| API Agent | Directions API連携、OGP生成、Cloudflare Pages設定 |
-| Test Agent | 全画面E2Eテスト、パフォーマンス計測、セキュリティ監査 |
+### Sprint 4: 地図 + 仕上げ (部分完了)
+| エージェント | タスク | 状態 |
+|-------------|--------|------|
+| Lead | Vercelデプロイ設定、CI/CD構築 | ✅ |
+| UI Agent | Google Maps表示 (MapView)、マップイベント一覧、PDF出力UI、カレンダー出力UI | ✅ |
+| API Agent | Googleカレンダーエクスポート、Googleトークン暗号化保存 | ✅ |
+| Test Agent | E2Eテスト整備 | 🔲 未着手 |
+
+### 残タスク
+- E2Eテスト (Playwright)
+- OGP生成（メタタグ動的生成）
+- パフォーマンス最適化
 
 ## Agent Teams 実行方法
 

@@ -13,9 +13,7 @@
 | バッジ | `UBadge` |
 | ドロップダウン | `UDropdownMenu` |
 | アイコン | `UIcon` (Lucide: `i-lucide-*`) |
-| AI チャット | `UChatMessage`, `UChatPrompt` (予定) |
-| ステッパー | `UStepper` |
-| タイムライン | `UTimeline` (しおり表示) |
+| チャット | `UChatMessage`, `UChatPrompt` |
 | スライドオーバー | `USlideover` (AIサイドパネル) |
 | モーダル | `UModal` |
 | スケルトン | `USkeleton` |
@@ -42,33 +40,45 @@ export default defineAppConfig({
 |------|------|------|------|
 | トップ | `/` | 不要 | ヒーロー、機能紹介 |
 | ログイン | `/login` | guest | Google OAuthログイン |
-| コールバック | `/auth/callback` | — | OAuth処理 |
+| コールバック | `/auth/callback` | — | OAuth PKCE処理 |
 | ダッシュボード | `/dashboard` | 必須 | マイしおり一覧 |
-| エディタ | `/shiori/[id]` | 必須 | しおり編集 |
-| プレビュー | `/shiori/[id]/preview` | 条件付き | しおりプレビュー |
-| 共有設定 | `/shiori/[id]/share` | 必須 | 招待リンク管理 |
-| AIチャット | `/shiori/[id]/plan` | 必須 | AI旅行相談 |
-| 招待受付 | `/shiori/[id]/invite/[token]` | 必須 | 招待リンク経由参加 |
-| 公開ビュー | `/s/[id]` | 不要 | 公開しおり閲覧 |
+| エディタ | `/shiori/[id]` | 必須 | しおり編集 (AIチャットパネル統合) |
+| マップビュー | `/shiori/[id]/map` | 必須 | Google Maps + イベント表示 |
+| 招待受付 | `/invite/[token]` | 必須 | 招待リンク経由参加 |
+| 公開ビュー | `/s/[id]` | 不要 | 公開しおり閲覧 (PDF・カレンダー出力対応) |
 
-## カスタムコンポーネント構成 (予定)
+## カスタムコンポーネント構成
 
 ```
 app/components/
-├── common/
-│   └── AppLogo.vue
-├── shiori/
-│   ├── ShioriCard.vue          # ダッシュボードのカード
-│   ├── DayTab.vue              # 日程タブ
-│   ├── EventCard.vue           # 予定カード（ドラッグ対応）
-│   ├── EventForm.vue           # 予定編集フォーム
-│   └── TemplateSelector.vue    # テンプレート選択
-├── chat/
-│   ├── ChatChoiceCard.vue      # 選択肢カード
-│   ├── ChatStepIndicator.vue   # ステップ進捗
-│   └── PlanPreview.vue         # プラン提案表示
-└── auth/
-    └── GoogleLoginButton.vue   # Googleログインボタン
+├── atoms/                         # 汎用UIパーツ (ドメイン知識なし)
+│   ├── ConfirmModal.vue           # 確認ダイアログ
+│   ├── CopyableInput.vue          # コピー可能な入力フィールド
+│   ├── DatePicker.vue             # 日付選択 (Internationalized Date)
+│   ├── EmptyState.vue             # 空状態表示
+│   └── Tab.vue                    # タブ切り替え
+├── containers/                    # ドメイン知識を持つ汎用コンポーネント
+│   ├── map/
+│   │   └── PlaceAutocomplete.vue  # 場所オートコンプリート
+│   └── shiori/
+│       ├── CoverImagePicker.vue   # カバー画像選択
+│       └── TemplateSelector.vue   # テンプレート選択UI
+└── section/                       # ページ固有コンポーネント
+    ├── chat/
+    │   ├── ChatPanel.vue          # AIチャットサイドパネル (SSEストリーミング)
+    │   ├── ChoiceCards.vue         # 選択肢カード表示
+    │   ├── MessageContent.vue     # Markdown→HTML変換表示
+    │   ├── PlanPreview.vue        # AIプランプレビュー
+    │   ├── ToolIndicator.vue      # ツール実行状態表示
+    │   └── Welcome.vue            # 初期ウェルカムメッセージ
+    ├── map/
+    │   ├── MapView.vue            # Google Maps表示
+    │   └── MapEventList.vue       # マップ連動イベント一覧
+    └── shiori/
+        ├── CalendarExportButton.vue  # Googleカレンダー出力
+        ├── EventFormModal.vue     # イベント編集モーダル
+        ├── PdfExportButton.vue    # PDF出力
+        └── ShareModal.vue         # 共有設定モーダル
 ```
 
 ## デザインテンプレート (5種)

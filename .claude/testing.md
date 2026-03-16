@@ -1,12 +1,41 @@
 # テスト方針
 
-## テストツール (導入予定)
+## テストツール
 
-| ツール | 用途 |
-|--------|------|
-| Vitest | ユニットテスト (composables, stores, utils) |
-| @vue/test-utils | コンポーネントテスト |
-| Playwright | E2Eテスト |
+| ツール | 用途 | 状態 |
+|--------|------|------|
+| Vitest | ユニットテスト (composables, stores, utils) | 導入済み |
+| @nuxt/test-utils | Nuxtコンポーネントテスト | 導入済み |
+| @vue/test-utils | Vueコンポーネントテスト | 導入済み |
+| happy-dom | テスト用DOM環境 | 導入済み |
+| postgres | RLSポリシーテスト用DB接続 | 導入済み |
+| Playwright | E2Eテスト | 未導入 |
+
+## テストプロジェクト構成
+
+```typescript
+// vitest.config.ts
+export default defineConfig({
+  test: {
+    projects: [
+      'test/unit/vitest.config.ts',   // ユニットテスト
+      'test/nuxt/vitest.config.ts',   // Nuxtコンポーネントテスト
+      'test/rls/vitest.config.ts',    // Supabase RLSポリシーテスト
+    ],
+  },
+})
+```
+
+## テスト実行コマンド
+
+```bash
+pnpm test           # 全テスト実行 (watch mode)
+pnpm test:run       # 全テスト実行 (1回)
+pnpm test:unit      # ユニットテストのみ
+pnpm test:nuxt      # Nuxtコンポーネントテストのみ
+pnpm test:rls       # RLSポリシーテストのみ
+pnpm test:agent     # エージェント対応レポーター
+```
 
 ## テスト優先度
 
@@ -46,16 +75,9 @@ pnpm dev
 pnpm typecheck
 ```
 
-## Supabase RLS テスト方針
+## CI
 
-```sql
--- anon ユーザーとして公開しおりが見えるか
-SELECT * FROM shioris WHERE is_public = true;
-
--- 他人のしおりが見えないか (認証済みユーザーとして)
-SELECT * FROM shioris; -- 自分のもの + 公開のもの + コラボ参加中のもの のみ
-
--- イベントのCRUD操作がメンバーのみ許可されるか
-INSERT INTO events (day_id, title) VALUES ('non-member-day-id', 'test');
--- → RLS violation expected
-```
+GitHub Actions で push / PR 時に以下を並列実行:
+- `pnpm lint` — ESLintチェック
+- `pnpm typecheck` — TypeScript型チェック
+- `pnpm test:unit --run` + `pnpm test:nuxt --run` — テスト実行

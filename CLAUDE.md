@@ -39,39 +39,44 @@ AIと一緒に旅のプランを作成し、おしゃれな「旅のしおり」
 
 ## 現在の状況
 
-**Sprint 1〜3 完了 → Sprint 4 開始待ち**
+**Sprint 1〜4 完了（Sprint 4 は部分完了）**
 
 ### Sprint 1: 基盤構築 — 完了
-- [x] 要件定義 v3、インタラクティブプロトタイプ（JSX 9画面）
+- [x] 要件定義 v3、インタラクティブプロトタイプ
 - [x] Supabase: テーブル6個、RLS、トリガー、インデックス、Realtime、Google OAuth
 - [x] Nuxt v4 初期セットアップ（TypeScript型チェックパス済み）
-- [x] .claude/ ドキュメント体系整備
-- [x] 開発環境: Node.js 22 + pnpm、Nuxt UI v4 セットアップ
-- [x] Google OAuth ログインフロー動作確認済み（PKCE）
-- [x] UI改善: レスポンシブヘッダー、モバイルメニュー、トップ・ログイン・ダッシュボード
+- [x] Google OAuth ログインフロー（PKCE）
+- [x] UI: レスポンシブヘッダー、モバイルメニュー、トップ・ログイン・ダッシュボード
 - [x] Server API: しおりCRUD 5エンドポイント、AIチャット（SSEストリーミング）
 - [x] composables: useAuth, useSupabase, useAuthFetch
-- [x] ユーティリティ: dayjs日付フォーマット、サーバー認証ヘルパー
 
 ### Sprint 2: AIチャット + エディタ — 完了
 - [x] しおりエディタ画面 (`/shiori/[id]`): 基本情報編集、日程・イベント管理、ドラッグ&ドロップ
-- [x] AIチャット: エディタ内サイドパネルとして統合（ChatPanel, PlanPreview）
-- [x] Server API: 日程CRUD（day/）、イベントCRUD（event/）、並び替え（reorder）
-- [x] プラン適用API (`apply-plan.post.ts`)
-- [x] チャット履歴API (`chat/[shioriId]/messages.get.ts`)
+- [x] AIチャット: エディタ内サイドパネル（ChatPanel, PlanPreview, ChoiceCards）
+- [x] AI SDK移行: @anthropic-ai/sdk → Vercel AI SDK (ai + @ai-sdk/anthropic)
+- [x] Server API: 日程CRUD、イベントCRUD、並び替え、プラン適用、チャット履歴
 
 ### Sprint 3: 共同編集 + デザイン — 完了
-- [x] テンプレート選択（TemplateSelector）
+- [x] テンプレート選択（TemplateSelector, CoverImagePicker）
 - [x] 共同編集: 招待リンクAPI、ShareModal、ロールベースUI制御
-- [x] 招待フロー (`/invite/[token]`)
-- [x] 公開しおりページ (`/s/[id]`)
-- [x] コラボレーターAPI（一覧取得、削除）
-- [x] Realtime同期、レスポンシブ対応改善
+- [x] 招待フロー (`/invite/[token]`)、公開しおりページ (`/s/[id]`)
+- [x] Realtime同期（Presence + Broadcast + Postgres Changes）
+
+### Sprint 4: 地図 + 仕上げ — 部分完了
+- [x] Google Maps表示（MapView, MapEventList, PlaceAutocomplete）
+- [x] PDF出力（jspdf + marked + dompurify）
+- [x] Googleカレンダーエクスポート（OAuth refresh token 暗号化保存）
+- [x] PWA対応（@vite-pwa/nuxt）
+- [x] CI/CD: GitHub Actions (lint/typecheck/test) + Vercel自動デプロイ
+- [x] テスト環境構築（Vitest 3プロジェクト: unit/nuxt/rls）
+- [ ] E2Eテスト（Playwright）
+- [ ] OGP生成（メタタグ動的生成）
 
 ### 未完了・次にやること（優先順）
 
-1. **テスト整備**: 認証フローE2E、RLSテスト、AIチャットフローテスト（Sprint 1〜3 残タスク）
-2. **Sprint 4: 地図 + 仕上げ**: Google Maps表示、ルート可視化、OGP生成、デプロイ設定
+1. **E2Eテスト**: Playwright導入、認証フロー・主要画面のテスト
+2. **OGP生成**: 公開しおりのメタタグ・サムネイル動的生成
+3. **パフォーマンス最適化**: Lighthouse監査、フォントCDN化検討
 
 ### 作業の進め方
 - Agent Teams 体制で並列開発（`.claude/agent-teams.md` 参照）
@@ -84,4 +89,8 @@ AIと一緒に旅のプランを作成し、おしゃれな「旅のしおり」
 pnpm install        # パッケージインストール
 pnpm dev            # 開発サーバー起動 (http://localhost:3000)
 pnpm typecheck      # 型チェック
+pnpm lint           # ESLint
+pnpm test:unit      # ユニットテスト
+pnpm test:nuxt      # Nuxtコンポーネントテスト
+pnpm test:rls       # RLSポリシーテスト
 ```
