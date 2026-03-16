@@ -23,6 +23,21 @@ const features = [
     title: 'みんなで編集',
     description: 'リアルタイム共同編集で、旅の計画をみんなで作れます。',
   },
+  {
+    icon: 'i-lucide-map-pin',
+    title: 'マップで確認',
+    description: '登録したスポットを地図上で一覧表示。ルートもひと目でわかります。',
+  },
+  {
+    icon: 'i-lucide-file-down',
+    title: 'PDF出力',
+    description: 'しおりをPDFとしてダウンロード。オフラインでも旅のお供に。',
+  },
+  {
+    icon: 'i-lucide-calendar-plus',
+    title: 'カレンダー連携',
+    description: '旅行プランをGoogleカレンダーにワンクリックで登録できます。',
+  },
 ]
 </script>
 
@@ -67,14 +82,6 @@ const features = [
           >
             無料ではじめる
           </UButton>
-          <UButton
-            variant="outline"
-            size="xl"
-            icon="i-lucide-play-circle"
-            disabled
-          >
-            使い方を見る
-          </UButton>
         </div>
       </div>
     </section>
@@ -91,7 +98,7 @@ const features = [
           </p>
         </div>
 
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <UCard
             v-for="feature in features"
             :key="feature.title"
