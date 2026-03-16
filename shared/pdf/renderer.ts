@@ -3,13 +3,12 @@
  * jsPDF を使ってしおりデータからA4 PDFを構築する
  */
 import type { jsPDF } from 'jspdf'
-import type { ShioriWithDays, DayWithEvents, Event } from '~~/types/database'
+import type { ShioriWithDays, DayWithEvents, Event, EventCategory  } from '~~/types/database'
 import { categoryLabels } from '~~/shared/category-icons'
-import type { EventCategory } from '~~/types/database'
 import { getCategoryEmoji } from './icons'
 import { getPdfPalette, type PdfColorPalette } from './colors'
 import {
-  PAGE_WIDTH, PAGE_HEIGHT,
+  PAGE_WIDTH,
   MARGIN_TOP, MARGIN_LEFT, MARGIN_RIGHT,
   CONTENT_WIDTH, PAGE_BOTTOM,
   FONT_TITLE, FONT_SUBTITLE, FONT_DAY_HEADER,

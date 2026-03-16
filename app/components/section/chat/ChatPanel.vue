@@ -22,7 +22,7 @@
       @send="handleSend"
     />
 
-    <div v-else class="flex min-h-0 flex-1 flex-col overflow-y-auto" ref="chatScrollContainer">
+    <div v-else ref="chatScrollContainer" class="flex min-h-0 flex-1 flex-col overflow-y-auto">
       <!-- 折りたたみボタン -->
       <div v-if="hiddenCount > 0" class="flex justify-center px-4 py-2">
         <UButton

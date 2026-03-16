@@ -45,8 +45,8 @@
         <!-- イベントリスト -->
         <div class="h-[calc(100dvh-3.5rem)]">
           <SectionMapEventList
-            :days="shiori.days || []"
             v-model:selected-day-numbers="selectedDays"
+            :days="shiori.days || []"
             @event-click="focusEvent"
             @event-edit="openEventEdit"
           />
@@ -122,7 +122,7 @@
 
 <script setup lang="ts">
 import type { ShioriWithRole, Event } from '~~/types/database'
-import MapViewComponent from '~~/app/components/section/map/MapView.vue'
+import type MapViewComponent from '~~/app/components/section/map/MapView.vue'
 
 definePageMeta({
   layout: false,

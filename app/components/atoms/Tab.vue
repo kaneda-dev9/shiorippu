@@ -23,7 +23,7 @@ defineProps<{
   variant?: 'pill' | 'link'
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   content?: boolean
-  ui?: Record<string, any>
+  ui?: Record<string, unknown>
 }>()
 
 const value = defineModel<string | number>('value')

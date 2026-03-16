@@ -9,6 +9,7 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@vueuse/nuxt',
     '@vite-pwa/nuxt',
+    '@nuxt/eslint',
   ],
 
   css: ['~/assets/css/main.css'],

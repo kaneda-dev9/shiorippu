@@ -13,6 +13,7 @@ const props = withDefaults(defineProps<{
   selectedDayNumbers?: number[]
   useDirections?: boolean
 }>(), {
+  selectedDayNumbers: () => [],
   useDirections: true,
 })
 
@@ -86,6 +87,7 @@ onMounted(async () => {
   map = await createMap(mapContainer.value)
   infoWindow = new google.maps.InfoWindow()
   if (props.useDirections) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const routesLib = await google.maps.importLibrary('routes') as any
     routeClass = routesLib.Route
   }

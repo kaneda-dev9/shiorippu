@@ -57,6 +57,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   range: false,
   numberOfMonths: 2,
+  maximumDays: undefined,
   placeholder: '日付を選択',
   clearable: false,
 })

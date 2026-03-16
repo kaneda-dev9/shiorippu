@@ -2,7 +2,6 @@ import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto'
 
 const ALGORITHM = 'aes-256-gcm'
 const IV_LENGTH = 12
-const AUTH_TAG_LENGTH = 16
 
 /** 暗号化キーを取得（環境変数から32バイトのhex文字列） */
 function getEncryptionKey(): Buffer {

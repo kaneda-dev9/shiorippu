@@ -62,7 +62,7 @@ interface Suggestion {
   description: string
 }
 
-const props = withDefaults(defineProps<{
+withDefaults(defineProps<{
   placeholder?: string
 }>(), {
   placeholder: '場所を検索...',
