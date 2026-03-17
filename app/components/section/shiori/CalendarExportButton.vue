@@ -8,7 +8,7 @@
     @click="onClickExport"
   >
     <slot>
-      <span class="hidden sm:inline">カレンダー</span>
+      カレンダー
     </slot>
   </UButton>
 

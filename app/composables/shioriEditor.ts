@@ -185,7 +185,7 @@ export function useShioriEditor(shioriId: string) {
     addPendingOp(dayId)
     await authFetch(`/api/day/${dayId}`, { method: 'DELETE' })
     shiori.value.days = shiori.value.days.filter((d) => d.id !== dayId)
-    toast.add({ title: `Day ${dayNumber} を削除しました`, color: 'success' })
+    toast.add({ title: `Day ${dayNumber} を削除しました`, color: 'error' })
   }
 
   /** イベント保存後のコールバック（Day間移動にも対応） */
@@ -222,7 +222,7 @@ export function useShioriEditor(shioriId: string) {
     if (day) {
       day.events = day.events.filter((e) => e.id !== eventId)
     }
-    toast.add({ title: 'イベントを削除しました', color: 'success' })
+    toast.add({ title: 'イベントを削除しました', color: 'error' })
   }
 
   /** Day並び替え後のAPI保存 */
@@ -275,7 +275,7 @@ export function useShioriEditor(shioriId: string) {
   /** しおりを削除 */
   async function deleteShiori() {
     await authFetch(`/api/shiori/${shioriId}`, { method: 'DELETE' })
-    toast.add({ title: 'しおりを削除しました', color: 'success' })
+    toast.add({ title: 'しおりを削除しました', color: 'error' })
     await navigateTo('/dashboard')
   }
 

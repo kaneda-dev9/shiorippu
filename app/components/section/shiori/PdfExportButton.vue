@@ -8,7 +8,7 @@
     @click="onGenerate"
   >
     <slot>
-      <span class="hidden sm:inline">PDF</span>
+      PDF
     </slot>
   </UButton>
 

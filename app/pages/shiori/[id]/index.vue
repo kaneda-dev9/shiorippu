@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import type { Event, DayWithEvents } from '~~/types/database'
-import { getCategoryIcon, getCategoryLabel } from '~~/shared/category-icons'
-import { bookingStatusConfig } from '~~/shared/booking-status'
 import { VueDraggable } from 'vue-draggable-plus'
 
 definePageMeta({
@@ -78,7 +76,7 @@ const selectedEvent = ref<Event | null>(null)
 const showDeleteModal = ref<boolean>(false)
 const showShareModal = ref<boolean>(false)
 const showTemplateSelector = ref<boolean>(false)
-const deleting = ref<boolean>(false)
+const processing = ref<boolean>(false)
 
 // タブナビゲーション
 const activeDay = ref<string>('')
@@ -127,7 +125,6 @@ const showDayDeleteModal = ref<boolean>(false)
 const deleteDayTarget = ref<{ id: string; dayNumber: number } | null>(null)
 const showEventDeleteModal = ref<boolean>(false)
 const deleteEventTarget = ref<{ dayId: string; eventId: string; title: string } | null>(null)
-const deletingItem = ref<boolean>(false)
 
 // --- UIイベントハンドラ ---
 
@@ -140,8 +137,14 @@ function startEditTitle() {
 
 /** タイトル保存 */
 async function handleSaveTitle() {
-  await saveTitle(titleInput.value)
-  editingTitle.value = false
+  processing.value = true
+  try {
+    await saveTitle(titleInput.value)
+    editingTitle.value = false
+  }
+  finally {
+    processing.value = false
+  }
 }
 
 // 日程の v-model ブリッジ（range では start/end が同時更新されるため debounce で1回にまとめる）
@@ -171,7 +174,7 @@ function confirmDeleteDay(dayId: string, dayNumber: number) {
 /** 日程を削除（UI状態のラッパー） */
 async function handleDeleteDay() {
   if (!deleteDayTarget.value || !shiori.value) return
-  deletingItem.value = true
+  processing.value = true
 
   // 削除前に切り替え先を計算
   const idx = shiori.value.days.findIndex((d) => d.id === deleteDayTarget.value!.id)
@@ -190,7 +193,7 @@ async function handleDeleteDay() {
     toast.add({ title: '日程の削除に失敗しました', color: 'error' })
   }
   finally {
-    deletingItem.value = false
+    processing.value = false
     showDayDeleteModal.value = false
     deleteDayTarget.value = null
   }
@@ -198,9 +201,15 @@ async function handleDeleteDay() {
 
 /** 日程を追加してタブをアクティブにする */
 async function handleAddDay() {
-  const newDayId = await addDay()
-  if (newDayId) {
-    activeDay.value = newDayId
+  processing.value = true
+  try {
+    const newDayId = await addDay()
+    if (newDayId) {
+      activeDay.value = newDayId
+    }
+  }
+  finally {
+    processing.value = false
   }
 }
 
@@ -227,7 +236,7 @@ function confirmDeleteEvent(dayId: string, eventId: string, title: string) {
 /** イベントを削除（UI状態のラッパー） */
 async function handleDeleteEvent() {
   if (!deleteEventTarget.value) return
-  deletingItem.value = true
+  processing.value = true
   try {
     await deleteEvent(deleteEventTarget.value.dayId, deleteEventTarget.value.eventId)
   }
@@ -235,7 +244,7 @@ async function handleDeleteEvent() {
     toast.add({ title: 'イベントの削除に失敗しました', color: 'error' })
   }
   finally {
-    deletingItem.value = false
+    processing.value = false
     showEventDeleteModal.value = false
     deleteEventTarget.value = null
   }
@@ -243,7 +252,7 @@ async function handleDeleteEvent() {
 
 /** しおりを削除（UI状態のラッパー） */
 async function handleDeleteShiori() {
-  deleting.value = true
+  processing.value = true
   try {
     await deleteShiori()
   }
@@ -251,7 +260,7 @@ async function handleDeleteShiori() {
     toast.add({ title: 'しおりの削除に失敗しました', color: 'error' })
   }
   finally {
-    deleting.value = false
+    processing.value = false
     showDeleteModal.value = false
   }
 }
@@ -311,6 +320,7 @@ async function handleDeleteShiori() {
               <UInput
                 v-model="titleInput"
                 autofocus
+                :loading="processing"
                 class="text-xl font-bold"
                 @keydown.enter="handleSaveTitle"
                 @keydown.escape="editingTitle = false"
@@ -359,7 +369,7 @@ async function handleDeleteShiori() {
               :class="showChat ? 'ring-2 ring-orange-500' : ''"
               @click="showChat = !showChat"
             >
-              <span class="hidden sm:inline">AI相談</span>
+              AI相談
             </UButton>
             <UButton
               icon="i-lucide-map"
@@ -367,7 +377,7 @@ async function handleDeleteShiori() {
               size="sm"
               :to="`/shiori/${shioriId}/map`"
             >
-              <span class="hidden sm:inline">マップ</span>
+              マップ
             </UButton>
             <!-- テンプレート切替ボタン（オーナーのみ） -->
             <UButton
@@ -378,7 +388,7 @@ async function handleDeleteShiori() {
               :class="showTemplateSelector ? 'ring-2 ring-orange-500' : ''"
               @click="showTemplateSelector = !showTemplateSelector"
             >
-              <span class="hidden sm:inline">テーマ</span>
+              テーマ
             </UButton>
             <SectionShioriCalendarExportButton
               :shiori-id="shioriId"
@@ -398,7 +408,7 @@ async function handleDeleteShiori() {
               size="sm"
               @click="showShareModal = true"
             >
-              <span class="hidden sm:inline">共有</span>
+              共有
             </UButton>
             <!-- 削除ボタン（オーナーのみ） -->
             <UButton
@@ -406,10 +416,11 @@ async function handleDeleteShiori() {
               icon="i-lucide-trash-2"
               variant="ghost"
               size="sm"
-              aria-label="しおりを削除"
               class="text-stone-400 hover:!text-red-500"
               @click="showDeleteModal = true"
-            />
+            >
+              削除
+            </UButton>
           </div>
         </div>
 
@@ -472,7 +483,7 @@ async function handleDeleteShiori() {
             <UButton icon="i-lucide-sparkles" @click="showChat = true">
               AIでプランを作る
             </UButton>
-            <UButton icon="i-lucide-plus" variant="outline" @click="handleAddDay">
+            <UButton icon="i-lucide-plus" variant="outline" :loading="processing" @click="handleAddDay">
               日程を追加
             </UButton>
           </div>
@@ -481,37 +492,15 @@ async function handleDeleteShiori() {
         <!-- 日程タブ -->
         <div v-else>
           <!-- Day タブバー -->
-          <div class="day-tab-scroll flex items-center gap-1.5 overflow-x-auto">
-            <button
-              v-for="tab in dayTabItems"
-              :key="tab.value"
-              class="relative shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold whitespace-nowrap transition-all duration-200"
-              :class="activeDay === tab.value
-                ? ['text-white shadow-sm', tabActiveClass]
-                : ['text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800']
-              "
-              @click="activeDay = tab.value as string"
-            >
-              {{ tab.label }}
-            </button>
-            <UButton
-              v-if="currentDay"
-              icon="i-lucide-trash-2"
-              variant="ghost"
-              size="xs"
-              aria-label="日程を削除"
-              class="shrink-0 text-stone-400 hover:text-red-500"
-              @click="confirmDeleteDay(currentDay.id, currentDay.day_number)"
-            />
-            <UButton
-              icon="i-lucide-plus"
-              variant="ghost"
-              size="xs"
-              aria-label="日程を追加"
-              class="shrink-0"
-              @click="handleAddDay"
-            />
-          </div>
+          <SectionShioriDayTabBar
+            v-model:active-day="activeDay"
+            :items="dayTabItems"
+            :active-class="tabActiveClass"
+            :show-delete="!!currentDay"
+            :adding="processing"
+            @add-day="handleAddDay"
+            @delete-day="currentDay && confirmDeleteDay(currentDay.id, currentDay.day_number)"
+          />
 
           <!-- 選択中の Day のイベントリスト -->
           <div v-if="currentDay" class="mt-4">
@@ -537,97 +526,17 @@ async function handleDeleteShiori() {
               handle=".event-drag-handle"
               :animation="200"
               ghost-class="opacity-30"
-              class="min-h-[2rem] space-y-2"
+              class="min-h-[2rem] space-y-3"
               @end="reorderEvents"
             >
-              <div
-                v-for="ev in currentDay.events"
-                :key="ev.id"
-                class="group relative flex items-start gap-3 overflow-hidden rounded-xl border border-l-[3px] border-stone-200 bg-white p-3 transition-all dark:border-stone-700 dark:bg-stone-900"
-                :class="[tmpl.colors.cardLeftBorder, tmpl.colors.cardBorderHover]"
-              >
-                <!-- ドラッグハンドル -->
-                <div class="flex shrink-0 flex-col items-center gap-1">
-                  <span class="event-drag-handle -m-1 flex cursor-grab items-center justify-center p-2 active:cursor-grabbing">
-                    <UIcon
-                      name="i-lucide-grip-vertical"
-                      class="size-4 text-stone-300"
-                      :class="tmpl.colors.dragHandleHover"
-                    />
-                  </span>
-                  <!-- カテゴリアイコン -->
-                  <div class="flex size-10 items-center justify-center rounded-lg" :class="[tmpl.colors.eventIconBg, tmpl.colors.accentBgDark]">
-                    <UIcon :name="getCategoryIcon(ev.category)" class="size-5" :class="tmpl.colors.eventIconText" />
-                  </div>
-                </div>
-
-                <!-- イベント情報 -->
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-2">
-                    <span v-if="ev.start_time" class="tabular-nums text-xs font-medium text-stone-400">
-                      {{ ev.start_time.slice(0, 5) }}
-                      <template v-if="ev.end_time"> - {{ ev.end_time.slice(0, 5) }}</template>
-                    </span>
-                    <span
-                      class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium"
-                      :class="[tmpl.colors.badgeText, tmpl.colors.badgeBg]"
-                    >
-                      {{ getCategoryLabel(ev.category) }}
-                    </span>
-                    <!-- 予約ステータスバッジ -->
-                    <UBadge
-                      v-if="ev.booking_status && ev.booking_status !== 'none'"
-                      :color="bookingStatusConfig[ev.booking_status].color as any"
-                      variant="subtle"
-                      size="xs"
-                    >
-                      <UIcon :name="bookingStatusConfig[ev.booking_status].icon" class="size-3" />
-                      {{ bookingStatusConfig[ev.booking_status].label }}
-                    </UBadge>
-                  </div>
-                  <p class="mt-0.5 font-medium text-stone-900 dark:text-stone-50">
-                    {{ ev.title }}
-                  </p>
-                  <p v-if="ev.address" class="mt-0.5 flex items-center gap-1 text-xs text-stone-400">
-                    <UIcon name="i-lucide-map-pin" class="size-3" />
-                    {{ ev.address }}
-                  </p>
-                  <p v-if="ev.memo" class="mt-1 text-xs text-stone-500">
-                    {{ ev.memo }}
-                  </p>
-                  <!-- URLリンク -->
-                  <a
-                    v-if="ev.url"
-                    :href="ev.url"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="mt-1 inline-flex items-center gap-1 text-xs hover:underline"
-                    :class="[tmpl.colors.link, tmpl.colors.linkHover]"
-                  >
-                    <UIcon name="i-lucide-external-link" class="size-3" />
-                    {{ ev.url.replace(/^https?:\/\//, '').split('/')[0] }}
-                  </a>
-                </div>
-
-                <!-- アクションボタン -->
-                <div class="flex shrink-0 gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100">
-                  <UButton
-                    icon="i-lucide-pencil"
-                    variant="ghost"
-                    size="xs"
-                    aria-label="イベントを編集"
-                    @click="openEditEvent(currentDay!.id, ev)"
-                  />
-                  <UButton
-                    icon="i-lucide-trash-2"
-                    variant="ghost"
-                    size="xs"
-                    aria-label="イベントを削除"
-                    class="text-stone-400 hover:text-red-500"
-                    @click="confirmDeleteEvent(currentDay!.id, ev.id, ev.title)"
-                  />
-                </div>
-              </div>
+              <SectionShioriEventCard
+                v-for="event in currentDay.events"
+                :key="event.id"
+                :event="event"
+                :tmpl="tmpl"
+                @edit="openEditEvent(currentDay!.id, event)"
+                @delete="confirmDeleteEvent(currentDay!.id, event.id, event.title)"
+              />
             </VueDraggable>
 
             <!-- イベント追加ボタン -->
@@ -649,6 +558,7 @@ async function handleDeleteShiori() {
             variant="outline"
             size="lg"
             block
+            :loading="processing"
             class="mt-6 rounded-xl border-2 border-dashed"
             :class="[tmpl.colors.addBtnBorderHover, tmpl.colors.addBtnTextHover, tmpl.colors.addBtnBorderHoverDark]"
             @click="handleAddDay"
@@ -719,7 +629,7 @@ async function handleDeleteShiori() {
       v-model:show="showDeleteModal"
       title="しおりを削除"
       :description="`「${shiori?.title}」を削除しますか？`"
-      :loading="deleting"
+      :loading="processing"
       @confirm="handleDeleteShiori"
     >
       <template #body>
@@ -734,7 +644,7 @@ async function handleDeleteShiori() {
       v-model:show="showDayDeleteModal"
       title="日程を削除"
       :description="`「Day ${deleteDayTarget?.dayNumber}」を削除しますか？`"
-      :loading="deletingItem"
+      :loading="processing"
       @confirm="handleDeleteDay"
     >
       <template #body>
@@ -749,7 +659,7 @@ async function handleDeleteShiori() {
       v-model:show="showEventDeleteModal"
       title="イベントを削除"
       :description="`「${deleteEventTarget?.title}」を削除しますか？`"
-      :loading="deletingItem"
+      :loading="processing"
       @confirm="handleDeleteEvent"
     />
   </div>
