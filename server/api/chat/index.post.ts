@@ -376,6 +376,13 @@ export default defineEventHandler(async (event) => {
         }),
       },
       stopWhen: stepCountIs(10),
+      // Claude の推論（thinking）を有効化
+      providerOptions: {
+        anthropic: {
+          thinking: { type: 'adaptive' },
+          effort: 'low',
+        },
+      },
       onFinish: async ({ text }) => {
         // ストリーミング完了後にチャット履歴をDBに保存
         if (!body.shioriId) return

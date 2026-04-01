@@ -13,7 +13,7 @@
 | バッジ | `UBadge` |
 | ドロップダウン | `UDropdownMenu` |
 | アイコン | `UIcon` (Lucide: `i-lucide-*`) |
-| チャット | `UChatMessage`, `UChatPrompt` |
+| チャット | `UChatMessages`, `UChatMessage`, `UChatPromptSubmit`, `UChatTool`, `UChatReasoning` |
 | スライドオーバー | `USlideover` (AIサイドパネル) |
 | モーダル | `UModal` |
 | スケルトン | `USkeleton` |
@@ -69,7 +69,6 @@ app/components/
     │   ├── ChoiceCards.vue         # 選択肢カード表示
     │   ├── MessageContent.vue     # Markdown→HTML変換表示
     │   ├── PlanPreview.vue        # AIプランプレビュー
-    │   ├── ToolIndicator.vue      # ツール実行状態表示
     │   └── Welcome.vue            # 初期ウェルカムメッセージ
     ├── map/
     │   ├── MapView.vue            # Google Maps表示

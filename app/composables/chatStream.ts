@@ -3,8 +3,8 @@ import { DefaultChatTransport } from 'ai'
 import type { UIMessage, ChatStatus } from 'ai'
 
 export interface ChatStreamResult {
-  messages: Ref<UIMessage[]>
-  status: Ref<ChatStatus>
+  messages: Readonly<Ref<UIMessage[]>>
+  status: Readonly<Ref<ChatStatus>>
   sendMessage: (text: string) => Promise<void>
   stopStreaming: () => void
   loadHistory: () => Promise<void>
@@ -15,14 +15,22 @@ export function useChatStream(shioriId: string): ChatStreamResult {
   const { session } = useAuth()
   const toast = useToast()
 
-  // Chat インスタンスのリアクティブラッパー
-  const messages = ref<UIMessage[]>([]) as Ref<UIMessage[]>
-  const status = ref<ChatStatus>('ready') as Ref<ChatStatus>
-
   let chat: Chat<UIMessage> | null = null
+  const statusRef = ref<ChatStatus>('ready') as Ref<ChatStatus>
+  const messagesRef = ref<UIMessage[]>([]) as Ref<UIMessage[]>
+
+  // 外部には readonly で公開（書き込み防止）
+  const messages = readonly(messagesRef) as Readonly<Ref<UIMessage[]>>
+  const status = readonly(statusRef) as Readonly<Ref<ChatStatus>>
+
+  // watchEffect のスコープ管理（非同期コンテキストでもリアクティビティを維持）
+  let scope: ReturnType<typeof effectScope> | null = null
 
   /** Chat インスタンスを初期化（クライアントサイドのみ） */
   function initChat(initialMessages?: UIMessage[]) {
+    // 既存のスコープを破棄
+    scope?.stop()
+
     chat = new Chat<UIMessage>({
       messages: initialMessages,
       transport: new DefaultChatTransport({
@@ -41,11 +49,12 @@ export function useChatStream(shioriId: string): ChatStreamResult {
       },
     })
 
-    // リアクティブ同期: Chat の内部 state を Vue ref にバインド
-    // Chat クラスは内部で Vue ref を使っているので、watchEffect で同期
-    watchEffect(() => {
-      messages.value = chat!.messages
-      status.value = chat!.status
+    // Chat の公開 getter 経由でリアクティブ同期
+    const chatInstance = chat
+    scope = effectScope()
+    scope.run(() => {
+      watchEffect(() => { statusRef.value = chatInstance.status })
+      watchEffect(() => { messagesRef.value = chatInstance.messages })
     })
   }
 
@@ -76,10 +85,13 @@ export function useChatStream(shioriId: string): ChatStreamResult {
   /** メッセージ送信 */
   async function sendMessage(text: string) {
     if (!text.trim() || !chat) return
-    if (status.value === 'streaming' || status.value === 'submitted') return
+    if (statusRef.value === 'streaming' || statusRef.value === 'submitted') return
 
     await chat.sendMessage({ text: text.trim() })
   }
+
+  // コンポーネント破棄時にスコープをクリーンアップ
+  tryOnScopeDispose(() => scope?.stop())
 
   return {
     messages,

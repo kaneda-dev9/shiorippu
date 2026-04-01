@@ -67,7 +67,7 @@
         <SectionChatMessageContent
           :message="message"
           :is-last="message.id === lastMessageId"
-          :is-streaming="status === 'streaming' || status === 'submitted'"
+          :status="status"
           :applied-plan-ids="appliedPlanIds"
           :shiori-id="props.shioriId"
           :choice-cards="message.id === lastMessageId ? choiceCards : []"
@@ -90,17 +90,18 @@
         leave-from-class="translate-y-0 opacity-100"
         leave-to-class="translate-y-2 opacity-0"
       >
-        <UButton
-          v-if="!isNearBottom && messages.length > 0"
-          icon="i-lucide-arrow-down"
-          variant="outline"
-          color="neutral"
-          size="xs"
-          class="absolute -top-10 right-4 z-10 rounded-full shadow-lg"
-          @click="scrollToBottom"
-        >
-          最新へ
-        </UButton>
+        <div v-if="!isNearBottom && messages.length > 0" class="absolute -top-10 right-4 z-10">
+          <UButton
+            icon="i-lucide-arrow-down"
+            variant="outline"
+            color="neutral"
+            size="xs"
+            class="rounded-full shadow-lg"
+            @click="scrollToBottom"
+          >
+            最新へ
+          </UButton>
+        </div>
       </Transition>
       <div class="flex items-end gap-2">
         <UTextarea

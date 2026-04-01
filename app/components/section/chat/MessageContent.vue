@@ -2,19 +2,39 @@
   <div>
     <!-- ユーザーメッセージ -->
     <template v-if="message.role === 'user'">
-      <div class="whitespace-pre-wrap">
-        {{ fullText }}
-      </div>
+      <template v-for="(part, index) in message.parts" :key="`${message.id}-${index}`">
+        <p v-if="isTextUIPart(part)" class="whitespace-pre-wrap">{{ part.text }}</p>
+      </template>
     </template>
 
     <!-- アシスタントメッセージ -->
     <template v-else>
-      <!-- メッセージ本文 -->
-      <div
-        v-if="displayText"
-        class="chat-markdown"
-        v-html="renderedHtml"
-      />
+      <!-- パーツイテレーション -->
+      <template v-for="(part, index) in message.parts" :key="`${message.id}-${index}`">
+        <!-- 推論 -->
+        <UChatReasoning
+          v-if="isReasoningUIPart(part)"
+          :text="part.text"
+          :streaming="checkReasoningStreaming(index)"
+          icon="i-lucide-brain"
+        />
+
+        <!-- ツール呼び出し（ツール名ごとに1行のみ表示） -->
+        <UChatTool
+          v-else-if="toolDisplayMap.get(index)"
+          :text="toolDisplayMap.get(index)!.label"
+          :streaming="toolDisplayMap.get(index)!.streaming"
+          :icon="toolDisplayMap.get(index)!.icon"
+        />
+
+        <!-- テキスト -->
+        <template v-else-if="isTextUIPart(part) && processedTexts.get(index)">
+          <div
+            class="chat-markdown"
+            v-html="renderMd(processedTexts.get(index)!)"
+          />
+        </template>
+      </template>
 
       <!-- 複数選択インジケーター -->
       <p
@@ -23,18 +43,6 @@
       >
         * 複数選択できます
       </p>
-
-      <!-- ストリーミング中のカーソル（プラン生成中・ツール実行中は非表示） -->
-      <span
-        v-if="showStreamingCursor"
-        class="inline-block h-4 w-0.5 animate-pulse bg-stone-400"
-      />
-
-      <!-- ツール使用中インジケーター -->
-      <SectionChatToolIndicator
-        v-if="isLast && isStreaming && toolActivityLabel"
-        :label="toolActivityLabel"
-      />
 
       <!-- プラン生成中インジケーター -->
       <div
@@ -62,7 +70,6 @@
               </p>
             </div>
           </div>
-          <!-- プログレスバー -->
           <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-orange-100 dark:bg-orange-900/30">
             <div class="h-full animate-pulse rounded-full bg-gradient-to-r from-orange-400 via-pink-400 to-orange-400" style="width: 60%; animation-duration: 1.5s;" />
           </div>
@@ -75,10 +82,10 @@
         :plan="plan"
         :shiori-id="shioriId"
         :applied="appliedPlanIds.has(message.id)"
-        @apply="handleApplyPlan"
+        @apply-plan="handleApplyPlan"
       />
 
-      <!-- 選択肢カード（最後のアシスタントメッセージの後にインライン表示） -->
+      <!-- 選択肢カード -->
       <SectionChatChoiceCards
         v-if="choiceCards.length > 0 && isLast && !isStreaming"
         class="mt-3"
@@ -87,7 +94,7 @@
         @send="handleSend"
       />
 
-      <!-- クイックリプライ（確認メッセージ時） -->
+      <!-- クイックリプライ -->
       <div
         v-if="quickReplies.length > 0 && choiceCards.length === 0 && isLast && !isStreaming"
         class="mt-3 flex flex-wrap gap-2"
@@ -107,7 +114,8 @@
 </template>
 
 <script setup lang="ts">
-import type { UIMessage } from 'ai'
+import type { UIMessage, ChatStatus } from 'ai'
+import { isTextUIPart, isToolUIPart, isReasoningUIPart, getToolName } from 'ai'
 import type { TripPlan } from '~~/types/database'
 import type { ChoiceCard } from '~~/app/utils/chatHelpers'
 import {
@@ -119,14 +127,14 @@ import {
   isPlanStreaming,
   countStreamingEvents,
   isSingleSelectMessage,
-  getToolActivity,
   getQuickReplies,
+  TOOL_CONFIG,
 } from '~~/app/utils/chatHelpers'
 
 const props = defineProps<{
   message: UIMessage
   isLast: boolean
-  isStreaming: boolean
+  status: ChatStatus
   appliedPlanIds: Set<string>
   shioriId: string
   choiceCards: ChoiceCard[]
@@ -137,6 +145,11 @@ const emit = defineEmits<{
   applyPlan: [plan: TripPlan, messageId: string]
   send: [text: string]
 }>()
+
+/** isStreaming を status から導出 */
+const isStreaming = computed<boolean>(() =>
+  props.status === 'streaming' || props.status === 'submitted',
+)
 
 /** メッセージのテキスト全文 */
 const fullText = computed<string>(() => getFullText(props.message))
@@ -149,70 +162,109 @@ const planGenerating = computed<boolean>(() => isPlanStreaming(fullText.value))
 
 /** ストリーミング中 & 最後のメッセージ & プラン生成中 */
 const showPlanGenerating = computed<boolean>(() =>
-  props.isLast && props.isStreaming && planGenerating.value,
+  props.isLast && isStreaming.value && planGenerating.value,
 )
 
 /** ストリーミング中のイベントカウント */
 const streamingEventCount = computed<number>(() => countStreamingEvents(fullText.value))
 
-/** 表示するテキスト（PLAN_JSON除去） */
-const displayText = computed<string>(() => {
-  const textWithoutPlan = getTextWithoutPlan(fullText.value)
-  // 選択肢がある場合は本文のみ
-  if (props.choiceCards.length > 0 && props.isLast && !props.isStreaming) {
-    return getMessageBody(textWithoutPlan)
+/** 選択肢リストを除去すべきか */
+const shouldStripChoiceList = computed<boolean>(() =>
+  props.choiceCards.length > 0 && props.isLast && !isStreaming.value,
+)
+
+/** 最後のテキストパーツの index */
+const lastTextPartIdx = computed<number>(() => {
+  for (let i = props.message.parts.length - 1; i >= 0; i--) {
+    if (isTextUIPart(props.message.parts[i]!)) return i
   }
-  return textWithoutPlan
+  return -1
 })
 
-/** レンダリング済みHTML */
-const renderedHtml = computed<string>(() => renderMd(displayText.value))
+/** 指定 index が最後のテキストパーツかどうか */
+function isLastTextPartIndex(index: number): boolean {
+  return index === lastTextPartIdx.value
+}
+
+/** パーツindex → 処理済みテキストの Map（computed キャッシュ） */
+const processedTexts = computed(() => {
+  const map = new Map<number, string>()
+  for (let i = 0; i < props.message.parts.length; i++) {
+    const part = props.message.parts[i]!
+    if (!isTextUIPart(part)) continue
+    let text = getTextWithoutPlan(part.text)
+    if (shouldStripChoiceList.value && isLastTextPartIndex(i)) {
+      text = getMessageBody(text)
+    }
+    map.set(i, text.trim())
+  }
+  return map
+})
 
 /** 複数選択ヒントを表示するか */
 const showMultiSelectHint = computed<boolean>(() =>
   props.isLast
-  && !props.isStreaming
+  && !isStreaming.value
   && props.choiceCards.length > 0
   && !isSingleSelectMessage(fullText.value),
 )
 
-/** ツール使用中のラベル（リアルタイム） */
-const realtimeToolLabel = computed<string | null>(() => getToolActivity(props.message))
-
-/**
- * 表示用ツールラベル: ツール完了後もテキストが再開するまで維持する
- * AI SDK ではツール状態遷移が高速なため、computed だけでは一瞬で消える
- */
-const stickyToolLabel = ref<string | null>(null)
-const lastTextLength = ref<number>(0)
-
-watch(realtimeToolLabel, (label) => {
-  if (label) stickyToolLabel.value = label
-})
-
-// テキストが増えたらツールラベルをクリア（テキストストリーミング再開）
-watch(fullText, (text) => {
-  if (text.length > lastTextLength.value && stickyToolLabel.value) {
-    stickyToolLabel.value = null
-  }
-  lastTextLength.value = text.length
-})
-
-// ストリーミング終了時にクリア
-watch(() => props.isStreaming, (streaming) => {
-  if (!streaming) stickyToolLabel.value = null
-})
-
-/** 表示するツールラベル */
-const toolActivityLabel = computed<string | null>(() => realtimeToolLabel.value || stickyToolLabel.value)
-
-/** ストリーミングカーソルを表示するか（プラン生成中・ツール実行中は非表示） */
-const showStreamingCursor = computed<boolean>(() =>
-  props.isLast && props.isStreaming && !planGenerating.value && !toolActivityLabel.value && props.message.role === 'assistant',
-)
-
 /** クイックリプライ（確認メッセージ用） */
 const quickReplies = computed<string[]>(() => getQuickReplies(fullText.value))
+
+/** 推論パートがストリーミング中か */
+function checkReasoningStreaming(partIndex: number): boolean {
+  if (!props.isLast || props.status !== 'streaming') return false
+  // このパーツ以降に異なるタイプのパーツがなければストリーミング中
+  const partType = props.message.parts[partIndex]!.type
+  for (let i = partIndex + 1; i < props.message.parts.length; i++) {
+    if (props.message.parts[i]!.type !== partType) return false
+  }
+  return true
+}
+
+/** ツール表示情報（index キー: 表示対象パーツのみ） */
+interface ToolDisplayInfo {
+  streaming: boolean
+  label: string
+  icon: string
+}
+
+type ToolPartRef = Parameters<typeof getToolName>[0]
+const TERMINAL_STATES = ['output-available', 'output-error', 'output-denied']
+
+/**
+ * ツール名ごとに重複排除した表示情報（index → 表示情報の Map）
+ * - 同一ツール名の最初の出現 index のみエントリを持つ
+ * - streaming: そのツール名のいずれかの呼び出しが実行中なら true
+ * - label/icon: TOOL_CONFIG から取得済み
+ */
+const toolDisplayMap = computed(() => {
+  const nameToIndex = new Map<string, number>()
+  const result = new Map<number, ToolDisplayInfo>()
+
+  for (let i = 0; i < props.message.parts.length; i++) {
+    const part = props.message.parts[i]!
+    if (!isToolUIPart(part)) continue
+    const name = getToolName(part as ToolPartRef)
+    const partStreaming = !TERMINAL_STATES.includes((part as { state: string }).state)
+    const config = TOOL_CONFIG[name]
+
+    const existingIdx = nameToIndex.get(name)
+    if (existingIdx === undefined) {
+      nameToIndex.set(name, i)
+      result.set(i, {
+        streaming: partStreaming,
+        label: config?.label ?? name,
+        icon: config?.icon ?? 'i-lucide-wrench',
+      })
+    }
+    else if (partStreaming) {
+      result.get(existingIdx)!.streaming = true
+    }
+  }
+  return result
+})
 
 /** プラン適用ハンドラ */
 function handleApplyPlan(plan: TripPlan) {

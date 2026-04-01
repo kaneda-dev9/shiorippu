@@ -20,12 +20,12 @@ export interface ChoiceCard {
 // 定数
 // ===========================================
 
-/** ツール名を日本語ラベルに変換 */
-export const TOOL_LABELS: Record<string, string> = {
-  search_places: 'スポットを検索中',
-  get_place_details: 'スポットの詳細を取得中',
-  get_directions: '移動時間を計算中',
-  web_search: '最新情報を検索中',
+/** ツール名→表示設定のマッピング */
+export const TOOL_CONFIG: Record<string, { label: string; icon: string }> = {
+  search_places: { label: 'スポットを検索中', icon: 'i-lucide-map-pin' },
+  get_place_details: { label: 'スポットの詳細を取得中', icon: 'i-lucide-info' },
+  get_directions: { label: '移動時間を計算中', icon: 'i-lucide-route' },
+  web_search: { label: '最新情報を検索中', icon: 'i-lucide-search' },
 }
 
 // ===========================================
@@ -93,6 +93,8 @@ export function getTextWithoutPlan(content: string): string {
   let text = content.replace(/<PLAN_JSON>[\s\S]*?<\/PLAN_JSON>/, '')
   // 未完了の開きタグ以降を除去（ストリーミング中）
   text = text.replace(/<PLAN_JSON>[\s\S]*$/, '')
+  // 閉じタグから始まるパーツを除去（パーツ跨ぎ対応）
+  text = text.replace(/^[\s\S]*?<\/PLAN_JSON>/, '')
   return text.trim()
 }
 
@@ -199,31 +201,6 @@ export function getFullText(message: UIMessage): string {
     .filter(isTextUIPart)
     .map(p => p.text)
     .join('')
-}
-
-/** UIMessage からツール使用中のラベルを取得（なければ null） */
-export function getToolActivity(message: UIMessage): string | null {
-  const activeTools: string[] = []
-  for (const part of message.parts) {
-    // dynamic-tool パート（AI SDK がカスタムツール実行時に生成）
-    if (part.type === 'dynamic-tool') {
-      const dp = part as { toolName: string; state: string }
-      if (dp.state !== 'output-available' && dp.state !== 'output-error') {
-        const label = TOOL_LABELS[dp.toolName] ?? dp.toolName
-        if (!activeTools.includes(label)) activeTools.push(label)
-      }
-    }
-    // typed tool パート（tool-{name} 形式）
-    else if (part.type.startsWith('tool-')) {
-      const tp = part as { type: string; state: string }
-      if (tp.state !== 'output-available' && tp.state !== 'output-error') {
-        const toolName = tp.type.replace('tool-', '')
-        const label = TOOL_LABELS[toolName] ?? toolName
-        if (!activeTools.includes(label)) activeTools.push(label)
-      }
-    }
-  }
-  return activeTools.length > 0 ? activeTools.join('、') : null
 }
 
 /** 確認メッセージ（「〜しましょうか？」等）に対するクイックリプライを抽出 */
