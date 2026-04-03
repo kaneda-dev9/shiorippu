@@ -1,13 +1,13 @@
 <template>
   <div class="py-8 text-center">
-    <div class="mb-3 text-4xl">
-      ✈️
+    <div class="mb-3 flex justify-center">
+      <UIcon name="i-lucide-compass" class="size-10 text-amber-600 dark:text-amber-400" />
     </div>
     <h3 class="mb-2 text-lg font-semibold text-stone-900 dark:text-stone-50">
-      旅行プランを一緒に考えましょう！
+      旅のプランを一緒に考えましょう
     </h3>
     <p class="mb-4 text-sm text-stone-500">
-      どんな旅がしたいか、気軽に話しかけてください
+      どんな旅がしたいか、気軽に教えてください
     </p>
     <div class="flex flex-wrap justify-center gap-2">
       <UButton

@@ -3,6 +3,11 @@
 AIと一緒に旅のプランを作成し、おしゃれな「旅のしおり」を作れるWebサービス。
 国内旅行（日本）に特化。個人開発・趣味プロジェクト。
 
+## 言語
+
+すべての応答・コメント・コミットメッセージも日本語で記述すること。
+コード中の変数名・関数名は英語のまま。
+
 ## ドキュメント
 
 詳細は `.claude/` 配下を参照:
@@ -19,6 +24,7 @@ AIと一緒に旅のプランを作成し、おしゃれな「旅のしおり」
 > **重要**: 上記ドキュメントはプロジェクトの「信頼できる情報源」として機能する。
 > Sprint完了時やアーキテクチャ変更時には、対応するmdファイルも必ず更新すること。
 > 特に以下のタイミングで更新が必要:
+>
 > - 新しいパッケージ追加・バージョン変更 → `dependencies.md`
 > - ファイル構成変更・新パターン導入 → `architecture.md`
 > - 新コンポーネント追加・UI方針変更 → `components.md`
@@ -26,7 +32,8 @@ AIと一緒に旅のプランを作成し、おしゃれな「旅のしおり」
 > - Supabase スキーマ変更 → `architecture.md`, `requirements.md`
 > - 開発ルール・パターンの変更 → `rules/` 配下
 
-### プランモード実行時
+## プランモード実行時
+
 作成したプランに対して必ず別でエイジェントを立てて、レビューさせること
 無理に粗探しする必要はなく、汎用性と再開発、冗長性とメンテナンス性、ロジックのパフォーマンスを重点的にチェックして、改善点や懸念点、他考慮不足があればユーザに共有
 
@@ -37,41 +44,6 @@ AIと一緒に旅のプランを作成し、おしゃれな「旅のしおり」
 - **リージョン**: 東京 (ap-northeast-1)
 - **認証**: Google OAuth 設定済み
 
-## 現在の状況
-
-**Sprint 1〜4 完了（Sprint 4 は部分完了）**
-
-### Sprint 1: 基盤構築 — 完了
-- [x] 要件定義 v3、インタラクティブプロトタイプ
-- [x] Supabase: テーブル6個、RLS、トリガー、インデックス、Realtime、Google OAuth
-- [x] Nuxt v4 初期セットアップ（TypeScript型チェックパス済み）
-- [x] Google OAuth ログインフロー（PKCE）
-- [x] UI: レスポンシブヘッダー、モバイルメニュー、トップ・ログイン・ダッシュボード
-- [x] Server API: しおりCRUD 5エンドポイント、AIチャット（SSEストリーミング）
-- [x] composables: useAuth, useSupabase, useAuthFetch
-
-### Sprint 2: AIチャット + エディタ — 完了
-- [x] しおりエディタ画面 (`/shiori/[id]`): 基本情報編集、日程・イベント管理、ドラッグ&ドロップ
-- [x] AIチャット: エディタ内サイドパネル（ChatPanel, PlanPreview, ChoiceCards）
-- [x] AI SDK移行: @anthropic-ai/sdk → Vercel AI SDK (ai + @ai-sdk/anthropic)
-- [x] Server API: 日程CRUD、イベントCRUD、並び替え、プラン適用、チャット履歴
-
-### Sprint 3: 共同編集 + デザイン — 完了
-- [x] テンプレート選択（TemplateSelector, CoverImagePicker）
-- [x] 共同編集: 招待リンクAPI、ShareModal、ロールベースUI制御
-- [x] 招待フロー (`/invite/[token]`)、公開しおりページ (`/s/[id]`)
-- [x] Realtime同期（Presence + Broadcast + Postgres Changes）
-
-### Sprint 4: 地図 + 仕上げ — 部分完了
-- [x] Google Maps表示（MapView, MapEventList, PlaceAutocomplete）
-- [x] PDF出力（jspdf + marked + dompurify）
-- [x] Googleカレンダーエクスポート（OAuth refresh token 暗号化保存）
-- [x] PWA対応（@vite-pwa/nuxt）
-- [x] CI/CD: GitHub Actions (lint/typecheck/test) + Vercel自動デプロイ
-- [x] テスト環境構築（Vitest 3プロジェクト: unit/nuxt/rls）
-- [ ] E2Eテスト（Playwright）
-- [ ] OGP生成（メタタグ動的生成）
-
 ### 未完了・次にやること（優先順）
 
 1. **E2Eテスト**: Playwright導入、認証フロー・主要画面のテスト
@@ -79,12 +51,14 @@ AIと一緒に旅のプランを作成し、おしゃれな「旅のしおり」
 3. **パフォーマンス最適化**: Lighthouse監査、フォントCDN化検討
 
 ### 作業の進め方
+
 - Agent Teams 体制で並列開発（`.claude/agent-teams.md` 参照）
 - 「続きの作業をしてください」→ 上記の「次にやること」を順番に進める
 - 「Sprint 2を実行してください」→ Agent Teams体制で並列実行
 - 特定タスクを指定することも可能（例: 「AIチャット画面を作って」）
 
 ### 開発コマンド
+
 ```bash
 pnpm install        # パッケージインストール
 pnpm dev            # 開発サーバー起動 (http://localhost:3000)

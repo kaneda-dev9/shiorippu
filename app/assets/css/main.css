@@ -1,3 +1,6 @@
+/* Google Fonts: Klee One（見出し・ロゴ用万年筆風）+ Noto Sans JP（本文） */
+@import url('https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap');
+
 @import "tailwindcss";
 @import "@nuxt/ui";
 
@@ -7,7 +10,13 @@
 /* しおりっぷ custom theme overrides */
 :root {
   --font-family-base: 'Noto Sans JP', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+  --font-family-display: 'Klee One', 'Noto Sans JP', serif;
   color-scheme: light dark;
+}
+
+/* 見出し・ロゴ用ディスプレイフォント */
+.font-display {
+  font-family: var(--font-family-display);
 }
 
 /* タッチデバイスでダブルタップズーム遅延を防止 */

@@ -45,9 +45,9 @@ watch(() => route.path, () => {
         <!-- ロゴ -->
         <NuxtLink
           to="/"
-          class="flex items-center gap-2 text-lg font-bold text-orange-500"
+          class="flex items-center gap-2 text-xl font-display text-amber-700 dark:text-amber-400"
         >
-          <UIcon name="i-lucide-map" class="size-6" />
+          <UIcon name="i-lucide-compass" class="size-5" />
           <span>しおりっぷ</span>
         </NuxtLink>
 

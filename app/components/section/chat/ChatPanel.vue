@@ -3,8 +3,8 @@
     <!-- ヘッダー -->
     <div class="flex items-center justify-between border-b border-stone-200 px-4 py-3 dark:border-stone-700">
       <div class="flex items-center gap-2">
-        <UIcon name="i-lucide-sparkles" class="size-5 text-orange-500" />
-        <span class="font-semibold text-stone-900 dark:text-stone-50">AI旅行プランナー</span>
+        <UIcon name="i-lucide-compass" class="size-5 text-amber-700 dark:text-amber-400" />
+        <span class="font-semibold text-stone-900 dark:text-stone-50">旅のコンシェルジュ</span>
       </div>
       <UButton
         icon="i-lucide-x"
@@ -122,8 +122,8 @@
       </div>
       <!-- ヘルパーテキスト -->
       <div class="mt-2 flex items-center justify-center gap-1.5 text-xs text-stone-400">
-        <UIcon name="i-lucide-sparkles" class="size-3 text-orange-400" />
-        <span>AIが質問に合わせて選択肢を提案します。「その他」で自由に入力もできます</span>
+        <UIcon name="i-lucide-pen-line" class="size-3 text-amber-600 dark:text-amber-400" />
+        <span>質問に合わせて選択肢を提案します。自由入力もできます</span>
       </div>
     </div>
   </div>
@@ -201,7 +201,7 @@ const userProps = {
 const assistantProps = {
   side: 'left' as const,
   variant: 'naked' as const,
-  avatar: { icon: 'i-lucide-bot' },
+  avatar: { icon: 'i-lucide-compass' },
 }
 
 /** 最後のメッセージID */

@@ -19,7 +19,7 @@
         v-for="sug in suggestions"
         :key="sug.placeId"
         type="button"
-        class="flex w-full items-start gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-orange-50 dark:hover:bg-orange-900/20"
+        class="flex w-full items-start gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-amber-50 dark:hover:bg-amber-900/20"
         @mousedown.prevent="selectPlace(sug)"
       >
         <UIcon name="i-lucide-map-pin" class="mt-0.5 size-4 shrink-0 text-stone-400" />

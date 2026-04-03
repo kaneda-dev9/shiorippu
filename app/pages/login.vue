@@ -32,14 +32,14 @@ async function handleGoogleLogin() {
       <UCard>
         <div class="flex flex-col items-center text-center">
           <!-- ロゴ -->
-          <div class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-orange-100 dark:bg-orange-900/30">
-            <UIcon name="i-lucide-map" class="size-8 text-orange-500" />
+          <div class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-900/20">
+            <UIcon name="i-lucide-compass" class="size-8 text-amber-700 dark:text-amber-400" />
           </div>
-          <h1 class="mb-1 text-xl font-bold text-stone-900 dark:text-stone-50">
+          <h1 class="mb-1 font-display text-xl font-bold text-stone-800 dark:text-stone-100">
             しおりっぷ
           </h1>
           <p class="mb-6 text-sm text-stone-500">
-            ログインして旅の計画を始めよう
+            旅の計画を始めよう
           </p>
 
           <!-- エラー表示 -->

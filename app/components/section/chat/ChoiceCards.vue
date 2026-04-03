@@ -8,8 +8,8 @@
         class="flex items-start gap-3 rounded-xl border-2 p-3 text-left transition-all"
         :class="
           selectedReplies.has(choice.label)
-            ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
-            : 'border-stone-200 bg-white hover:border-orange-300 dark:border-stone-700 dark:bg-stone-900'
+            ? 'border-amber-600 bg-amber-50 dark:bg-amber-900/20'
+            : 'border-stone-200 bg-white hover:border-amber-400 dark:border-stone-700 dark:bg-stone-900'
         "
         @click="toggleChoice(choice.label)"
       >
@@ -20,7 +20,7 @@
             <UIcon
               v-if="selectedReplies.has(choice.label)"
               name="i-lucide-check"
-              class="size-4 shrink-0 text-orange-500"
+              class="size-4 shrink-0 text-amber-700 dark:text-amber-400"
             />
           </div>
           <p v-if="choice.description" class="mt-0.5 text-xs leading-snug text-stone-500">
@@ -35,8 +35,8 @@
       class="flex w-full items-center gap-2 rounded-xl border-2 border-dashed p-3 text-sm transition-all"
       :class="
         showOtherInput
-          ? 'border-orange-500 bg-orange-50 text-orange-600 dark:bg-orange-900/20'
-          : 'border-stone-200 text-stone-400 hover:border-orange-300 hover:text-orange-500 dark:border-stone-700'
+          ? 'border-amber-600 bg-amber-50 text-amber-700 dark:bg-amber-900/20'
+          : 'border-stone-200 text-stone-400 hover:border-amber-400 hover:text-amber-700 dark:text-amber-400 dark:border-stone-700'
       "
       @click="showOtherInput = !showOtherInput"
     >

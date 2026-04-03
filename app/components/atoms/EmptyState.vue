@@ -32,6 +32,6 @@ withDefaults(defineProps<{
 })
 
 // アイコン背景ありの場合のスタイル
-const iconBgClass = 'size-20 bg-orange-100 dark:bg-orange-900/30'
-const iconClass = 'size-10 text-orange-500'
+const iconBgClass = 'size-20 bg-amber-50 dark:bg-amber-900/20'
+const iconClass = 'size-10 text-amber-700 dark:text-amber-400'
 </script>

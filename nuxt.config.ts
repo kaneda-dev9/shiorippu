@@ -47,7 +47,7 @@ export default defineNuxtConfig({
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'description', content: 'AIと一緒に旅のプランを作って、おしゃれなしおりにしよう' },
-        { name: 'theme-color', content: '#f97316' },
+        { name: 'theme-color', content: '#b45309' },
       ],
       link: [
         { rel: 'icon', href: '/favicon.ico', sizes: '48x48' },
@@ -71,7 +71,7 @@ export default defineNuxtConfig({
       short_name: 'しおりっぷ',
       description: 'AIと一緒に旅のプランを作って、おしゃれなしおりにしよう',
       lang: 'ja',
-      theme_color: '#f97316',
+      theme_color: '#b45309',
       background_color: '#ffffff',
       display: 'standalone',
       icons: [
@@ -97,6 +97,12 @@ export default defineNuxtConfig({
       functions: {
         maxDuration: 60, // AIチャットのSSEストリーミング用（デフォルト10秒では不足）
       },
+    },
+  },
+
+  vite: {
+    optimizeDeps: {
+      include: ['jspdf'],
     },
   },
 

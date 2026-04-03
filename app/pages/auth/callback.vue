@@ -72,7 +72,7 @@ onMounted(async () => {
 <template>
   <div class="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">
     <div class="text-center">
-      <UIcon name="i-lucide-loader-2" class="size-8 animate-spin text-orange-500" />
+      <UIcon name="i-lucide-loader-2" class="size-8 animate-spin text-amber-700 dark:text-amber-400" />
       <p class="mt-4 text-sm text-stone-500">
         ログイン中...
       </p>

@@ -39,7 +39,7 @@
       <!-- 複数選択インジケーター -->
       <p
         v-if="showMultiSelectHint"
-        class="mt-2 text-xs font-medium text-orange-500"
+        class="mt-2 text-xs font-medium text-amber-700 dark:text-amber-400"
       >
         * 複数選択できます
       </p>
@@ -47,18 +47,18 @@
       <!-- プラン生成中インジケーター -->
       <div
         v-if="showPlanGenerating"
-        class="mt-3 overflow-hidden rounded-xl border border-orange-200 bg-orange-50/50 dark:border-orange-800/50 dark:bg-orange-900/10"
+        class="mt-3 overflow-hidden rounded-xl border border-amber-200 bg-amber-50/50 dark:border-amber-800/50 dark:bg-amber-900/10"
       >
-        <div class="flex items-center gap-2 border-b border-orange-200 bg-orange-100/50 px-4 py-2.5 dark:border-orange-800/50 dark:bg-orange-900/20">
-          <UIcon name="i-lucide-map" class="size-4 text-orange-500" />
-          <span class="text-sm font-semibold text-orange-700 dark:text-orange-300">旅行プラン</span>
+        <div class="flex items-center gap-2 border-b border-amber-200 bg-amber-100/50 px-4 py-2.5 dark:border-amber-800/50 dark:bg-amber-900/20">
+          <UIcon name="i-lucide-map" class="size-4 text-amber-700 dark:text-amber-400" />
+          <span class="text-sm font-semibold text-amber-700 dark:text-amber-300">旅行プラン</span>
         </div>
         <div class="px-4 py-5">
           <div class="flex items-center gap-3">
             <div class="relative flex size-10 items-center justify-center">
-              <span class="absolute inline-flex size-full animate-ping rounded-full bg-orange-300 opacity-30" />
-              <span class="relative flex size-8 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30">
-                <UIcon name="i-lucide-wand-sparkles" class="size-4 text-orange-500" />
+              <span class="absolute inline-flex size-full animate-ping rounded-full bg-amber-300 opacity-30" />
+              <span class="relative flex size-8 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+                <UIcon name="i-lucide-pen-line" class="size-4 text-amber-700 dark:text-amber-400" />
               </span>
             </div>
             <div>
@@ -70,8 +70,8 @@
               </p>
             </div>
           </div>
-          <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-orange-100 dark:bg-orange-900/30">
-            <div class="h-full animate-pulse rounded-full bg-gradient-to-r from-orange-400 via-pink-400 to-orange-400" style="width: 60%; animation-duration: 1.5s;" />
+          <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-amber-100 dark:bg-amber-900/30">
+            <div class="h-full animate-pulse rounded-full bg-gradient-to-r from-amber-400 via-pink-400 to-amber-400" style="width: 60%; animation-duration: 1.5s;" />
           </div>
         </div>
       </div>

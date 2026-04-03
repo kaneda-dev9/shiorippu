@@ -185,7 +185,7 @@ async function handleSubmit() {
       <div class="flex items-center gap-2">
         <UIcon
           :name="categoryIcons[form.category] || 'i-lucide-map-pin'"
-          class="size-5 text-orange-500"
+          class="size-5 text-amber-700 dark:text-amber-400"
         />
         <span class="font-semibold">
           {{ isEditMode ? 'イベントを編集' : 'イベントを追加' }}

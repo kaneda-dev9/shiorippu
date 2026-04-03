@@ -79,7 +79,7 @@ onMounted(() => {
     <!-- ページヘッダー -->
     <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-stone-900 dark:text-stone-50">
+        <h1 class="text-2xl font-bold font-display text-stone-800 dark:text-stone-50">
           マイしおり
         </h1>
         <p class="mt-1 text-sm text-stone-500">
@@ -113,18 +113,18 @@ onMounted(() => {
     <div v-else-if="shioris.length === 0">
       <UCard class="py-8">
         <AtomsEmptyState
-          icon="i-lucide-map"
+          icon="i-lucide-pen-line"
           icon-bg
           title="まだしおりがありません"
-          message="AIと一緒に旅のプランを作ってみましょう！行き先やテーマを伝えるだけで、最適なプランを提案します。"
+          message="行き先やテーマを伝えるだけで、ぴったりのプランを提案します。"
         >
           <template #action>
             <UButton
-              icon="i-lucide-sparkles"
+              icon="i-lucide-pen-line"
               size="lg"
               @click="createShiori"
             >
-              AIで旅を計画する
+              旅を計画する
             </UButton>
           </template>
         </AtomsEmptyState>
@@ -136,7 +136,7 @@ onMounted(() => {
       <UCard
         v-for="shiori in shioris"
         :key="shiori.id"
-        class="group relative cursor-pointer transition-all hover:shadow-md hover:ring-1 hover:ring-orange-200 dark:hover:ring-orange-800"
+        class="group relative cursor-pointer transition-all hover:shadow-md hover:ring-1 hover:ring-amber-300 dark:hover:ring-amber-700"
         @click="navigateTo(`/shiori/${shiori.id}`)"
       >
         <!-- 削除ボタン（ホバーで表示、オーナーのみ） -->
@@ -166,9 +166,9 @@ onMounted(() => {
         </div>
         <div
           v-else
-          class="mb-3 flex h-28 items-center justify-center rounded-lg bg-gradient-to-br from-orange-100 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/10"
+          class="mb-3 flex h-28 items-center justify-center rounded-lg bg-gradient-to-br from-amber-50 to-stone-100 dark:from-amber-900/10 dark:to-stone-800/20"
         >
-          <UIcon name="i-lucide-map" class="size-10 text-orange-300 dark:text-orange-700" />
+          <UIcon name="i-lucide-compass" class="size-10 text-amber-300 dark:text-amber-700" />
         </div>
 
         <!-- タイトル -->

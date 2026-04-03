@@ -33,7 +33,7 @@
         :key="preset.id"
         class="group relative aspect-[5/2] overflow-hidden rounded-lg border-2 transition-all"
         :class="selected === preset.path
-          ? 'border-orange-400 ring-2 ring-orange-400/30'
+          ? 'border-amber-500 ring-2 ring-amber-400/30'
           : 'border-transparent hover:border-stone-300 dark:hover:border-stone-600'
         "
         @click="selected = preset.path"
@@ -51,7 +51,7 @@
         <!-- 選択チェック -->
         <div
           v-if="selected === preset.path"
-          class="absolute right-1 top-1 flex size-5 items-center justify-center rounded-full bg-orange-500 text-white"
+          class="absolute right-1 top-1 flex size-5 items-center justify-center rounded-full bg-amber-600 text-white"
         >
           <UIcon name="i-lucide-check" class="size-3" />
         </div>

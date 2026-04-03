@@ -1,7 +1,7 @@
 <template>
   <!-- ローディング -->
   <div v-if="loading" class="flex h-dvh items-center justify-center">
-    <UIcon name="i-lucide-loader-2" class="size-8 animate-spin text-orange-500" />
+    <UIcon name="i-lucide-loader-2" class="size-8 animate-spin text-amber-700 dark:text-amber-400" />
   </div>
 
   <!-- エラー -->

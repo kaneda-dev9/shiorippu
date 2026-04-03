@@ -45,7 +45,7 @@
         <div
           v-for="(ev, idx) in day.events"
           :key="ev.id"
-          class="group cursor-pointer border-b border-stone-100 px-3 py-2.5 transition-colors hover:bg-orange-50 dark:border-stone-800 dark:hover:bg-orange-900/10"
+          class="group cursor-pointer border-b border-stone-100 px-3 py-2.5 transition-colors hover:bg-amber-50 dark:border-stone-800 dark:hover:bg-amber-900/10"
           :class="{ 'opacity-40': !ev.lat || !ev.lng }"
           @click="handleEventClick(ev)"
         >

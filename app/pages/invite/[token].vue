@@ -53,7 +53,7 @@ watch(
   <div class="flex min-h-[calc(100vh-3.5rem)] items-center justify-center px-4">
     <!-- ローディング -->
     <div v-if="status === 'loading' || status === 'redirecting'" class="text-center">
-      <UIcon name="i-lucide-loader-2" class="mb-4 size-10 animate-spin text-orange-500" />
+      <UIcon name="i-lucide-loader-2" class="mb-4 size-10 animate-spin text-amber-700 dark:text-amber-400" />
       <p class="text-stone-600 dark:text-stone-400">
         {{ status === 'redirecting' ? 'リダイレクト中...' : '招待を処理中...' }}
       </p>

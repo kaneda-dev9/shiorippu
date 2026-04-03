@@ -26,7 +26,6 @@ const {
   shiori,
   loading,
   isOwner,
-  tmpl,
   otherOnlineUsers,
   fetchShiori,
   saveTitle,
@@ -37,7 +36,6 @@ const {
   deleteEvent,
   reorderEvents,
   deleteShiori,
-  changeTemplate,
   changeCoverImage,
 } = useShioriEditor(shioriId)
 
@@ -75,7 +73,7 @@ const selectedDayId = ref<string>('')
 const selectedEvent = ref<Event | null>(null)
 const showDeleteModal = ref<boolean>(false)
 const showShareModal = ref<boolean>(false)
-const showTemplateSelector = ref<boolean>(false)
+const showCoverPicker = ref<boolean>(false)
 const processing = ref<boolean>(false)
 
 // タブナビゲーション
@@ -91,17 +89,7 @@ const dayTabItems = computed(() => {
     }))
 })
 
-// テンプレートに応じたアクティブタブの色
-const tabActiveClass = computed<string>(() => {
-  const map: Record<string, string> = {
-    simple: 'bg-stone-700 dark:bg-stone-300 dark:text-stone-900',
-    pop: 'bg-orange-500 dark:bg-orange-500',
-    wafuu: 'bg-amber-600 dark:bg-amber-500',
-    resort: 'bg-cyan-500 dark:bg-cyan-500',
-    nature: 'bg-green-600 dark:bg-green-500',
-  }
-  return map[tmpl.value.id] || map.simple!
-})
+const tabActiveClass = 'bg-stone-700 dark:bg-stone-300 dark:text-stone-900'
 
 const currentDay = computed<DayWithEvents | undefined>(() => {
   if (!shiori.value) return undefined
@@ -269,7 +257,7 @@ async function handleDeleteShiori() {
 <template>
   <div class="h-full">
     <div v-if="loading" class="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">
-      <UIcon name="i-lucide-loader-2" class="size-8 animate-spin text-orange-500" />
+      <UIcon name="i-lucide-loader-2" class="size-8 animate-spin text-amber-700 dark:text-amber-400" />
     </div>
 
     <div v-else-if="shiori" class="flex h-full">
@@ -285,8 +273,7 @@ async function handleDeleteShiori() {
           >
           <div
             v-else
-            class="size-full bg-gradient-to-r"
-            :class="tmpl.colors.headerGradient"
+            class="size-full bg-gradient-to-r from-stone-400 to-stone-500"
           />
           <!-- ダークオーバーレイ -->
           <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-black/10" />
@@ -297,7 +284,7 @@ async function handleDeleteShiori() {
             variant="soft"
             size="xs"
             class="absolute bottom-3 right-3 bg-black/30 text-white backdrop-blur-sm hover:bg-black/50"
-            @click="showTemplateSelector = !showTemplateSelector"
+            @click="showCoverPicker = !showCoverPicker"
           >
             カバー変更
           </UButton>
@@ -331,7 +318,7 @@ async function handleDeleteShiori() {
               v-else
               tabindex="0"
               role="button"
-              class="cursor-pointer truncate text-xl font-bold text-stone-900 hover:text-orange-500 focus-visible:outline-2 focus-visible:outline-orange-500 dark:text-stone-50"
+              class="cursor-pointer truncate text-xl font-bold text-stone-900 hover:text-amber-700 focus-visible:outline-2 focus-visible:outline-amber-600 dark:text-stone-50"
               @click="startEditTitle"
               @keydown.enter="startEditTitle"
             >
@@ -345,7 +332,7 @@ async function handleDeleteShiori() {
               <div
                 v-for="ou in otherOnlineUsers"
                 :key="ou.user_id"
-                class="relative flex size-7 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-orange-100 dark:border-stone-800 dark:bg-orange-900/30"
+                class="relative flex size-7 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-amber-50 dark:border-stone-800 dark:bg-amber-900/20"
                 :title="ou.display_name || 'ゲスト'"
               >
                 <img
@@ -356,20 +343,20 @@ async function handleDeleteShiori() {
                   height="28"
                   class="size-full object-cover"
                 >
-                <UIcon v-else name="i-lucide-user" class="size-3.5 text-orange-500" />
+                <UIcon v-else name="i-lucide-user" class="size-3.5 text-amber-700 dark:text-amber-400" />
                 <!-- オンラインインジケーター -->
                 <span class="absolute bottom-0 right-0 size-2 rounded-full bg-green-500 ring-1 ring-white dark:ring-stone-800" />
               </div>
             </div>
 
             <UButton
-              icon="i-lucide-sparkles"
+              icon="i-lucide-compass"
               variant="soft"
               size="sm"
-              :class="showChat ? 'ring-2 ring-orange-500' : ''"
+              :class="showChat ? 'ring-2 ring-amber-500' : ''"
               @click="showChat = !showChat"
             >
-              AI相談
+              相談する
             </UButton>
             <UButton
               icon="i-lucide-map"
@@ -379,16 +366,16 @@ async function handleDeleteShiori() {
             >
               マップ
             </UButton>
-            <!-- テンプレート切替ボタン（オーナーのみ） -->
+            <!-- カバー画像変更ボタン（オーナーのみ） -->
             <UButton
               v-if="isOwner"
-              icon="i-lucide-palette"
+              icon="i-lucide-image"
               variant="ghost"
               size="sm"
-              :class="showTemplateSelector ? 'ring-2 ring-orange-500' : ''"
-              @click="showTemplateSelector = !showTemplateSelector"
+              :class="showCoverPicker ? 'ring-2 ring-amber-500' : ''"
+              @click="showCoverPicker = !showCoverPicker"
             >
-              テーマ
+              カバー
             </UButton>
             <SectionShioriCalendarExportButton
               :shiori-id="shioriId"
@@ -442,30 +429,16 @@ async function handleDeleteShiori() {
           />
         </div>
 
-        <!-- テーマ設定（オーナーのみ） -->
-        <div v-if="isOwner && showTemplateSelector" class="mb-6 space-y-5 rounded-xl border border-stone-200 bg-stone-50 p-4 dark:border-stone-700 dark:bg-stone-900">
-          <!-- カラーテーマ -->
-          <div>
-            <h3 class="mb-3 flex items-center gap-2 text-sm font-semibold text-stone-700 dark:text-stone-300">
-              <UIcon name="i-lucide-palette" class="size-4" />
-              カラーテーマ
-            </h3>
-            <ContainersShioriTemplateSelector
-              :selected="shiori.template_id"
-              @update:selected="changeTemplate"
-            />
-          </div>
-          <!-- カバー画像 -->
-          <div>
-            <h3 class="mb-3 flex items-center gap-2 text-sm font-semibold text-stone-700 dark:text-stone-300">
-              <UIcon name="i-lucide-image" class="size-4" />
-              カバー画像
-            </h3>
-            <ContainersShioriCoverImagePicker
-              :selected="shiori.cover_image_url"
-              @update:selected="changeCoverImage"
-            />
-          </div>
+        <!-- カバー画像設定（オーナーのみ） -->
+        <div v-if="isOwner && showCoverPicker" class="mb-6 rounded-xl border border-stone-200 bg-stone-50 p-4 dark:border-stone-700 dark:bg-stone-900">
+          <h3 class="mb-3 flex items-center gap-2 text-sm font-semibold text-stone-700 dark:text-stone-300">
+            <UIcon name="i-lucide-image" class="size-4" />
+            カバー画像
+          </h3>
+          <ContainersShioriCoverImagePicker
+            :selected="shiori.cover_image_url"
+            @update:selected="changeCoverImage"
+          />
         </div>
 
         <!-- 空の状態 -->
@@ -477,11 +450,11 @@ async function handleDeleteShiori() {
             まだ予定がありません
           </h3>
           <p class="mb-6 text-stone-500">
-            AIに相談してプランを作るか、手動で日程を追加しましょう
+            相談してプランを作るか、手動で日程を追加しましょう
           </p>
           <div class="flex items-center justify-center gap-3">
-            <UButton icon="i-lucide-sparkles" @click="showChat = true">
-              AIでプランを作る
+            <UButton icon="i-lucide-pen-line" @click="showChat = true">
+              プランを作る
             </UButton>
             <UButton icon="i-lucide-plus" variant="outline" :loading="processing" @click="handleAddDay">
               日程を追加
@@ -506,7 +479,7 @@ async function handleDeleteShiori() {
           <div v-if="currentDay" class="mt-4">
             <!-- 日程ヘッダー -->
             <div class="mb-3 flex items-center justify-between">
-              <h2 class="flex items-center gap-2 text-sm font-semibold" :class="tmpl.colors.dayHeader">
+              <h2 class="flex items-center gap-2 text-sm font-semibold text-stone-700 dark:text-stone-300">
                 <UIcon name="i-lucide-calendar-days" class="size-4" />
                 Day {{ currentDay.day_number }}
                 <span v-if="currentDay.date" class="text-stone-400">{{ currentDay.date }}</span>
@@ -533,7 +506,6 @@ async function handleDeleteShiori() {
                 v-for="event in currentDay.events"
                 :key="event.id"
                 :event="event"
-                :tmpl="tmpl"
                 @edit="openEditEvent(currentDay!.id, event)"
                 @delete="confirmDeleteEvent(currentDay!.id, event.id, event.title)"
               />
@@ -544,8 +516,7 @@ async function handleDeleteShiori() {
               icon="i-lucide-plus"
               variant="outline"
               block
-              class="mt-2 rounded-xl border-2 border-dashed"
-              :class="[tmpl.colors.addBtnBorderHover, tmpl.colors.addBtnTextHover, tmpl.colors.addBtnBorderHoverDark]"
+              class="mt-2 rounded-xl border-2 border-dashed hover:border-stone-400 hover:text-stone-600 dark:hover:border-stone-500"
               @click="openAddEvent(currentDay.id)"
             >
               イベントを追加
@@ -559,8 +530,7 @@ async function handleDeleteShiori() {
             size="lg"
             block
             :loading="processing"
-            class="mt-6 rounded-xl border-2 border-dashed"
-            :class="[tmpl.colors.addBtnBorderHover, tmpl.colors.addBtnTextHover, tmpl.colors.addBtnBorderHoverDark]"
+            class="mt-6 rounded-xl border-2 border-dashed hover:border-stone-400 hover:text-stone-600 dark:hover:border-stone-500"
             @click="handleAddDay"
           >
             日程を追加
@@ -578,16 +548,16 @@ async function handleDeleteShiori() {
       <template v-if="showChat">
         <!-- リサイズハンドル -->
         <div
-          class="group relative hidden w-1 shrink-0 cursor-col-resize bg-stone-200 transition-colors hover:bg-orange-400 active:bg-orange-500 md:block dark:bg-stone-700 dark:hover:bg-orange-500"
+          class="group relative hidden w-1 shrink-0 cursor-col-resize bg-stone-200 transition-colors hover:bg-amber-400 active:bg-amber-500 md:block dark:bg-stone-700 dark:hover:bg-amber-500"
           @pointerdown.prevent="startResize"
         >
           <!-- ドラッグインジケーター（中央の点々） -->
           <div class="absolute inset-y-0 -left-1 -right-1" />
           <div class="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover:opacity-100">
             <div class="flex flex-col gap-1">
-              <span class="block size-1 rounded-full bg-orange-500" />
-              <span class="block size-1 rounded-full bg-orange-500" />
-              <span class="block size-1 rounded-full bg-orange-500" />
+              <span class="block size-1 rounded-full bg-amber-500" />
+              <span class="block size-1 rounded-full bg-amber-500" />
+              <span class="block size-1 rounded-full bg-amber-500" />
             </div>
           </div>
         </div>

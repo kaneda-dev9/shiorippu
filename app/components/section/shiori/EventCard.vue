@@ -1,8 +1,7 @@
 <template>
   <UCard
     variant="outline"
-    class="group border-l-[3px] transition-all"
-    :class="[tmpl.colors.cardLeftBorder, tmpl.colors.cardBorderHover]"
+    class="group transition-all hover:border-stone-300 dark:hover:border-stone-600"
     :ui="{ header: 'p-3 sm:p-4 border-b-0', body: 'p-3 pt-0 sm:p-4 sm:pt-0' }"
   >
     <!-- ヘッダー: ドラッグ・アイコン・時間・バッジ・アクション -->
@@ -11,20 +10,18 @@
         <span class="event-drag-handle -m-1 flex shrink-0 cursor-grab items-center justify-center p-1 active:cursor-grabbing">
           <UIcon
             name="i-lucide-grip-vertical"
-            class="size-4 text-stone-300"
-            :class="tmpl.colors.dragHandleHover"
+            class="size-4 text-stone-300 hover:text-stone-500"
           />
         </span>
-        <div class="flex size-8 shrink-0 items-center justify-center rounded-lg" :class="[tmpl.colors.eventIconBg, tmpl.colors.accentBgDark]">
-          <UIcon :name="getCategoryIcon(event.category)" class="size-4" :class="tmpl.colors.eventIconText" />
+        <div class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-stone-100 dark:bg-stone-800">
+          <UIcon :name="getCategoryIcon(event.category)" class="size-4 text-stone-500 dark:text-stone-400" />
         </div>
         <span v-if="event.start_time" class="shrink-0 tabular-nums text-xs font-medium text-stone-400">
           {{ event.start_time.slice(0, 5) }}
           <template v-if="event.end_time"> - {{ event.end_time.slice(0, 5) }}</template>
         </span>
         <span
-          class="inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium"
-          :class="[tmpl.colors.badgeText, tmpl.colors.badgeBg]"
+          class="inline-flex shrink-0 items-center rounded-md bg-stone-100 px-1.5 py-0.5 text-[11px] font-medium text-stone-600 dark:bg-stone-800 dark:text-stone-300"
         >
           {{ getCategoryLabel(event.category) }}
         </span>
@@ -73,8 +70,7 @@
       :href="event.url"
       target="_blank"
       rel="noopener noreferrer"
-      class="mt-1 inline-flex items-center gap-1 text-xs hover:underline"
-      :class="[tmpl.colors.link, tmpl.colors.linkHover]"
+      class="mt-1 inline-flex items-center gap-1 text-xs text-amber-700 hover:text-amber-800 hover:underline dark:text-amber-400 dark:hover:text-amber-300"
     >
       <UIcon name="i-lucide-external-link" class="size-3" />
       {{ event.url.replace(/^https?:\/\//, '').split('/')[0] }}
@@ -84,13 +80,11 @@
 
 <script setup lang="ts">
 import type { Event } from '~~/types/database'
-import type { ShioriTemplate } from '~~/shared/templates'
 import { getCategoryIcon, getCategoryLabel } from '~~/shared/category-icons'
 import { bookingStatusConfig } from '~~/shared/booking-status'
 
 defineProps<{
   event: Event
-  tmpl: ShioriTemplate
 }>()
 
 const emit = defineEmits<{

@@ -32,8 +32,8 @@
     <template #body>
       <div class="space-y-3">
         <!-- 既存エクスポート済みイベントの警告 -->
-        <div v-if="existingInfo?.count" class="flex items-center gap-3 rounded-lg bg-orange-50 p-3 dark:bg-orange-900/20">
-          <UIcon name="i-lucide-alert-triangle" class="size-5 shrink-0 text-orange-500" />
+        <div v-if="existingInfo?.count" class="flex items-center gap-3 rounded-lg bg-amber-50 p-3 dark:bg-amber-900/20">
+          <UIcon name="i-lucide-alert-triangle" class="size-5 shrink-0 text-amber-700 dark:text-amber-400" />
           <div class="text-sm">
             <p class="font-medium text-stone-900 dark:text-stone-50">
               Googleカレンダーに {{ existingInfo.count }}件のイベントが既にエクスポート済みです
@@ -118,8 +118,8 @@
   >
     <template #body>
       <div class="space-y-4 text-center">
-        <div class="mx-auto flex size-16 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30">
-          <UIcon name="i-lucide-calendar-plus" class="size-8 text-orange-500" />
+        <div class="mx-auto flex size-16 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-900/20">
+          <UIcon name="i-lucide-calendar-plus" class="size-8 text-amber-700 dark:text-amber-400" />
         </div>
         <div>
           <p class="font-medium text-stone-900 dark:text-stone-50">

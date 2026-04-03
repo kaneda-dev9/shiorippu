@@ -19,7 +19,7 @@ const templateList = getTemplateList()
       class="group relative flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 transition-all"
       :class="[
         selected === t.id
-          ? 'border-orange-400 bg-orange-50/50 ring-2 ring-orange-400/30 dark:bg-orange-900/10'
+          ? 'border-amber-500 bg-amber-50/50 ring-2 ring-amber-400/30 dark:bg-amber-900/10'
           : 'border-stone-200 hover:border-stone-300 dark:border-stone-700 dark:hover:border-stone-600',
         disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
       ]"
@@ -40,7 +40,7 @@ const templateList = getTemplateList()
       <!-- 選択チェック -->
       <div
         v-if="selected === t.id"
-        class="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-orange-500 text-white"
+        class="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-amber-600 text-white"
       >
         <UIcon name="i-lucide-check" class="size-3" />
       </div>

@@ -27,11 +27,11 @@ watch(() => props.applied, (val) => {
 </script>
 
 <template>
-  <div class="mt-3 overflow-hidden rounded-xl border border-orange-200 bg-orange-50/50 dark:border-orange-800/50 dark:bg-orange-900/10">
+  <div class="mt-3 overflow-hidden rounded-xl border border-amber-200 bg-amber-50/50 dark:border-amber-800/50 dark:bg-amber-900/10">
     <!-- ヘッダー -->
-    <div class="flex items-center gap-2 border-b border-orange-200 bg-orange-100/50 px-4 py-2.5 dark:border-orange-800/50 dark:bg-orange-900/20">
-      <UIcon name="i-lucide-map" class="size-4 text-orange-500" />
-      <span class="text-sm font-semibold text-orange-700 dark:text-orange-300">旅行プラン</span>
+    <div class="flex items-center gap-2 border-b border-amber-200 bg-amber-100/50 px-4 py-2.5 dark:border-amber-800/50 dark:bg-amber-900/20">
+      <UIcon name="i-lucide-map" class="size-4 text-amber-700 dark:text-amber-400" />
+      <span class="text-sm font-semibold text-amber-700 dark:text-amber-300">旅行プラン</span>
       <UBadge variant="subtle" size="xs" color="primary">
         {{ plan.days.length }}日間
       </UBadge>
@@ -42,12 +42,12 @@ watch(() => props.applied, (val) => {
       <div v-for="day in plan.days" :key="day.day_number" class="mb-3 last:mb-0">
         <!-- Day ヘッダー -->
         <div class="mb-1.5 flex items-center gap-1.5">
-          <span class="text-xs font-bold text-orange-500">Day {{ day.day_number }}</span>
+          <span class="text-xs font-bold text-amber-700 dark:text-amber-400">Day {{ day.day_number }}</span>
           <span v-if="day.date" class="text-xs text-stone-400">{{ day.date }}</span>
         </div>
 
         <!-- イベントリスト -->
-        <div class="ml-2 space-y-1 border-l-2 border-orange-200 pl-3 dark:border-orange-800/50">
+        <div class="ml-2 space-y-1 border-l-2 border-amber-200 pl-3 dark:border-amber-800/50">
           <div
             v-for="(ev, evIdx) in day.events"
             :key="evIdx"
@@ -55,7 +55,7 @@ watch(() => props.applied, (val) => {
           >
             <!-- カテゴリアイコン -->
             <div class="flex size-6 shrink-0 items-center justify-center rounded bg-white dark:bg-stone-800">
-              <UIcon :name="getCategoryIcon(ev.category)" class="size-3.5 text-orange-500" />
+              <UIcon :name="getCategoryIcon(ev.category)" class="size-3.5 text-amber-700 dark:text-amber-400" />
             </div>
 
             <div class="min-w-0 flex-1">
@@ -80,10 +80,10 @@ watch(() => props.applied, (val) => {
     </div>
 
     <!-- 適用ボタン -->
-    <div class="border-t border-orange-200 px-4 py-3 dark:border-orange-800/50">
+    <div class="border-t border-amber-200 px-4 py-3 dark:border-amber-800/50">
       <UButton
         v-if="!applied"
-        icon="i-lucide-wand-sparkles"
+        icon="i-lucide-pen-line"
         class="w-full justify-center"
         :loading="applying"
         :disabled="applying"

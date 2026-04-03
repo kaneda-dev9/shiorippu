@@ -165,7 +165,7 @@ function roleLabel(role: string) {
   <UModal v-model:open="isOpen" title="共有設定">
     <template #title>
       <div class="flex items-center gap-2">
-        <UIcon name="i-lucide-share-2" class="size-5 text-orange-500" />
+        <UIcon name="i-lucide-share-2" class="size-5 text-amber-700 dark:text-amber-400" />
         <span class="font-semibold">共有設定</span>
       </div>
     </template>
@@ -265,7 +265,7 @@ function roleLabel(role: string) {
               class="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-stone-50 dark:hover:bg-stone-800"
             >
               <!-- アバター -->
-              <div class="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-orange-100 dark:bg-orange-900/30">
+              <div class="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-amber-50 dark:bg-amber-900/20">
                 <img
                   v-if="collab.profile?.avatar_url"
                   :src="collab.profile.avatar_url"
@@ -274,7 +274,7 @@ function roleLabel(role: string) {
                   height="32"
                   class="size-full object-cover"
                 >
-                <UIcon v-else name="i-lucide-user" class="size-4 text-orange-500" />
+                <UIcon v-else name="i-lucide-user" class="size-4 text-amber-700 dark:text-amber-400" />
               </div>
 
               <!-- 名前とロール -->
