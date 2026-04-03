@@ -23,10 +23,12 @@ export function useGoogleMaps() {
 
     loading.value = true
     try {
-      await importLibrary('maps')
-      await importLibrary('marker')
-      await importLibrary('places')
-      await importLibrary('routes')
+      await Promise.all([
+        importLibrary('maps'),
+        importLibrary('marker'),
+        importLibrary('places'),
+        importLibrary('routes'),
+      ])
       loaded.value = true
       return google.maps
     }
@@ -44,7 +46,7 @@ export function useGoogleMaps() {
     return new google.maps.Map(element, {
       center: { lat: 35.6762, lng: 139.6503 }, // 東京デフォルト
       zoom: 12,
-      mapId: 'DEMO_MAP_ID', // 本番デプロイ時は Cloud Console で作成した Map ID に差し替える
+      mapId: useRuntimeConfig().public.googleMapsMapId || 'DEMO_MAP_ID',
       disableDefaultUI: false,
       zoomControl: true,
       mapTypeControl: false,

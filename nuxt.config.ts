@@ -25,11 +25,13 @@ export default defineNuxtConfig({
     googleClientId: '',
     googleClientSecret: '',
     tokenEncryptionKey: '',
+    googleMapsServerApiKey: '',
     // Public (exposed to client)
     public: {
       supabaseUrl: '',
       supabaseAnonKey: '',
       googleMapsApiKey: '',
+      googleMapsMapId: '',
       appUrl: 'http://localhost:3000',
     },
   },

@@ -2,7 +2,6 @@
 import type { ShioriWithDays } from '~~/types/database'
 import { getCategoryIcon, getCategoryLabel } from '~~/shared/category-icons'
 import { bookingStatusConfig } from '~~/shared/booking-status'
-import { getTemplate } from '~~/shared/templates'
 // formatDateJa, formatDateRange は app/utils/date.ts から auto-import
 
 definePageMeta({
@@ -33,8 +32,6 @@ async function fetchShiori() {
 
 onMounted(fetchShiori)
 
-// テンプレートスタイル
-const tmpl = computed(() => getTemplate(shiori.value?.template_id))
 </script>
 
 <template>
@@ -73,8 +70,7 @@ const tmpl = computed(() => getTemplate(shiori.value?.template_id))
       >
       <div
         v-else
-        class="size-full bg-gradient-to-r"
-        :class="tmpl.colors.headerGradient"
+        class="size-full bg-gradient-to-r from-stone-400 to-stone-500"
       />
       <!-- ダークオーバーレイ -->
       <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/10" />
@@ -116,7 +112,7 @@ const tmpl = computed(() => getTemplate(shiori.value?.template_id))
     <div v-else class="space-y-8">
       <div v-for="day in shiori.days" :key="day.id">
         <!-- 日程ヘッダー -->
-        <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold" :class="tmpl.colors.dayHeader">
+        <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold text-stone-700 dark:text-stone-300">
           <UIcon name="i-lucide-calendar-days" class="size-4" />
           Day {{ day.day_number }}
           <span v-if="day.date" class="text-stone-400">{{ formatDateJa(day.date) }}</span>
@@ -132,12 +128,11 @@ const tmpl = computed(() => getTemplate(shiori.value?.template_id))
           <div
             v-for="ev in day.events"
             :key="ev.id"
-            class="relative flex items-start gap-3 overflow-hidden rounded-xl border border-l-[3px] border-stone-200 bg-white p-3 dark:border-stone-700 dark:bg-stone-900"
-            :class="tmpl.colors.cardLeftBorder"
+            class="relative flex items-start gap-3 overflow-hidden rounded-xl border border-stone-200 bg-white p-3 dark:border-stone-700 dark:bg-stone-900"
           >
             <!-- カテゴリアイコン -->
-            <div class="flex size-10 shrink-0 items-center justify-center rounded-lg" :class="[tmpl.colors.eventIconBg, tmpl.colors.accentBgDark]">
-              <UIcon :name="getCategoryIcon(ev.category)" class="size-5" :class="tmpl.colors.eventIconText" />
+            <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-stone-100 dark:bg-stone-800">
+              <UIcon :name="getCategoryIcon(ev.category)" class="size-5 text-stone-500 dark:text-stone-400" />
             </div>
 
             <!-- イベント情報 -->
@@ -148,8 +143,7 @@ const tmpl = computed(() => getTemplate(shiori.value?.template_id))
                   <template v-if="ev.end_time"> - {{ ev.end_time.slice(0, 5) }}</template>
                 </span>
                 <span
-                  class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium"
-                  :class="[tmpl.colors.badgeText, tmpl.colors.badgeBg]"
+                  class="inline-flex items-center rounded-md bg-stone-100 px-1.5 py-0.5 text-[11px] font-medium text-stone-600 dark:bg-stone-800 dark:text-stone-300"
                 >
                   {{ getCategoryLabel(ev.category) }}
                 </span>
@@ -180,8 +174,7 @@ const tmpl = computed(() => getTemplate(shiori.value?.template_id))
                 :href="ev.url"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="mt-1 inline-flex items-center gap-1 text-xs hover:underline"
-                :class="[tmpl.colors.link, tmpl.colors.linkHover]"
+                class="mt-1 inline-flex items-center gap-1 text-xs text-amber-700 hover:text-amber-800 hover:underline dark:text-amber-400 dark:hover:text-amber-300"
               >
                 <UIcon name="i-lucide-external-link" class="size-3" />
                 {{ ev.url.replace(/^https?:\/\//, '').split('/')[0] }}
@@ -206,7 +199,7 @@ const tmpl = computed(() => getTemplate(shiori.value?.template_id))
     <!-- フッター -->
     <div class="mt-8 border-t border-stone-200 pt-6 text-center text-xs text-stone-400 dark:border-stone-700">
       <p>
-        <NuxtLink to="/" class="hover:underline" :class="tmpl.colors.link">
+        <NuxtLink to="/" class="text-amber-700 hover:underline dark:text-amber-400">
           しおりっぷ
         </NuxtLink>
         で作成された旅のしおり

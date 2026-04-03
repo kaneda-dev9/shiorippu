@@ -4,10 +4,7 @@
     <div class="day-tab-scroll mb-3 flex items-center gap-1.5 overflow-x-auto">
       <button
         class="shrink-0 rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap transition-all"
-        :class="!activeCategory
-          ? 'bg-stone-700 text-white dark:bg-stone-300 dark:text-stone-900'
-          : 'text-stone-500 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800'
-        "
+        :class="!activeCategory ? activeBtnClass : inactiveBtnClass"
         @click="activeCategory = null"
       >
         すべて
@@ -16,10 +13,7 @@
         v-for="cat in coverCategories"
         :key="cat.value"
         class="shrink-0 rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap transition-all"
-        :class="activeCategory === cat.value
-          ? 'bg-stone-700 text-white dark:bg-stone-300 dark:text-stone-900'
-          : 'text-stone-500 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800'
-        "
+        :class="activeCategory === cat.value ? activeBtnClass : inactiveBtnClass"
         @click="activeCategory = cat.value"
       >
         {{ cat.label }}
@@ -72,4 +66,7 @@ const filteredPresets = computed(() => {
   if (!activeCategory.value) return coverImagePresets
   return coverImagePresets.filter((p) => p.category === activeCategory.value)
 })
+
+const activeBtnClass = 'bg-stone-700 text-white dark:bg-stone-300 dark:text-stone-900'
+const inactiveBtnClass = 'text-stone-500 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800'
 </script>

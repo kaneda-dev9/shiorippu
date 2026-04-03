@@ -50,7 +50,6 @@
       </div>
 
       <UChatMessages
-        ref="chatMessages"
         :messages="visibleMessages"
         :status="status"
         should-auto-scroll

@@ -133,11 +133,14 @@ onMounted(() => {
 
     <!-- しおり一覧グリッド -->
     <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <UCard
+      <NuxtLink
         v-for="shiori in shioris"
         :key="shiori.id"
-        class="group relative cursor-pointer transition-all hover:shadow-md hover:ring-1 hover:ring-amber-300 dark:hover:ring-amber-700"
-        @click="navigateTo(`/shiori/${shiori.id}`)"
+        :to="`/shiori/${shiori.id}`"
+        class="block h-full"
+      >
+      <UCard
+        class="group relative h-full cursor-pointer transition-all hover:shadow-md hover:ring-1 hover:ring-amber-300 dark:hover:ring-amber-700"
       >
         <!-- 削除ボタン（ホバーで表示、オーナーのみ） -->
         <UButton
@@ -216,6 +219,7 @@ onMounted(() => {
           </span>
         </div>
       </UCard>
+      </NuxtLink>
     </div>
     <!-- 削除確認モーダル -->
     <AtomsConfirmModal

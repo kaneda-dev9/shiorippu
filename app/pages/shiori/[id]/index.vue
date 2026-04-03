@@ -144,13 +144,14 @@ watch(() => shiori.value?.start_date, (val) => { shioriStartDate.value = val ?? 
 watch(() => shiori.value?.end_date, (val) => { shioriEndDate.value = val ?? null }, { immediate: true })
 
 // ピッカー変更 → API保存（同一tickの変更をまとめる）
-let saveDatesTimer: ReturnType<typeof setTimeout> | null = null
+const debouncedSaveDates = useDebounceFn((start: string | null, end: string | null) => {
+  saveDates(start, end)
+}, 0)
 watch([shioriStartDate, shioriEndDate], ([start, end]) => {
   if (!shiori.value) return
   // shiori側の値と同じなら保存不要
   if (start === (shiori.value.start_date ?? null) && end === (shiori.value.end_date ?? null)) return
-  if (saveDatesTimer) clearTimeout(saveDatesTimer)
-  saveDatesTimer = setTimeout(() => saveDates(start, end), 0)
+  debouncedSaveDates(start, end)
 })
 
 /** 日程削除の確認ダイアログを開く */

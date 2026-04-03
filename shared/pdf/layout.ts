@@ -6,13 +6,12 @@ export const PAGE_HEIGHT = 297
 
 // マージン (mm)
 export const MARGIN_TOP = 15
-export const MARGIN_BOTTOM = 20 // ページ番号用スペース
+const MARGIN_BOTTOM = 20 // ページ番号用スペース
 export const MARGIN_LEFT = 15
 export const MARGIN_RIGHT = 15
 
 // コンテンツ領域
 export const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT // 180mm
-export const CONTENT_HEIGHT = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM // 262mm
 export const PAGE_BOTTOM = PAGE_HEIGHT - MARGIN_BOTTOM
 
 // フォントサイズ (pt)
@@ -34,7 +33,6 @@ export const DAY_HEADER_MARGIN_BOTTOM = 4
 export const EVENT_CARD_PADDING = 3
 export const EVENT_CARD_GAP = 3
 export const EVENT_CARD_BORDER_LEFT = 1
-export const EVENT_CARD_RADIUS = 2
 export const FOOTER_Y = PAGE_HEIGHT - 10
 
 // フォント名

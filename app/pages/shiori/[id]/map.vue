@@ -132,6 +132,7 @@ definePageMeta({
 
 const route = useRoute()
 const { authFetch } = useAuthFetch()
+const isMobile = useMediaQuery('(max-width: 767.9px)')
 const toast = useToast()
 const shioriId = route.params.id as string
 
@@ -158,7 +159,7 @@ const eventsWithoutLocation = computed(() => {
 
 // モバイルではサイドバーを初期非表示
 onMounted(async () => {
-  if (window.innerWidth < 768) {
+  if (isMobile.value) {
     showSidebar.value = false
   }
   await fetchShiori()
@@ -185,7 +186,7 @@ function focusEvent(ev: Event) {
   if (ev.lat != null && ev.lng != null) {
     mapViewRef.value?.panTo(ev.lat, ev.lng, 16)
     // モバイルではサイドバーを閉じる
-    if (window.innerWidth < 768) {
+    if (isMobile.value) {
       showSidebar.value = false
     }
   }
