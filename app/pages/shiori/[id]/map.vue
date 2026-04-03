@@ -181,10 +181,11 @@ async function fetchShiori() {
   }
 }
 
-/** イベントクリック時にマップ上でフォーカス */
+/** イベントクリック時にマップ上でフォーカス+マーカーハイライト */
 function focusEvent(ev: Event) {
   if (ev.lat != null && ev.lng != null) {
     mapViewRef.value?.panTo(ev.lat, ev.lng, 16)
+    mapViewRef.value?.highlightMarker(ev.id)
     // モバイルではサイドバーを閉じる
     if (isMobile.value) {
       showSidebar.value = false

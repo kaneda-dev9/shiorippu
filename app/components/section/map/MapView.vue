@@ -4,9 +4,9 @@
 
 <script setup lang="ts">
 import type { DayWithEvents, Event, EventCategory } from '~~/types/database'
-import { getCategoryLabel } from '~~/shared/category-icons'
 import { getDayColor } from '~~/shared/day-colors'
 import { tryOnScopeDispose } from '@vueuse/core'
+import MapInfoWindow from './MapInfoWindow.vue'
 
 const props = withDefaults(defineProps<{
   days: DayWithEvents[]
@@ -22,11 +22,14 @@ const emit = defineEmits<{
 }>()
 
 const { createMap } = useGoogleMaps()
+const { mount: mountComponent, unmountAll: unmountAllInfoWindows } = useMountComponent()
 const mapContainer = useTemplateRef<HTMLElement>('mapContainer')
 
 let map: google.maps.Map | null = null
 let markers: google.maps.marker.AdvancedMarkerElement[] = []
 let polylines: google.maps.Polyline[] = []
+const markerEventMap = new Map<string, { marker: google.maps.marker.AdvancedMarkerElement; pinEl: HTMLElement; color: string; order: number }>()
+let highlightedEventId: string | null = null
 let infoWindow: google.maps.InfoWindow | null = null
 // Routes API (Route.computeRoutes) を使用
 // 型定義が @types/google.maps にまだないため any
@@ -85,7 +88,7 @@ const visibleDays = computed(() => {
 onMounted(async () => {
   if (!mapContainer.value) return
   map = await createMap(mapContainer.value)
-  infoWindow = new google.maps.InfoWindow()
+  infoWindow = new google.maps.InfoWindow({ headerDisabled: true })
   if (props.useDirections) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const routesLib = await google.maps.importLibrary('routes') as any
@@ -133,13 +136,12 @@ async function renderAll(preserveViewport = false) {
       })
 
       marker.addListener('gmp-click', () => {
-        if (!infoWindow || !map) return
-        infoWindow.setContent(createInfoContent(loc.event, day.day_number, color))
-        infoWindow.open({ anchor: marker, map })
+        highlightMarker(loc.event.id)
         emit('marker-click', loc.event, day.day_number)
       })
 
       markers.push(marker)
+      markerEventMap.set(loc.event.id, { marker, pinEl, color, order: i + 1 })
     }
 
     // 区間ごとにルート描画
@@ -418,56 +420,25 @@ function createPinElement(color: string, order: number): HTMLElement {
   return el
 }
 
-/** HTMLエスケープ（XSS防止） */
-function escapeHtml(text: string): string {
-  const div = document.createElement('div')
-  div.textContent = text
-  return div.innerHTML
-}
-
-/** InfoWindow のHTMLコンテンツを作成 */
-function createInfoContent(ev: Event, dayNumber: number, color: string): string {
-  const safeTitle = escapeHtml(ev.title)
-  const safeCategory = escapeHtml(getCategoryLabel(ev.category))
-  const time = ev.start_time
-    ? `<div style="color:#78716c;font-size:12px;margin-top:2px;">${escapeHtml(ev.start_time)}${ev.end_time ? ` ~ ${escapeHtml(ev.end_time)}` : ''}</div>`
-    : ''
-  const address = ev.address
-    ? `<div style="color:#a8a29e;font-size:11px;margin-top:4px;">${escapeHtml(ev.address)}</div>`
-    : ''
-
-  const gmapsUrl = ev.place_id
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${ev.lat},${ev.lng}`)}&query_place_id=${encodeURIComponent(ev.place_id)}`
-    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${ev.lat},${ev.lng}`)}`
-
-  return `
-    <div style="min-width:160px;max-width:260px;padding:4px;">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-        <span style="
-          display:inline-block;width:8px;height:8px;border-radius:50%;
-          background:${escapeHtml(color)};flex-shrink:0;
-        "></span>
-        <span style="font-size:11px;color:#78716c;">Day ${dayNumber} / ${safeCategory}</span>
-      </div>
-      <div style="font-weight:600;font-size:14px;color:#1c1917;">${safeTitle}</div>
-      ${time}
-      ${address}
-      <a href="${escapeHtml(gmapsUrl)}" target="_blank" rel="noopener noreferrer"
-        style="display:inline-flex;align-items:center;gap:3px;margin-top:6px;font-size:12px;color:#ea580c;text-decoration:none;"
-        onmouseover="this.style.textDecoration='underline'"
-        onmouseout="this.style.textDecoration='none'">
-        Google Mapで開く
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
-      </a>
-    </div>
-  `
+/** InfoWindow のコンテンツをVueコンポーネントからDOM要素として生成 */
+function createInfoContent(ev: Event, dayNumber: number, color: string): HTMLElement {
+  const { el } = mountComponent(MapInfoWindow, {
+    event: ev,
+    dayNumber,
+    color,
+    onClose: () => infoWindow?.close(),
+  })
+  return el
 }
 
 function clearAll() {
+  unmountAllInfoWindows()
   for (const m of markers) {
     m.map = null
   }
   markers = []
+  markerEventMap.clear()
+  highlightedEventId = null
   for (const p of polylines) {
     p.setMap(null)
   }
@@ -563,5 +534,58 @@ function getGoogleMapsRouteUrl(): string | null {
   return `https://www.google.com/maps/dir/${points.join('/')}`
 }
 
-defineExpose({ fitBounds, panTo, getGoogleMapsRouteUrl })
+/** 指定イベントのマーカーをハイライト（バウンス+拡大アニメーション） */
+function highlightMarker(eventId: string) {
+  // 前回のハイライトを元に戻す
+  if (highlightedEventId && highlightedEventId !== eventId) {
+    const prev = markerEventMap.get(highlightedEventId)
+    if (prev) {
+      prev.pinEl.style.transform = 'rotate(-45deg)'
+      prev.pinEl.style.width = '32px'
+      prev.pinEl.style.height = '32px'
+      prev.pinEl.style.zIndex = ''
+    }
+  }
+
+  const entry = markerEventMap.get(eventId)
+  if (!entry) return
+
+  highlightedEventId = eventId
+
+  // マーカーを拡大＋バウンスアニメーション
+  const el = entry.pinEl
+  el.style.zIndex = '999'
+  el.style.transition = 'transform 0.3s ease, width 0.3s ease, height 0.3s ease'
+  el.style.width = '42px'
+  el.style.height = '42px'
+  el.style.transform = 'rotate(-45deg) scale(1)'
+
+  // バウンスアニメーション
+  el.animate([
+    { transform: 'rotate(-45deg) translateY(0)' },
+    { transform: 'rotate(-45deg) translateY(-16px)' },
+    { transform: 'rotate(-45deg) translateY(0)' },
+    { transform: 'rotate(-45deg) translateY(-8px)' },
+    { transform: 'rotate(-45deg) translateY(0)' },
+  ], {
+    duration: 600,
+    easing: 'ease-out',
+  })
+
+  // InfoWindowも開く
+  if (infoWindow && map) {
+    const day = visibleDays.value.find(d =>
+      d.events.some(e => e.id === eventId),
+    )
+    if (day) {
+      const ev = day.events.find(e => e.id === eventId)
+      if (ev) {
+        infoWindow.setContent(createInfoContent(ev, day.day_number, entry.color))
+        infoWindow.open({ anchor: entry.marker, map })
+      }
+    }
+  }
+}
+
+defineExpose({ fitBounds, panTo, getGoogleMapsRouteUrl, highlightMarker })
 </script>
