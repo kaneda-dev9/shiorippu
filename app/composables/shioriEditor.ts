@@ -1,5 +1,4 @@
 import type { ShioriWithRole, Day, Event, CollaboratorRole } from '~~/types/database'
-import { getTemplate } from '~~/shared/templates'
 
 /**
  * しおりエディタのデータ操作を管理する composable
@@ -7,7 +6,6 @@ import { getTemplate } from '~~/shared/templates'
  * - Day/イベントの CRUD
  * - 並び替え（ドラッグ&ドロップ）
  * - Realtime同期
- * - テンプレート変更
  */
 export function useShioriEditor(shioriId: string) {
   const { authFetch } = useAuthFetch()
@@ -21,8 +19,6 @@ export function useShioriEditor(shioriId: string) {
 
   // 派生状態
   const isOwner = computed(() => userRole.value === 'owner')
-  const tmpl = computed(() => getTemplate(shiori.value?.template_id))
-
   // Realtime 同期
   const { onlineUsers, addPendingOp } = useRealtimeSync({
     shioriId,
@@ -182,10 +178,16 @@ export function useShioriEditor(shioriId: string) {
   /** 日程を削除 */
   async function deleteDay(dayId: string, dayNumber: number) {
     if (!shiori.value) return
-    addPendingOp(dayId)
-    await authFetch(`/api/day/${dayId}`, { method: 'DELETE' })
-    shiori.value.days = shiori.value.days.filter((d) => d.id !== dayId)
-    toast.add({ title: `Day ${dayNumber} を削除しました`, color: 'error' })
+    try {
+      addPendingOp(dayId)
+      await authFetch(`/api/day/${dayId}`, { method: 'DELETE' })
+      shiori.value.days = shiori.value.days.filter((d) => d.id !== dayId)
+      toast.add({ title: `Day ${dayNumber} を削除しました`, color: 'error' })
+    }
+    catch {
+      toast.add({ title: '日程の削除に失敗しました', color: 'error' })
+      await fetchShiori()
+    }
   }
 
   /** イベント保存後のコールバック（Day間移動にも対応） */
@@ -274,27 +276,13 @@ export function useShioriEditor(shioriId: string) {
 
   /** しおりを削除 */
   async function deleteShiori() {
-    await authFetch(`/api/shiori/${shioriId}`, { method: 'DELETE' })
-    toast.add({ title: 'しおりを削除しました', color: 'error' })
-    await navigateTo('/dashboard')
-  }
-
-  /** テンプレートを変更 */
-  async function changeTemplate(templateId: string) {
-    if (!shiori.value || shiori.value.template_id === templateId) return
-    const prev = shiori.value.template_id
-    shiori.value.template_id = templateId
     try {
-      addPendingOp(shioriId)
-      await authFetch(`/api/shiori/${shioriId}`, {
-        method: 'PUT',
-        body: { template_id: templateId },
-      })
-      toast.add({ title: 'テンプレートを変更しました', color: 'success' })
+      await authFetch(`/api/shiori/${shioriId}`, { method: 'DELETE' })
+      toast.add({ title: 'しおりを削除しました', color: 'error' })
+      await navigateTo('/dashboard')
     }
     catch {
-      shiori.value.template_id = prev
-      toast.add({ title: 'テンプレートの変更に失敗しました', color: 'error' })
+      toast.add({ title: 'しおりの削除に失敗しました', color: 'error' })
     }
   }
 
@@ -326,7 +314,6 @@ export function useShioriEditor(shioriId: string) {
     userRole,
     // 派生状態
     isOwner,
-    tmpl,
     otherOnlineUsers,
     // 操作
     fetchShiori,
@@ -339,7 +326,6 @@ export function useShioriEditor(shioriId: string) {
     reorderDays,
     reorderEvents,
     deleteShiori,
-    changeTemplate,
     changeCoverImage,
   }
 }

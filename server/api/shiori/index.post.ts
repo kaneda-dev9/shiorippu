@@ -66,6 +66,12 @@ export default defineEventHandler(async (event) => {
 
   if (collabError) {
     console.error('コラボレーター追加エラー:', collabError)
+    // しおりをロールバック削除
+    await supabase.from('shioris').delete().eq('id', data.id)
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'しおりの作成に失敗しました。',
+    })
   }
 
   setResponseStatus(event, 201)

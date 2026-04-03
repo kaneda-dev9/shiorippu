@@ -8,9 +8,15 @@ export function useAuth() {
   const profile = useState<Profile | null>('auth-profile', () => null)
   const loading = useState('auth-loading', () => true)
 
+  // 前回のサブスクリプションを保持（重複登録防止）
+  let authSubscription: { unsubscribe: () => void } | null = null
+
   // Initialize auth state
   async function init() {
     try {
+      // 既存のサブスクリプションを解除
+      authSubscription?.unsubscribe()
+
       const { data: { session: currentSession } } = await supabase.auth.getSession()
       session.value = currentSession
       user.value = currentSession?.user ?? null
@@ -20,7 +26,7 @@ export function useAuth() {
       }
 
       // Listen for auth changes
-      supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
         session.value = newSession
         user.value = newSession?.user ?? null
 
@@ -31,6 +37,7 @@ export function useAuth() {
           profile.value = null
         }
       })
+      authSubscription = subscription
     }
     finally {
       loading.value = false

@@ -38,7 +38,7 @@ export async function searchPlaces(
   location?: string,
   type?: string,
 ): Promise<PlaceResult[]> {
-  const apiKey = useRuntimeConfig().public.googleMapsApiKey
+  const apiKey = (useRuntimeConfig().googleMapsServerApiKey as string) || useRuntimeConfig().public.googleMapsApiKey
   if (!apiKey) return []
 
   try {
@@ -114,7 +114,7 @@ export async function searchPlaces(
  * Google Places API (New) でプレース詳細を取得
  */
 export async function getPlaceDetails(placeId: string): Promise<PlaceResult | null> {
-  const apiKey = useRuntimeConfig().public.googleMapsApiKey
+  const apiKey = (useRuntimeConfig().googleMapsServerApiKey as string) || useRuntimeConfig().public.googleMapsApiKey
   if (!apiKey) return null
 
   try {
@@ -178,7 +178,7 @@ export async function getDirections(
   destination: string,
   mode: string = 'transit',
 ): Promise<DirectionsResult | null> {
-  const apiKey = useRuntimeConfig().public.googleMapsApiKey
+  const apiKey = (useRuntimeConfig().googleMapsServerApiKey as string) || useRuntimeConfig().public.googleMapsApiKey
   if (!apiKey) return null
 
   try {

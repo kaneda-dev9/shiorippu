@@ -12,32 +12,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const user = await requireAuth(event)
+  await requireShioriAccess(event, shioriId)
+
   const supabase = useServerSupabase()
-
-  // アクセス権チェック（オーナーまたはコラボレーター）
-  const { data: shiori } = await supabase
-    .from('shioris')
-    .select('owner_id')
-    .eq('id', shioriId)
-    .single()
-
-  if (!shiori) {
-    throw createError({ statusCode: 404, statusMessage: 'しおりが見つかりません。' })
-  }
-
-  if (shiori.owner_id !== user.id) {
-    const { data: collab } = await supabase
-      .from('collaborators')
-      .select('id')
-      .eq('shiori_id', shioriId)
-      .eq('user_id', user.id)
-      .single()
-
-    if (!collab) {
-      throw createError({ statusCode: 403, statusMessage: 'アクセス権限がありません。' })
-    }
-  }
 
   const { data, error } = await supabase
     .from('chat_messages')

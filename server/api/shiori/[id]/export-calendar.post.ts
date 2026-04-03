@@ -116,10 +116,13 @@ export default defineEventHandler(async (event): Promise<CalendarExportResult> =
 
   // エクスポート日時を更新
   if (succeeded > 0) {
-    await supabase
+    const { error: exportDateError } = await supabase
       .from('shioris')
       .update({ last_calendar_exported_at: new Date().toISOString() })
       .eq('id', shioriId)
+    if (exportDateError) {
+      console.error('エクスポート日時の更新に失敗:', exportDateError)
+    }
   }
 
   if (failed === 0) {

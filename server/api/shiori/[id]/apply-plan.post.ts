@@ -267,10 +267,13 @@ export default defineEventHandler(async (event) => {
       d.events.map((e) => ({ title: e.title, category: e.category, address: e.address })),
     )
     const coverPath = selectCoverImage(currentShiori.area, allEvents)
-    await supabase
+    const { error: coverError } = await supabase
       .from('shioris')
       .update({ cover_image_url: coverPath })
       .eq('id', id)
+    if (coverError) {
+      console.error('カバー画像の更新に失敗:', coverError)
+    }
   }
 
   // レスポンスを組み立て

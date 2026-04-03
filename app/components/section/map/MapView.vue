@@ -418,32 +418,41 @@ function createPinElement(color: string, order: number): HTMLElement {
   return el
 }
 
+/** HTMLエスケープ（XSS防止） */
+function escapeHtml(text: string): string {
+  const div = document.createElement('div')
+  div.textContent = text
+  return div.innerHTML
+}
+
 /** InfoWindow のHTMLコンテンツを作成 */
 function createInfoContent(ev: Event, dayNumber: number, color: string): string {
+  const safeTitle = escapeHtml(ev.title)
+  const safeCategory = escapeHtml(getCategoryLabel(ev.category))
   const time = ev.start_time
-    ? `<div style="color:#78716c;font-size:12px;margin-top:2px;">${ev.start_time}${ev.end_time ? ` ~ ${ev.end_time}` : ''}</div>`
+    ? `<div style="color:#78716c;font-size:12px;margin-top:2px;">${escapeHtml(ev.start_time)}${ev.end_time ? ` ~ ${escapeHtml(ev.end_time)}` : ''}</div>`
     : ''
   const address = ev.address
-    ? `<div style="color:#a8a29e;font-size:11px;margin-top:4px;">${ev.address}</div>`
+    ? `<div style="color:#a8a29e;font-size:11px;margin-top:4px;">${escapeHtml(ev.address)}</div>`
     : ''
 
   const gmapsUrl = ev.place_id
-    ? `https://www.google.com/maps/search/?api=1&query=${ev.lat},${ev.lng}&query_place_id=${ev.place_id}`
-    : `https://www.google.com/maps/search/?api=1&query=${ev.lat},${ev.lng}`
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${ev.lat},${ev.lng}`)}&query_place_id=${encodeURIComponent(ev.place_id)}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${ev.lat},${ev.lng}`)}`
 
   return `
     <div style="min-width:160px;max-width:260px;padding:4px;">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
         <span style="
           display:inline-block;width:8px;height:8px;border-radius:50%;
-          background:${color};flex-shrink:0;
+          background:${escapeHtml(color)};flex-shrink:0;
         "></span>
-        <span style="font-size:11px;color:#78716c;">Day ${dayNumber} / ${getCategoryLabel(ev.category)}</span>
+        <span style="font-size:11px;color:#78716c;">Day ${dayNumber} / ${safeCategory}</span>
       </div>
-      <div style="font-weight:600;font-size:14px;color:#1c1917;">${ev.title}</div>
+      <div style="font-weight:600;font-size:14px;color:#1c1917;">${safeTitle}</div>
       ${time}
       ${address}
-      <a href="${gmapsUrl}" target="_blank" rel="noopener noreferrer"
+      <a href="${escapeHtml(gmapsUrl)}" target="_blank" rel="noopener noreferrer"
         style="display:inline-flex;align-items:center;gap:3px;margin-top:6px;font-size:12px;color:#ea580c;text-decoration:none;"
         onmouseover="this.style.textDecoration='underline'"
         onmouseout="this.style.textDecoration='none'">

@@ -22,7 +22,14 @@ export async function requireAuth(event: H3Event): Promise<User> {
     })
   }
 
-  const token = authorization.replace('Bearer ', '')
+  if (!authorization.startsWith('Bearer ')) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: '認証トークンの形式が無効です。',
+    })
+  }
+
+  const token = authorization.slice(7)
 
   if (!token) {
     throw createError({

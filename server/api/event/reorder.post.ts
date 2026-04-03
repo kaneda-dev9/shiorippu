@@ -20,6 +20,28 @@ export default defineEventHandler(async (event) => {
 
   const supabase = useServerSupabase()
 
+  // しおりに属する day_id のリストを取得し、リクエスト内の day_id が正当か検証
+  const { data: validDays, error: dayError } = await supabase
+    .from('days')
+    .select('id')
+    .eq('shiori_id', body.shiori_id)
+
+  if (dayError || !validDays) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: '日程の検証に失敗しました。',
+    })
+  }
+
+  const validDayIds = new Set(validDays.map((d) => d.id))
+  const invalidDayId = body.order.find((item) => !validDayIds.has(item.day_id))
+  if (invalidDayId) {
+    throw createError({
+      statusCode: 403,
+      statusMessage: '指定されたイベントはこのしおりに属していません。',
+    })
+  }
+
   // 各 event の sort_order と day_id を更新
   const updates = body.order.map((item) =>
     supabase

@@ -32,11 +32,15 @@ export default defineEventHandler(async (event) => {
   }
 
   // オーナーのプロフィール
-  const { data: ownerProfile } = await supabase
+  const { data: ownerProfile, error: profileError } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', shiori.owner_id)
     .single()
+
+  if (profileError) {
+    console.error('オーナープロフィール取得エラー:', profileError)
+  }
 
   // コラボレーター一覧（オーナーは仮想エントリで追加するので除外）
   const { data: collaborators, error } = await supabase

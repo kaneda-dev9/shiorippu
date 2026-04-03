@@ -106,8 +106,15 @@ export default defineEventHandler(async (event) => {
     events: events.filter((e: Event) => e.day_id === day.id),
   }))
 
+  // オーナー・コラボレーター以外にはセンシティブフィールドを隠す
+  const result = { ...(shiori as Shiori) }
+  if (!userRole) {
+    delete (result as Record<string, unknown>).invite_token
+    delete (result as Record<string, unknown>).invite_enabled
+  }
+
   return {
-    ...(shiori as Shiori),
+    ...result,
     days: daysWithEvents,
     userRole,
   } as ShioriWithDays & { userRole: string | null }

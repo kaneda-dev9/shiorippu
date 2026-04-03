@@ -290,6 +290,11 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // しおりへのアクセス権を検証（他人のしおりIDを指定した不正アクセスを防止）
+  if (body.shioriId) {
+    await requireShioriAccess(event, body.shioriId)
+  }
+
   const config = useRuntimeConfig()
 
   if (!config.claudeApiKey) {
