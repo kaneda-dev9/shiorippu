@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- ヒーローセクション -->
-    <section class="bg-stone-50 dark:bg-stone-950">
+    <section class="bg-kinari">
       <div class="relative mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-3xl flex-col items-center justify-center px-4 py-16 sm:px-6 lg:px-8">
         <p class="mb-6 text-sm tracking-widest text-amber-700 uppercase dark:text-amber-500">旅のしおり作成サービス</p>
 
@@ -9,7 +9,7 @@
           旅の計画を、もっと楽しく。
         </h1>
 
-        <p class="mb-8 max-w-lg text-center text-base text-stone-600 sm:text-lg dark:text-stone-400">
+        <p class="mb-10 max-w-lg text-center text-base leading-relaxed text-stone-600 sm:text-lg dark:text-stone-400">
           テーマを伝えて、プランを練って、おしゃれなしおりを作ろう。
           みんなで編集して、最高の旅を。
         </p>
@@ -61,9 +61,9 @@
     </section>
 
     <!-- 特徴セクション -->
-    <section class="border-t border-stone-200 bg-white py-16 sm:py-24 dark:border-stone-800 dark:bg-stone-950">
+    <section class="border-t border-stone-200 bg-white py-20 sm:py-28 dark:border-stone-800 dark:bg-stone-950">
       <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        <div class="mb-12 text-center">
+        <div class="mb-16 text-center">
           <p class="mb-3 text-sm tracking-widest text-teal-600 uppercase dark:text-teal-400">Features</p>
           <h2 class="mb-3 text-2xl font-display text-stone-800 sm:text-3xl dark:text-stone-100">
             しおりっぷの特徴
@@ -73,7 +73,7 @@
           </p>
         </div>
 
-        <div class="grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
           <div v-for="feature in features" :key="feature.title" class="group text-center">
             <div class="mx-auto mb-4 flex size-12 items-center justify-center rounded-full border border-stone-200 transition-colors group-hover:border-amber-300 group-hover:bg-amber-50 dark:border-stone-700 dark:group-hover:border-amber-700 dark:group-hover:bg-amber-900/20">
               <UIcon :name="feature.icon" class="size-5 text-stone-500 transition-colors group-hover:text-amber-700 dark:text-stone-400 dark:group-hover:text-amber-400" />
@@ -86,9 +86,9 @@
     </section>
 
     <!-- 使い方セクション -->
-    <section class="border-t border-stone-200 bg-stone-50 py-16 sm:py-24 dark:border-stone-800 dark:bg-stone-900">
+    <section class="border-t border-stone-200 bg-stone-50 py-20 sm:py-28 dark:border-stone-800 dark:bg-stone-900">
       <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <div class="mb-12 text-center">
+        <div class="mb-16 text-center">
           <p class="mb-3 text-sm tracking-widest text-teal-600 uppercase dark:text-teal-400">How it works</p>
           <h2 class="mb-3 text-2xl font-display text-stone-900 sm:text-3xl dark:text-stone-50">
             かんたん3ステップ
@@ -98,7 +98,7 @@
           </p>
         </div>
 
-        <div class="flex flex-col gap-10 sm:gap-12">
+        <div class="flex flex-col gap-12 sm:gap-14">
           <div v-for="(step, index) in steps" :key="step.title" class="flex items-start gap-5">
             <div class="flex flex-col items-center">
               <div class="flex size-10 shrink-0 items-center justify-center rounded-full border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/30">

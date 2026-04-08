@@ -47,7 +47,7 @@
             variant="ghost"
             size="xs"
             aria-label="イベントを削除"
-            class="text-stone-400 hover:text-red-500"
+            class="text-stone-400 hover:text-error-500"
             @click="emit('delete')"
           />
         </div>

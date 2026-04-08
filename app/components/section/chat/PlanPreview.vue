@@ -66,7 +66,7 @@ watch(() => props.applied, (val) => {
                 </span>
                 <span class="text-xs font-medium text-stone-700 dark:text-stone-200">{{ ev.title }}</span>
               </div>
-              <p v-if="ev.memo" class="text-[10px] leading-tight text-stone-400">
+              <p v-if="ev.memo" class="text-[10px] leading-normal text-stone-400">
                 {{ ev.memo }}
               </p>
             </div>
@@ -93,7 +93,7 @@ watch(() => props.applied, (val) => {
       </UButton>
       <div
         v-else
-        class="flex items-center justify-center gap-2 text-sm font-medium text-emerald-600 dark:text-emerald-400"
+        class="flex items-center justify-center gap-2 text-sm font-medium text-success-600 dark:text-success-400"
       >
         <UIcon name="i-lucide-check-circle" class="size-4" />
         しおりに適用済み

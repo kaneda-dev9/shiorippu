@@ -62,8 +62,8 @@ watch(
     <!-- エラー -->
     <UCard v-else-if="status === 'error'" class="max-w-md">
       <div class="flex flex-col items-center text-center">
-        <div class="mb-4 flex size-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-          <UIcon name="i-lucide-x-circle" class="size-8 text-red-500" />
+        <div class="mb-4 flex size-16 items-center justify-center rounded-full bg-error-100 dark:bg-error-900/30">
+          <UIcon name="i-lucide-x-circle" class="size-8 text-error-500" />
         </div>
         <h2 class="mb-2 text-lg font-semibold text-stone-900 dark:text-stone-50">
           招待リンクエラー

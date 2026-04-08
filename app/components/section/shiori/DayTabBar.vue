@@ -19,7 +19,7 @@
         variant="ghost"
         size="xs"
         aria-label="日程を削除"
-        class="shrink-0 text-stone-400 hover:text-red-500"
+        class="shrink-0 text-stone-400 hover:text-error-500"
         @click="emit('deleteDay')"
       />
       <UButton

@@ -346,7 +346,7 @@ async function handleDeleteShiori() {
                 >
                 <UIcon v-else name="i-lucide-user" class="size-3.5 text-amber-700 dark:text-amber-400" />
                 <!-- オンラインインジケーター -->
-                <span class="absolute bottom-0 right-0 size-2 rounded-full bg-green-500 ring-1 ring-white dark:ring-stone-800" />
+                <span class="absolute bottom-0 right-0 size-2 rounded-full bg-success-500 ring-1 ring-white dark:ring-stone-800" />
               </div>
             </div>
 
@@ -404,7 +404,7 @@ async function handleDeleteShiori() {
               icon="i-lucide-trash-2"
               variant="ghost"
               size="sm"
-              class="text-stone-400 hover:!text-red-500"
+              class="text-stone-400 hover:!text-error-500"
               @click="showDeleteModal = true"
             >
               削除

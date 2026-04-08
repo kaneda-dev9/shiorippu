@@ -37,7 +37,7 @@
     <!-- 選択済み表示 -->
     <div
       v-if="selectedPlace && !showDropdown"
-      class="mt-1 flex items-center gap-1 text-xs text-green-600 dark:text-green-400"
+      class="mt-1 flex items-center gap-1 text-xs text-success-600 dark:text-success-400"
     >
       <UIcon name="i-lucide-check-circle" class="size-3" />
       位置情報取得済み

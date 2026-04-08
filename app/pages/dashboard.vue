@@ -75,14 +75,14 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
     <!-- ページヘッダー -->
-    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="mb-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h1 class="text-2xl font-bold font-display text-stone-800 dark:text-stone-50">
           マイしおり
         </h1>
-        <p class="mt-1 text-sm text-stone-500">
+        <p class="mt-1 text-sm leading-relaxed text-stone-500">
           旅のしおりを作成・管理
         </p>
       </div>
@@ -149,7 +149,7 @@ onMounted(() => {
           variant="ghost"
           size="xs"
           aria-label="しおりを削除"
-          class="absolute right-2 top-2 z-10 transition-opacity md:opacity-0 md:group-hover:opacity-100 hover:!text-red-500"
+          class="absolute right-2 top-2 z-10 transition-opacity md:opacity-0 md:group-hover:opacity-100 hover:!text-error-500"
           @click="confirmDelete(shiori, $event)"
         />
 

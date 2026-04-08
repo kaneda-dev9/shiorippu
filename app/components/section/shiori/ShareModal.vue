@@ -294,7 +294,7 @@ function roleLabel(role: string) {
                 variant="ghost"
                 size="xs"
                 aria-label="メンバーを削除"
-                class="text-stone-400 hover:!text-red-500"
+                class="text-stone-400 hover:!text-error-500"
                 @click="confirmKick(collab)"
               />
             </div>
