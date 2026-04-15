@@ -42,6 +42,30 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // 移動元イベントがこのしおりに属するか検証（クロスしおり改ざん防止）
+  const requestedEventIds = body.order.map((item) => item.id)
+  const { data: validEvents, error: eventError } = await supabase
+    .from('events')
+    .select('id')
+    .in('day_id', [...validDayIds])
+    .in('id', requestedEventIds)
+
+  if (eventError || !validEvents) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'イベントの検証に失敗しました。',
+    })
+  }
+
+  const validEventIds = new Set(validEvents.map((e) => e.id))
+  const foreignEvent = requestedEventIds.find((id) => !validEventIds.has(id))
+  if (foreignEvent) {
+    throw createError({
+      statusCode: 403,
+      statusMessage: '指定されたイベントはこのしおりに属していません。',
+    })
+  }
+
   // 各 event の sort_order と day_id を更新
   const updates = body.order.map((item) =>
     supabase

@@ -32,6 +32,48 @@ AIと一緒に旅のプランを作成し、おしゃれな「旅のしおり」
 > - Supabase スキーマ変更 → `architecture.md`, `requirements.md`
 > - 開発ルール・パターンの変更 → `rules/` 配下
 
+## セキュリティポリシー（AIエージェント向け）
+
+### 機密変数 — 絶対に読み取り・出力・コードへの埋め込みを禁止
+
+| 変数名 | 用途 | 保管場所 |
+|--------|------|----------|
+| `NUXT_SUPABASE_SERVICE_KEY` | Supabase service role (RLSバイパス) | サーバーサイドのみ |
+| `NUXT_CLAUDE_API_KEY` | Claude API キー | サーバーサイドのみ |
+| `NUXT_TOKEN_ENCRYPTION_KEY` | AES-256-GCM 暗号化キー | サーバーサイドのみ |
+| `NUXT_GOOGLE_CLIENT_SECRET` | Google OAuth クライアントシークレット | サーバーサイドのみ |
+| `DATABASE_URL` | 生 Postgres 接続 (RLSバイパス・認可迂回) | テスト環境のみ |
+
+パブリック変数（`NUXT_PUBLIC_*`）はクライアントに露出してよいが、それ以外は不可。
+
+### 禁止操作
+
+- `.env` ファイルの直接読み取り・書き込み（`.env.example` は参照可）
+- `cat .env`、`printenv`、`env` などによる環境変数ダンプ
+- 機密変数の値をレスポンス・コード・ログ・ドキュメントに含めること
+- `curl ... | bash` などのパイプ経由スクリプト実行
+- `git push --force`、`git reset --hard`、`rm -rf` などの破壊的操作
+- `sudo` による権限昇格
+
+### 環境変数の参照方法
+
+```bash
+# NG: 値を出力する
+cat .env
+echo $NUXT_SUPABASE_SERVICE_KEY
+
+# OK: キー名のみ確認する
+grep -E "^NUXT_" .env.example
+```
+
+### セキュリティ違反が疑われる場合
+
+1. ツール呼び出しを即座に停止
+2. 何を実行しようとしていたか日本語でユーザーに報告
+3. 安全な代替手段を提案
+
+---
+
 ## プランモード実行時
 
 作成したプランに対して必ず別でエイジェントを立てて、レビューさせること

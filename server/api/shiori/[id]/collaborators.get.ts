@@ -31,10 +31,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'しおりが見つかりません。' })
   }
 
-  // オーナーのプロフィール
+  // オーナーのプロフィール（UI表示に必要なフィールドのみ取得）
   const { data: ownerProfile, error: profileError } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id, display_name, avatar_url')
     .eq('id', shiori.owner_id)
     .single()
 
@@ -65,7 +65,7 @@ export default defineEventHandler(async (event) => {
   if (userIds.length > 0) {
     const { data: profilesData } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, display_name, avatar_url')
       .in('id', userIds)
 
     if (profilesData) {
