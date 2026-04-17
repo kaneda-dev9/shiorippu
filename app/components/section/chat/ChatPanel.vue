@@ -156,7 +156,6 @@ const {
   status,
   sendMessage,
   stopStreaming,
-  loadHistory,
 } = useChatStream(props.shioriId)
 
 // プラン適用済みメッセージIDの管理
@@ -266,5 +265,5 @@ async function handleApplyPlan(plan: TripPlan, messageId: string) {
   }
 }
 
-onMounted(loadHistory)
+
 </script>

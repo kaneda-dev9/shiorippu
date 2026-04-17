@@ -7,13 +7,13 @@ export interface ChatStreamResult {
   status: Readonly<Ref<ChatStatus>>
   sendMessage: (text: string) => Promise<void>
   stopStreaming: () => void
-  loadHistory: () => Promise<void>
 }
 
 export function useChatStream(shioriId: string): ChatStreamResult {
   const { authFetch } = useAuthFetch()
-  const { session } = useAuth()
+  const { session, loading: authLoading } = useAuth()
   const toast = useToast()
+  const queryCache = useQueryCache()
 
   let chat: Chat<UIMessage> | null = null
   const statusRef = ref<ChatStatus>('ready') as Ref<ChatStatus>
@@ -51,31 +51,52 @@ export function useChatStream(shioriId: string): ChatStreamResult {
 
     // Chat の公開 getter 経由でリアクティブ同期
     const chatInstance = chat
+    // streaming → ready 遷移後にキャッシュを invalidate（再マウント時に最新を反映）
+    const hasStreamed = ref(false)
+
     scope = effectScope()
     scope.run(() => {
       watchEffect(() => { statusRef.value = chatInstance.status })
       watchEffect(() => { messagesRef.value = chatInstance.messages })
+      watch(statusRef, (s) => {
+        if (s === 'streaming') {
+          hasStreamed.value = true
+        }
+        if (s === 'ready' && hasStreamed.value) {
+          queryCache.invalidateQueries({ key: chatKeys.messages(shioriId) })
+          hasStreamed.value = false
+        }
+      })
     })
   }
 
-  /** チャット履歴を取得 */
-  async function loadHistory() {
-    try {
-      const data = await authFetch<{ id: string; role: string; content: string }[]>(
-        `/api/chat/${shioriId}/messages`,
-      )
-      const historyMessages: UIMessage[] = data.map((m) => ({
+  // Pinia Colada で履歴を取得（認証後のみ）
+  const { data: history, error } = useQuery({
+    key: () => chatKeys.messages(shioriId),
+    query: () => authFetch<{ id: string; role: string; content: string }[]>(
+      `/api/chat/${shioriId}/messages`,
+    ),
+    enabled: () => !authLoading.value && !!session.value,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+  })
+
+  // 履歴取得後に Chat を初期化
+  watch(history, (msgs) => {
+    if (msgs && !chat) {
+      const initial: UIMessage[] = msgs.map((m) => ({
         id: m.id,
         role: m.role as 'user' | 'assistant',
         parts: [{ type: 'text' as const, text: m.content }],
       }))
-      initChat(historyMessages)
+      initChat(initial)
     }
-    catch {
-      // 履歴がなくても初期化
-      initChat()
-    }
-  }
+  }, { immediate: true })
+
+  // 履歴取得失敗時も空で初期化
+  watch(error, (e) => {
+    if (e && !chat) initChat()
+  })
 
   /** ストリーミングを中断 */
   function stopStreaming() {
@@ -98,6 +119,5 @@ export function useChatStream(shioriId: string): ChatStreamResult {
     status,
     sendMessage,
     stopStreaming,
-    loadHistory,
   }
 }
