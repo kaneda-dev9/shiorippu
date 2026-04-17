@@ -1,4 +1,5 @@
 import type { User, Session } from '@supabase/supabase-js'
+import { useQueryCache } from '@pinia/colada'
 import type { Profile } from '~~/types/database'
 
 export function useAuth() {
@@ -76,6 +77,8 @@ export function useAuth() {
     user.value = null
     session.value = null
     profile.value = null
+    // キャッシュ残留による他ユーザーへの情報漏洩を防ぐため、全 query キャッシュを破棄
+    useQueryCache().invalidateQueries({ key: [] })
     await navigateTo('/')
   }
 

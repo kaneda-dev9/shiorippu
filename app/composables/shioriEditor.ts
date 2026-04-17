@@ -263,7 +263,7 @@ export function useShioriEditor(shioriId: string) {
   const deleteShioriMutation = useMutation({
     mutation: () => authFetch(`/api/shiori/${shioriId}`, { method: 'DELETE' }),
     async onSuccess() {
-      toast.add({ title: 'しおりを削除しました', color: 'error' })
+      toast.add({ title: 'しおりを削除しました', color: 'success' })
       await navigateTo('/dashboard')
     },
     onError() {
@@ -329,7 +329,7 @@ export function useShioriEditor(shioriId: string) {
     },
     onSuccess(_data, { dayNumber }) {
       deleteDayRollback = undefined
-      toast.add({ title: `Day ${dayNumber} を削除しました`, color: 'error' })
+      toast.add({ title: `Day ${dayNumber} を削除しました`, color: 'success' })
     },
     onError() {
       restoreShiori(deleteDayRollback)
@@ -395,7 +395,7 @@ export function useShioriEditor(shioriId: string) {
     },
     onSuccess() {
       deleteEventRollback = undefined
-      toast.add({ title: 'イベントを削除しました', color: 'error' })
+      toast.add({ title: 'イベントを削除しました', color: 'success' })
     },
     onError() {
       restoreShiori(deleteEventRollback)
