@@ -105,7 +105,21 @@ export default defineNuxtConfig({
 
   vite: {
     optimizeDeps: {
-      include: ['jspdf'],
+      // dev サーバー初回実行時のページリロード抑止のため、実行時に検出される依存を pre-bundle
+      include: [
+        'jspdf',
+        '@supabase/supabase-js',
+        'dayjs',
+        'dayjs/locale/ja',
+        'vue-draggable-plus',
+        '@internationalized/date',
+        'zod',
+        'marked',
+        'dompurify',
+        'ai',
+        '@ai-sdk/vue',
+        '@googlemaps/js-api-loader',
+      ],
     },
   },
 
