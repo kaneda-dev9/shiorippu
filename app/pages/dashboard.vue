@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
+import { useMutation, useQuery, useQueryCache } from '@pinia/colada'
 import type { Shiori } from '~~/types/database'
 
 definePageMeta({
@@ -7,71 +8,70 @@ definePageMeta({
 })
 
 const { authFetch } = useAuthFetch()
-const { user } = useAuth()
+const { user, session, loading: authLoading } = useAuth()
 const toast = useToast()
+const queryCache = useQueryCache()
 
-const shioris = ref<Shiori[]>([])
-const loading = ref<boolean>(true)
 const deleteTarget = ref<Shiori | null>(null)
 const showDeleteModal = ref<boolean>(false)
-const deleting = ref<boolean>(false)
 
-async function fetchShioris() {
-  loading.value = true
-  try {
-    shioris.value = await authFetch<Shiori[]>('/api/shiori')
-  }
-  catch (e) {
-    console.error('しおり一覧取得エラー:', e)
-  }
-  finally {
-    loading.value = false
-  }
-}
+// しおり一覧取得
+const { data: shioris, asyncStatus } = useQuery({
+  key: shioriKeys.list,
+  query: () => authFetch<Shiori[]>('/api/shiori'),
+  enabled: () => !authLoading.value && !!session.value,
+})
+const loading = computed(() => asyncStatus.value === 'loading')
+
+// しおり作成
+const { mutateAsync: createShioriMutate } = useMutation({
+  mutation: () => authFetch<Shiori>('/api/shiori', { method: 'POST' }),
+  onSettled: () => queryCache.invalidateQueries({ key: shioriKeys.list() }),
+})
 
 async function createShiori() {
   try {
-    const data = await authFetch<Shiori>('/api/shiori', { method: 'POST' })
+    const data = await createShioriMutate()
     await navigateTo(`/shiori/${data.id}`)
   }
-  catch (e) {
-    console.error('しおり作成エラー:', e)
-    toast.add({
-      title: 'しおりの作成に失敗しました',
-      color: 'error',
-    })
+  catch {
+    toast.add({ title: 'しおりの作成に失敗しました', color: 'error' })
   }
 }
 
-/** 削除確認モーダルを開く */
+// 削除確認モーダルを開く
 function confirmDelete(shiori: Shiori, e: MouseEvent) {
   e.stopPropagation()
   deleteTarget.value = shiori
   showDeleteModal.value = true
 }
 
-/** しおりを削除 */
-async function deleteShiori() {
-  if (!deleteTarget.value) return
-  deleting.value = true
-  try {
-    await authFetch(`/api/shiori/${deleteTarget.value.id}`, { method: 'DELETE' })
-    shioris.value = shioris.value.filter((s) => s.id !== deleteTarget.value!.id)
-    toast.add({ title: 'しおりを削除しました', color: 'success' })
-  }
-  catch {
+// しおり削除（楽観的更新）
+const { mutate: deleteShioriMutate, isLoading: deleting } = useMutation({
+  mutation: (id: string) => authFetch(`/api/shiori/${id}`, { method: 'DELETE' }),
+  onMutate: (id) => {
+    queryCache.cancelQueries({ key: shioriKeys.list() })
+    const previous = queryCache.getQueryData<Shiori[]>(shioriKeys.list())
+    queryCache.setQueryData<Shiori[]>(shioriKeys.list(),
+      (old) => old?.filter((s) => s.id !== id) ?? [])
+    return { previous }
+  },
+  onError: (_e, _id, ctx) => {
+    if (ctx?.previous) {
+      queryCache.setQueryData(shioriKeys.list(), ctx.previous)
+    }
     toast.add({ title: 'しおりの削除に失敗しました', color: 'error' })
-  }
-  finally {
-    deleting.value = false
-    showDeleteModal.value = false
-    deleteTarget.value = null
-  }
-}
-
-onMounted(() => {
-  fetchShioris()
+  },
+  onSuccess: () => toast.add({ title: 'しおりを削除しました', color: 'success' }),
+  onSettled: () => queryCache.invalidateQueries({ key: shioriKeys.list() }),
 })
+
+function deleteShiori() {
+  if (!deleteTarget.value) return
+  deleteShioriMutate(deleteTarget.value.id)
+  showDeleteModal.value = false
+  deleteTarget.value = null
+}
 </script>
 
 <template>
@@ -110,7 +110,7 @@ onMounted(() => {
     </div>
 
     <!-- 空状態 -->
-    <div v-else-if="shioris.length === 0">
+    <div v-else-if="!shioris || shioris.length === 0">
       <UCard class="py-8">
         <AtomsEmptyState
           icon="i-lucide-pen-line"
