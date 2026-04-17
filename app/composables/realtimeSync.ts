@@ -2,11 +2,21 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 import type { PresenceUser, Day, Event, Shiori } from '~~/types/database'
 import { tryOnScopeDispose } from '@vueuse/core'
 
+/**
+ * Supabase Postgres Changes のイベント種別。
+ * reducer 側の型安全な分岐に利用するため、単一の union として外に公開する。
+ */
+export type RealtimeEventType = 'INSERT' | 'UPDATE' | 'DELETE'
+
+export type ShioriRealtimePayload = { eventType: RealtimeEventType; new: Shiori }
+export type DayRealtimePayload = { eventType: RealtimeEventType; new: Day; old: { id: string } }
+export type EventRealtimePayload = { eventType: RealtimeEventType; new: Event; old: { id: string } }
+
 interface RealtimeSyncOptions {
   shioriId: string
-  onShioriChange?: (payload: { eventType: string; new: Shiori }) => void
-  onDayChange?: (payload: { eventType: string; new: Day; old: { id: string } }) => void
-  onEventChange?: (payload: { eventType: string; new: Event; old: { id: string } }) => void
+  onShioriChange?: (payload: ShioriRealtimePayload) => void
+  onDayChange?: (payload: DayRealtimePayload) => void
+  onEventChange?: (payload: EventRealtimePayload) => void
 }
 
 /**
@@ -87,7 +97,7 @@ export function useRealtimeSync(options: RealtimeSyncOptions) {
           return
         }
         options.onShioriChange?.({
-          eventType: payload.eventType,
+          eventType: payload.eventType as RealtimeEventType,
           new: record,
         })
       },
@@ -110,7 +120,7 @@ export function useRealtimeSync(options: RealtimeSyncOptions) {
           return
         }
         options.onDayChange?.({
-          eventType: payload.eventType,
+          eventType: payload.eventType as RealtimeEventType,
           new: payload.new as Day,
           old: payload.old as { id: string },
         })
@@ -135,7 +145,7 @@ export function useRealtimeSync(options: RealtimeSyncOptions) {
           return
         }
         options.onEventChange?.({
-          eventType: payload.eventType,
+          eventType: payload.eventType as RealtimeEventType,
           new: payload.new as Event,
           old: payload.old as { id: string },
         })
