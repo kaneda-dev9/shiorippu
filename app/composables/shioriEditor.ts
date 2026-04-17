@@ -73,83 +73,17 @@ export function useShioriEditor(shioriId: string) {
   }
 
   // --- Realtime 同期（setQueryData 経由でキャッシュ更新） ---
+  // マージロジックは shioriRealtimeReducers.ts の純粋関数に委譲
   const { onlineUsers, addPendingOp } = useRealtimeSync({
     shioriId,
     onShioriChange(payload) {
-      patchShiori((old) => ({
-        ...old,
-        title: payload.new.title,
-        start_date: payload.new.start_date,
-        end_date: payload.new.end_date,
-        area: payload.new.area,
-        is_public: payload.new.is_public,
-        invite_enabled: payload.new.invite_enabled,
-        invite_token: payload.new.invite_token,
-        template_id: payload.new.template_id,
-        cover_image_url: payload.new.cover_image_url,
-      }))
+      patchShiori((old) => applyShioriChange(old, payload))
     },
     onDayChange(payload) {
-      patchShiori((old) => {
-        const days = [...old.days]
-        if (payload.eventType === 'INSERT') {
-          if (!days.some((d) => d.id === payload.new.id)) {
-            days.push({ ...payload.new, events: [] })
-            days.sort((a, b) => a.sort_order - b.sort_order)
-          }
-          return { ...old, days }
-        }
-        if (payload.eventType === 'UPDATE') {
-          const idx = days.findIndex((d) => d.id === payload.new.id)
-          if (idx >= 0) {
-            days[idx] = { ...payload.new, events: days[idx]!.events }
-          }
-          days.sort((a, b) => a.sort_order - b.sort_order)
-          return { ...old, days }
-        }
-        // DELETE
-        return { ...old, days: days.filter((d) => d.id !== payload.old.id) }
-      })
+      patchShiori((old) => applyDayChange(old, payload))
     },
     onEventChange(payload) {
-      patchShiori((old) => {
-        const days = old.days.map((d) => ({ ...d, events: [...d.events] }))
-
-        if (payload.eventType === 'INSERT') {
-          const day = days.find((d) => d.id === payload.new.day_id)
-          if (day && !day.events.some((e) => e.id === payload.new.id)) {
-            day.events.push(payload.new)
-            day.events.sort((a, b) => a.sort_order - b.sort_order)
-          }
-        }
-        else if (payload.eventType === 'UPDATE') {
-          // 旧Dayから削除 / 新Dayへ挿入
-          for (const day of days) {
-            const idx = day.events.findIndex((e) => e.id === payload.new.id)
-            if (idx >= 0) {
-              if (day.id === payload.new.day_id) {
-                day.events[idx] = payload.new
-              }
-              else {
-                day.events.splice(idx, 1)
-              }
-            }
-          }
-          const targetDay = days.find((d) => d.id === payload.new.day_id)
-          if (targetDay && !targetDay.events.some((e) => e.id === payload.new.id)) {
-            targetDay.events.push(payload.new)
-          }
-          for (const day of days) {
-            day.events.sort((a, b) => a.sort_order - b.sort_order)
-          }
-        }
-        else if (payload.eventType === 'DELETE') {
-          for (const day of days) {
-            day.events = day.events.filter((e) => e.id !== payload.old.id)
-          }
-        }
-        return { ...old, days }
-      })
+      patchShiori((old) => applyEventChange(old, payload))
     },
   })
 
