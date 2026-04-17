@@ -8,7 +8,7 @@
   <div v-else-if="error" class="flex h-dvh flex-col items-center justify-center gap-4 px-4">
     <UIcon name="i-lucide-alert-circle" class="size-12 text-stone-300" />
     <p class="text-sm text-stone-500">
-      {{ error }}
+      しおりの取得に失敗しました
     </p>
     <UButton
       icon="i-lucide-arrow-left"
@@ -132,13 +132,31 @@ definePageMeta({
 
 const route = useRoute()
 const { authFetch } = useAuthFetch()
+const { session, loading: authLoading } = useAuth()
 const isMobile = useMediaQuery('(max-width: 767.9px)')
 const toast = useToast()
 const shioriId = route.params.id as string
 
-const shiori = ref<ShioriWithRole | null>(null)
-const loading = ref<boolean>(true)
-const error = ref<string | null>(null)
+// Pinia Colada: editor と同じキーでキャッシュ共有
+const { data: shiori, asyncStatus, error } = useQuery({
+  key: () => shioriKeys.detail(shioriId),
+  query: () => authFetch<ShioriWithRole>(`/api/shiori/${shioriId}`),
+  enabled: () => !authLoading.value && !!session.value,
+  refetchOnWindowFocus: false,
+})
+const loading = computed(() => asyncStatus.value === 'loading')
+
+// エラー時はトースト表示 + ダッシュボードへリダイレクト
+watch(error, (e) => {
+  if (e) {
+    console.error('しおり取得エラー:', e)
+    toast.add({ title: 'しおりの取得に失敗しました', color: 'error' })
+    navigateTo('/dashboard')
+  }
+})
+
+const queryCache = useQueryCache()
+
 const showSidebar = ref<boolean>(true)
 const selectedDays = ref<number[]>([])
 const mapViewRef = useTemplateRef<InstanceType<typeof MapViewComponent>>('mapViewRef')
@@ -158,28 +176,11 @@ const eventsWithoutLocation = computed(() => {
 })
 
 // モバイルではサイドバーを初期非表示
-onMounted(async () => {
+onMounted(() => {
   if (isMobile.value) {
     showSidebar.value = false
   }
-  await fetchShiori()
 })
-
-async function fetchShiori() {
-  loading.value = true
-  error.value = null
-  try {
-    shiori.value = await authFetch<ShioriWithRole>(`/api/shiori/${shioriId}`)
-  }
-  catch (e) {
-    console.error('しおり取得エラー:', e)
-    error.value = 'しおりの取得に失敗しました'
-    toast.add({ title: 'しおりの取得に失敗しました', color: 'error' })
-  }
-  finally {
-    loading.value = false
-  }
-}
 
 /** イベントクリック時にマップ上でフォーカス+マーカーハイライト */
 function focusEvent(ev: Event) {
@@ -215,18 +216,17 @@ function openEventEdit(ev: Event, dayId: string) {
   showEventModal.value = true
 }
 
-/** イベント保存後にデータを更新 */
-async function onEventSaved(savedEvent: Event) {
-  if (!shiori.value?.days) return
-
-  // ローカルのイベントデータを更新
-  for (const day of shiori.value.days) {
-    const idx = day.events.findIndex(e => e.id === savedEvent.id)
-    if (idx !== -1) {
-      day.events[idx] = savedEvent
-      break
-    }
-  }
+/** イベント保存後にキャッシュを更新（immutable 更新） */
+function onEventSaved(savedEvent: Event) {
+  const current = queryCache.getQueryData<ShioriWithRole>(shioriKeys.detail(shioriId))
+  if (!current) return
+  queryCache.setQueryData<ShioriWithRole>(shioriKeys.detail(shioriId), {
+    ...current,
+    days: current.days.map(day => ({
+      ...day,
+      events: day.events.map(ev => ev.id === savedEvent.id ? savedEvent : ev),
+    })),
+  })
 }
 </script>
 
