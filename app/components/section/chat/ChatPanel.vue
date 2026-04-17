@@ -102,23 +102,20 @@
           </UButton>
         </div>
       </Transition>
-      <div class="flex items-end gap-2">
-        <UTextarea
-          v-model="inputText"
-          placeholder="メッセージを入力…"
-          :rows="1"
-          autoresize
-          :maxrows="4"
-          class="flex-1"
-          :disabled="status === 'streaming' || status === 'submitted'"
-          @keydown="handleKeydown"
-        />
+      <UChatPrompt
+        v-model="inputText"
+        placeholder="メッセージを入力…"
+        :rows="1"
+        :maxrows="4"
+        :autofocus="false"
+        :disabled="status === 'streaming' || status === 'submitted'"
+        @submit="handleSubmit"
+      >
         <UChatPromptSubmit
           :status="status"
-          @click="handleSubmitClick"
           @stop="stopStreaming"
         />
-      </div>
+      </UChatPrompt>
       <!-- ヘルパーテキスト -->
       <div class="mt-2 flex items-center justify-center gap-1.5 text-xs text-stone-400">
         <UIcon name="i-lucide-pen-line" class="size-3 text-amber-600 dark:text-amber-400" />
@@ -233,20 +230,10 @@ async function handleSend(text: string) {
   await sendMessage(text)
 }
 
-/** 送信ボタンクリック */
-function handleSubmitClick() {
+/** UChatPrompt の submit（Enter / 送信ボタン両対応、IME ガードは useIMEGuard 内蔵） */
+function handleSubmit() {
   if (status.value !== 'ready' || !inputText.value.trim()) return
   handleSend(inputText.value)
-}
-
-/** Enter キーで送信（Shift+Enter は改行、IME変換中は無視） */
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
-    e.preventDefault()
-    if (inputText.value.trim()) {
-      handleSend(inputText.value)
-    }
-  }
 }
 
 /** プランをしおりに適用 */
