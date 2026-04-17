@@ -197,6 +197,10 @@ export function useShioriEditor(shioriId: string) {
   const deleteShioriMutation = useMutation({
     mutation: () => authFetch(`/api/shiori/${shioriId}`, { method: 'DELETE' }),
     async onSuccess() {
+      // 一覧キャッシュを無効化してから遷移。
+      // これを呼ばないと dashboard 再表示時に削除済みしおりが一覧に残り、
+      // クリックすると詳細 API が 404 を返す（UI 側キャッシュだけ古い状態）。
+      await queryCache.invalidateQueries({ key: shioriKeys.list() })
       toast.add({ title: 'しおりを削除しました', color: 'success' })
       await navigateTo('/dashboard')
     },
