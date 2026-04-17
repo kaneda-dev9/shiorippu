@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useQuery } from '@pinia/colada'
 import type { ShioriWithDays } from '~~/types/database'
 import { getCategoryIcon, getCategoryLabel } from '~~/shared/category-icons'
 import { bookingStatusConfig } from '~~/shared/booking-status'
@@ -11,26 +12,13 @@ definePageMeta({
 const route = useRoute()
 const shioriId = route.params.id as string
 
-const shiori = ref<ShioriWithDays | null>(null)
-const loading = ref<boolean>(true)
-const error = ref<boolean>(false)
-
-async function fetchShiori() {
-  loading.value = true
-  error.value = false
-  try {
-    // 認証ヘッダーなしで呼ぶ（公開しおりのみ取得可能）
-    shiori.value = await $fetch<ShioriWithDays>(`/api/shiori/${shioriId}`)
-  }
-  catch {
-    error.value = true
-  }
-  finally {
-    loading.value = false
-  }
-}
-
-onMounted(fetchShiori)
+// 認証ヘッダーなしで呼ぶ（公開しおりのみ取得可能）
+const { data: shiori, asyncStatus, error } = useQuery({
+  key: () => publicShioriKeys.detail(shioriId),
+  query: () => $fetch<ShioriWithDays>(`/api/shiori/${shioriId}`),
+  refetchOnWindowFocus: false,
+})
+const loading = computed(() => asyncStatus.value === 'loading')
 
 </script>
 
