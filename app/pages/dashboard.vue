@@ -41,6 +41,8 @@ async function createShiori() {
 
 // 削除確認モーダルを開く
 function confirmDelete(shiori: Shiori, e: MouseEvent) {
+  // NuxtLink (<a>) 内にあるため、preventDefault で遷移を阻止する必要がある
+  e.preventDefault()
   e.stopPropagation()
   deleteTarget.value = shiori
   showDeleteModal.value = true
