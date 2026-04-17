@@ -1,9 +1,18 @@
 import type { ShioriWithRole, Day, Event, CollaboratorRole } from '~~/types/database'
 import { useMutation, useQuery, useQueryCache } from '@pinia/colada'
 
-// ロールバック用スナップショットは closure ref に保存する。
-// Pinia Colada v1.1 の `_ReduceContext` が optional プロパティを含む TContext を潰してしまい
-// `onError(_, _, ctx)` 経由では前値を受け取れないための回避策。同一 mutation の同時発火は無い前提。
+/**
+ * しおりエディタのデータ操作を管理する composable
+ * - useQuery でしおり取得（認証準備完了まで待機）
+ * - Realtime同期はキャッシュへ setQueryData で反映
+ * - CRUD は useMutation + 楽観的更新 + ロールバック
+ *
+ * ロールバック実装について:
+ *   Pinia Colada v1.1 の `_ReduceContext` 型が `Record<any,any> extends TContext` の
+ *   条件で TContext を `_EmptyObject` に潰してしまい、`onError(_,_,ctx)` の ctx 経由で
+ *   previous を受け取れない。そのためスナップショットを mutation スコープ内の
+ *   closure ref に保存する方式とする。同時実行はしない前提。
+ */
 export function useShioriEditor(shioriId: string) {
   const { authFetch } = useAuthFetch()
   const { session, loading: authLoading, user } = useAuth()
@@ -12,6 +21,7 @@ export function useShioriEditor(shioriId: string) {
 
   const detailKey = () => shioriKeys.detail(shioriId)
 
+  // --- しおり取得（useQuery） ---
   const {
     data: shiori,
     asyncStatus,
@@ -19,7 +29,7 @@ export function useShioriEditor(shioriId: string) {
   } = useQuery({
     key: detailKey,
     query: () => authFetch<ShioriWithRole>(`/api/shiori/${shioriId}`),
-    // auth race 対策：セッション確立前に queryFn が走ると authFetch が throw する
+    // 認証初期化完了後かつセッション確立後のみ実行（auth race 対策）
     enabled: () => !authLoading.value && !!session.value,
     refetchOnWindowFocus: false,
     staleTime: 0,
@@ -31,31 +41,38 @@ export function useShioriEditor(shioriId: string) {
     return !shiori.value && !queryError.value
   })
 
+  // クエリ失敗時は dashboard に戻す
   watch(queryError, async (err) => {
     if (!err) return
     toast.add({ title: 'しおりの取得に失敗しました', color: 'error' })
     await navigateTo('/dashboard')
   })
 
+  // 派生状態
   const userRole = computed<CollaboratorRole | null>(() => shiori.value?.userRole ?? null)
   const isOwner = computed(() => userRole.value === 'owner')
 
+  // --- 共通ヘルパ ---
+  /** キャッシュから現在のしおりを snapshot（structuredClone で完全独立） */
   function snapshotShiori(): ShioriWithRole | undefined {
     const current = queryCache.getQueryData<ShioriWithRole>(detailKey())
     return current ? structuredClone(current) : undefined
   }
 
+  /** キャッシュに updater を適用する薄いラッパ。キャッシュ未構築時は何もしない */
   function patchShiori(updater: (old: ShioriWithRole) => ShioriWithRole) {
     const current = queryCache.getQueryData<ShioriWithRole>(detailKey())
     if (!current) return
     queryCache.setQueryData<ShioriWithRole>(detailKey(), updater(current))
   }
 
+  /** スナップショットを復元（ロールバック） */
   function restoreShiori(snapshot: ShioriWithRole | undefined) {
     if (!snapshot) return
     queryCache.setQueryData<ShioriWithRole>(detailKey(), snapshot)
   }
 
+  // --- Realtime 同期（setQueryData 経由でキャッシュ更新） ---
   const { onlineUsers, addPendingOp } = useRealtimeSync({
     shioriId,
     onShioriChange(payload) {
@@ -136,10 +153,12 @@ export function useShioriEditor(shioriId: string) {
     },
   })
 
+  // 自分以外のオンラインユーザー
   const otherOnlineUsers = computed(() =>
     onlineUsers.value.filter((u) => u.user_id !== user.value?.id),
   )
 
+  // --- saveTitle ---
   let saveTitleRollback: ShioriWithRole | undefined
   const saveTitleMutation = useMutation({
     mutation: (title: string) => authFetch(`/api/shiori/${shioriId}`, {
@@ -498,7 +517,10 @@ export function useShioriEditor(shioriId: string) {
     }
   }
 
-  // SectionChatPanel の @plan-applied で AI 適用後の最新状態を取りにいくためのハンドラ
+  /**
+   * しおりデータを再取得（キャッシュを invalidate）。
+   * 以前の `fetchShiori` と互換目的で残す。
+   */
   async function fetchShiori() {
     await queryCache.invalidateQueries({ key: detailKey() })
   }

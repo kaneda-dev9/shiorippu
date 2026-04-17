@@ -15,6 +15,7 @@ const queryCache = useQueryCache()
 const deleteTarget = ref<Shiori | null>(null)
 const showDeleteModal = ref<boolean>(false)
 
+// しおり一覧取得
 const { data: shioris, asyncStatus } = useQuery({
   key: shioriKeys.list,
   query: () => authFetch<Shiori[]>('/api/shiori'),
@@ -22,6 +23,7 @@ const { data: shioris, asyncStatus } = useQuery({
 })
 const loading = computed(() => asyncStatus.value === 'loading')
 
+// しおり作成
 const { mutateAsync: createShioriMutate } = useMutation({
   mutation: () => authFetch<Shiori>('/api/shiori', { method: 'POST' }),
   onSettled: () => queryCache.invalidateQueries({ key: shioriKeys.list() }),
@@ -37,12 +39,14 @@ async function createShiori() {
   }
 }
 
+// 削除確認モーダルを開く
 function confirmDelete(shiori: Shiori, e: MouseEvent) {
   e.stopPropagation()
   deleteTarget.value = shiori
   showDeleteModal.value = true
 }
 
+// しおり削除（楽観的更新）
 const { mutate: deleteShioriMutate, isLoading: deleting } = useMutation({
   mutation: (id: string) => authFetch(`/api/shiori/${id}`, { method: 'DELETE' }),
   onMutate: (id) => {
