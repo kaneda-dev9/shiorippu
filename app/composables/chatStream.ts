@@ -19,16 +19,12 @@ export function useChatStream(shioriId: string): ChatStreamResult {
   const statusRef = ref<ChatStatus>('ready') as Ref<ChatStatus>
   const messagesRef = ref<UIMessage[]>([]) as Ref<UIMessage[]>
 
-  // 外部には readonly で公開（書き込み防止）
   const messages = readonly(messagesRef) as Readonly<Ref<UIMessage[]>>
   const status = readonly(statusRef) as Readonly<Ref<ChatStatus>>
 
-  // watchEffect のスコープ管理（非同期コンテキストでもリアクティビティを維持）
   let scope: ReturnType<typeof effectScope> | null = null
 
-  /** Chat インスタンスを初期化（クライアントサイドのみ） */
   function initChat(initialMessages?: UIMessage[]) {
-    // 既存のスコープを破棄
     scope?.stop()
 
     chat = new Chat<UIMessage>({
@@ -49,9 +45,8 @@ export function useChatStream(shioriId: string): ChatStreamResult {
       },
     })
 
-    // Chat の公開 getter 経由でリアクティブ同期
     const chatInstance = chat
-    // streaming → ready 遷移後にキャッシュを invalidate（再マウント時に最新を反映）
+    // streaming → ready 遷移で履歴キャッシュを invalidate し、再マウント時に最新を反映させる
     const hasStreamed = ref(false)
 
     scope = effectScope()
