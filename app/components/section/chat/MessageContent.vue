@@ -85,6 +85,31 @@
         @apply-plan="handleApplyPlan"
       />
 
+      <!-- プランの読み込みに失敗した場合のフォールバック -->
+      <div
+        v-if="showPlanBroken"
+        class="mt-3 overflow-hidden rounded-xl border border-amber-200 bg-amber-50/50 dark:border-amber-800/50 dark:bg-amber-900/10"
+      >
+        <div class="flex items-center gap-2 border-b border-amber-200 bg-amber-100/50 px-4 py-2.5 dark:border-amber-800/50 dark:bg-amber-900/20">
+          <UIcon name="i-lucide-triangle-alert" class="size-4 text-amber-700 dark:text-amber-400" />
+          <span class="text-sm font-semibold text-amber-700 dark:text-amber-300">プランの読み込みに失敗しました</span>
+        </div>
+        <div class="px-4 py-3">
+          <p class="text-xs text-stone-500 dark:text-stone-400">
+            プランデータの解析に失敗しました。もう一度生成してみてください。
+          </p>
+          <UButton
+            icon="i-lucide-refresh-ccw"
+            variant="soft"
+            size="sm"
+            class="mt-3 w-full justify-center"
+            @click="emit('send', 'プランを作り直してください')"
+          >
+            プランを再生成する
+          </UButton>
+        </div>
+      </div>
+
       <!-- 選択肢カード -->
       <SectionChatChoiceCards
         v-if="choiceCards.length > 0 && isLast && !isStreaming"
@@ -128,6 +153,7 @@ import {
   countStreamingEvents,
   isSingleSelectMessage,
   getQuickReplies,
+  hasPlanTag,
   TOOL_CONFIG,
 } from '~~/app/utils/chatHelpers'
 
@@ -163,6 +189,19 @@ const planGenerating = computed<boolean>(() => isPlanStreaming(fullText.value))
 /** ストリーミング中 & 最後のメッセージ & プラン生成中 */
 const showPlanGenerating = computed<boolean>(() =>
   props.isLast && isStreaming.value && planGenerating.value,
+)
+
+/**
+ * プラン生成が試みられたがプレビューを出せない状態か
+ * - 完全な PLAN_JSON タグだが JSON パース失敗
+ * - 開きタグのみでストリームが止まった（トークン上限 / ツールエラー / キャンセル）
+ * `plan` computed の結果を再利用して extractPlan の二重実行を避ける。
+ */
+const showPlanBroken = computed<boolean>(() =>
+  props.isLast
+  && !isStreaming.value
+  && hasPlanTag(fullText.value)
+  && plan.value === null,
 )
 
 /** ストリーミング中のイベントカウント */

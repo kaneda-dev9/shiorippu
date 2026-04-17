@@ -1,9 +1,14 @@
 import dayjs from 'dayjs'
 import { createAnthropic } from '@ai-sdk/anthropic'
-import { streamText, convertToModelMessages, tool, stepCountIs } from 'ai'
+import { streamText, convertToModelMessages, tool, stepCountIs, isTextUIPart } from 'ai'
 import type { UIMessage } from 'ai'
 import { z } from 'zod'
 import { searchPlaces, getPlaceDetails, getDirections } from '~~/server/utils/google-maps'
+
+/** UIMessage.parts からテキストパーツのみを連結して取得する */
+function joinTextParts(parts: UIMessage['parts']): string {
+  return parts.filter(isTextUIPart).map(p => p.text).join('')
+}
 
 /** 旅行プランナーとしてのシステムプロンプト */
 const SYSTEM_PROMPT = `あなたは「しおりっぷ」の旅行プランナーAIです。
@@ -388,8 +393,15 @@ export default defineEventHandler(async (event) => {
           effort: 'low',
         },
       },
-      onFinish: async ({ text }) => {
-        // ストリーミング完了後にチャット履歴をDBに保存
+    })
+
+    // ストリーミング完了後にチャット履歴を DB に保存する。
+    // streamText の onFinish では text が最終ステップのみとなり、ツール呼び出しを
+    // 挟んで前段に出力された PLAN_JSON が欠落する。toUIMessageStreamResponse の
+    // onFinish に渡される responseMessage は SDK が text-delta を順に積み上げた
+    // 完全な UIMessage なので、text パートをそのまま連結すれば原文を再構築できる。
+    return result.toUIMessageStreamResponse({
+      onFinish: async ({ responseMessage }) => {
         if (!body.shioriId) return
 
         const supabase = useServerSupabase()
@@ -397,10 +409,7 @@ export default defineEventHandler(async (event) => {
         // 最後のユーザーメッセージを取得して保存
         const lastUserMsg = [...body.messages!].reverse().find(m => m.role === 'user')
         if (lastUserMsg) {
-          const userText = lastUserMsg.parts
-            .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
-            .map(p => p.text)
-            .join('')
+          const userText = joinTextParts(lastUserMsg.parts)
           if (userText) {
             const { error: userErr } = await supabase
               .from('chat_messages')
@@ -414,22 +423,21 @@ export default defineEventHandler(async (event) => {
           }
         }
 
-        // AI応答を保存
-        if (text) {
+        // AI 応答を保存
+        const fullText = joinTextParts(responseMessage.parts)
+        if (fullText) {
           const { error: assistantErr } = await supabase
             .from('chat_messages')
             .insert({
               shiori_id: body.shioriId,
               role: 'assistant',
-              content: text,
+              content: fullText,
               metadata: {},
             })
           if (assistantErr) console.error('AI応答保存エラー:', assistantErr)
         }
       },
     })
-
-    return result.toUIMessageStreamResponse()
   }
   catch (error: unknown) {
     console.error('Claude API エラー:', error)

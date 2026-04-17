@@ -60,18 +60,51 @@ export function renderMd(text: string): string {
 // プラン関連
 // ===========================================
 
-/** メッセージからPLAN_JSONを抽出 */
+/**
+ * PLAN_JSON 候補文字列を JSON.parse できる形に整える
+ * - AI が ```json ... ``` のようにコードフェンスで包むケースに対応
+ * - 末尾カンマ除去は文字列リテラル内を誤って破壊するリスクがあるため行わない
+ */
+function sanitizePlanJson(raw: string): string {
+  let text = raw.trim()
+  text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')
+  return text.trim()
+}
+
+/** メッセージからPLAN_JSONを抽出（生データ → sanitize 後の2段階パース） */
 export function extractPlan(content: string): TripPlan | null {
   const match = content.match(/<PLAN_JSON>([\s\S]*?)<\/PLAN_JSON>/)
   if (!match?.[1]) return null
-  try {
-    const parsed = JSON.parse(match[1])
-    if (parsed?.days?.length > 0) return parsed as TripPlan
+  const raw = match[1]
+  for (const candidate of [raw, sanitizePlanJson(raw)]) {
+    try {
+      const parsed = JSON.parse(candidate)
+      if (parsed?.days?.length > 0) return parsed as TripPlan
+    }
+    catch {
+      // 次の候補を試す
+    }
   }
-  catch {
-    // JSONパース失敗
+  // 全候補でパース失敗: 原因調査用にログを残す（先頭200文字のみ）
+  // ストリーミング中は JSON が必然的に不完全なので、閉じタグが到達した後のみ警告する。
+  if (content.includes('</PLAN_JSON>')) {
+    console.warn('[extractPlan] JSONパース失敗:', raw.slice(0, 200))
   }
   return null
+}
+
+/** メッセージに <PLAN_JSON> タグが出現したか（開き単独でも true） */
+export function hasPlanTag(content: string): boolean {
+  return content.includes('<PLAN_JSON>')
+}
+
+/**
+ * <PLAN_JSON> は出現したが有効な TripPlan を抽出できない状態か
+ * - ストリーミング中の判定は呼び出し側で isStreaming を組み合わせる
+ */
+export function isPlanBroken(content: string): boolean {
+  if (!hasPlanTag(content)) return false
+  return extractPlan(content) === null
 }
 
 /** ストリーミング中にプランJSON生成中かどうかを判定 */

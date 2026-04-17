@@ -9,6 +9,8 @@ import {
   parseChoiceCards,
   isSingleSelectMessage,
   getQuickReplies,
+  hasPlanTag,
+  isPlanBroken,
 } from '~~/app/utils/chatHelpers'
 
 // ===========================================
@@ -57,6 +59,56 @@ describe('extractPlan', () => {
 
   it('daysプロパティがない場合nullを返す', () => {
     expect(extractPlan('<PLAN_JSON>{"other":"value"}</PLAN_JSON>')).toBeNull()
+  })
+
+  it('コードフェンス付きJSONを抽出する', () => {
+    const content = '<PLAN_JSON>\n```json\n{"days":[{"events":[]}]}\n```\n</PLAN_JSON>'
+    const plan = extractPlan(content)
+    expect(plan).not.toBeNull()
+    expect(plan!.days).toHaveLength(1)
+  })
+
+  it('文字列リテラル内のカンマを保持する（sanitizeで壊れない）', () => {
+    const content = '<PLAN_JSON>{"days":[{"events":[{"title":"A, B, C"}]}]}</PLAN_JSON>'
+    const plan = extractPlan(content)
+    expect(plan).not.toBeNull()
+    expect(plan!.days[0]!.events[0]!.title).toBe('A, B, C')
+  })
+})
+
+// ===========================================
+// hasPlanTag / isPlanBroken
+// ===========================================
+
+describe('hasPlanTag', () => {
+  it('開きタグのみでもtrueを返す', () => {
+    expect(hasPlanTag('テキスト<PLAN_JSON>{"days":[')).toBe(true)
+  })
+
+  it('完全タグでtrueを返す', () => {
+    expect(hasPlanTag('<PLAN_JSON>{"days":[]}</PLAN_JSON>')).toBe(true)
+  })
+
+  it('タグなしでfalseを返す', () => {
+    expect(hasPlanTag('普通のテキスト')).toBe(false)
+  })
+})
+
+describe('isPlanBroken', () => {
+  it('正常なplanではfalseを返す', () => {
+    expect(isPlanBroken('<PLAN_JSON>{"days":[{"events":[]}]}</PLAN_JSON>')).toBe(false)
+  })
+
+  it('完全タグでパース失敗の場合trueを返す', () => {
+    expect(isPlanBroken('<PLAN_JSON>{invalid}</PLAN_JSON>')).toBe(true)
+  })
+
+  it('開きタグのみ（閉じタグ未達）でtrueを返す', () => {
+    expect(isPlanBroken('テキスト<PLAN_JSON>{"days":[...')).toBe(true)
+  })
+
+  it('タグなしでfalseを返す', () => {
+    expect(isPlanBroken('普通のテキスト')).toBe(false)
   })
 })
 
